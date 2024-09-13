@@ -1,0 +1,32 @@
+To build a successful NN,
+
+1. Import the data
+2. Clean the data
+3. Split the data into training/test sets
+4. create a model
+5. train a model
+6. make predictions
+7. evaluate and improve
+
+
+best data points to modify for collection:
+
+RSI
+STOCH
+MACD
+LIN REG
+WILLIAM POINTS CD
+D/V/A
+
+methods of dictating swing entry/exit:
+
+STOCH break/hold
+Vel Equilibrium
+MACD Equilibrium
+
+
+ORDER OF DATA\
+
+KDdBS12V
+KDdBS12V
+KDdBS12V
