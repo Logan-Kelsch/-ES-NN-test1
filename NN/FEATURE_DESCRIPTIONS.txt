@@ -1,0 +1,55 @@
+# 3.0 collected data features:
+# Symbol: /ES:XCME
+
+For the 4-10-23 to 9-13-24 , 101kdatapoint dataset
+# Work Time: 4/10/23, 3:05 PM - 9/13/24, 1:55 PM
+
+FEATURES _____________________________________________________
+
+
+# fulltime- seconds since 1970 (for appending data)
+
+# FullK-    fullK plot for Stochastic of past hour
+
+# diffKD-   value difference between fullK/fullD of past hour
+
+# OB , OS-  boolean output for FullK value when in top 20% (OB) or bottom 20% (OS)
+
+# vol-      trade volume of each bar (currently of each 5 minutes)
+
+# s15,
+  s30,
+  s60-      Current price change slope over past n minutes
+ 
+#ToD-       Time of Day in seconds
+
+#perc30,
+ perc60,
+ percD-    percentile of low and high of LAST 30,60 mins and day
+
+#RSI-       RSI output of past hour
+
+#Wpercent-  William Percent output of past hour
+
+#acc-       Rate of acceleration of past hour over half hours
+            Velocity of past hour minus velocity of hour (30 minutes prior)
+
+################################
+#DESIRED OUTPUTS
+#Are formulated by making a bull and bear 0-1 oscillator
+
+UPDATED TO BE BOOLEAN, no more consideration of oscillation
+Value is either 1 or zero
+
+#standard deviations derived from past 4 hours of movement
+#Value description:
+
+#If value==1
+#  the price moved >=1 std. dev. in that direciton for next n mins
+#else
+Value is zero, and the price moved anything less than 
+1 std. dev in said direction for next n minutes
+
+#bull/bear15 - 15 minute direction lookahead
+#bull/bear30 - 30 minute direction lookahead
+#bull/bear60 - 60 minute direction lookahead
