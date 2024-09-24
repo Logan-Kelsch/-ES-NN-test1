@@ -47,3 +47,16 @@ if bull60 then _up else _in+"|"+
 if bear60 then _dn else _in);
 
 AddOrder(OrderType.SELL_TO_CLOSE, 1, high, 1, Color.White, Color.White, name="SellClose");
+
+
+
+##### SECOND EDITION EDITS HERE
+
+AddOrder(OrderType.BUY_TO_OPEN, 1, low, 1, Color.White, Color.White,name=
+FT+"|"+FullK+"|"+diffKD+"|"+OB+"|"+OS+"|"+
+vol+"|"+s15+"|"+s30+"|"+s60+"|"+ToD+"|"+Inertias+"|"+
+percBB+"|"+spreadRSI+"|"+ADX+"|"+RSI+"|"+WPercent+"|"+acc+"|"+
+if class==4 then _up else
+if class==3 then _upR else
+if class==2 then _dnR else
+if class==1 then _dn else "ERR");
