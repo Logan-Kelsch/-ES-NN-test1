@@ -94,7 +94,6 @@ def reform_with_PCA_isolated(X_pcatran, X_pcafit, test_size, num_isol_feats, com
     X_main_features = X_pcatran[:, :-num_isol_feats]
     X_time_features = X_pcatran[:, -num_isol_feats:]
     
-
     pca = PCA()
 
     pca = PCA(n_components = comps_PCA, random_state=0)
@@ -104,6 +103,10 @@ def reform_with_PCA_isolated(X_pcatran, X_pcafit, test_size, num_isol_feats, com
     return np.hstack((X_main_features, X_time_features))
 
 
+
+def lstm_train_test_cut(X, y, test_size=0.2, time_steps=5):
+    X_train, X_test, y_train, y_test = 0
+    return X_train, X_test, y_train, y_test
 
 
 
