@@ -97,7 +97,7 @@ def reform_with_PCA_isolated(X_pcatran, X_pcafit, test_size, num_isol_feats, com
 
     pca = PCA()
 
-    pca = PCA(n_components = comps_PCA)
+    pca = PCA(n_components = comps_PCA, random_state=0)
     pca.fit(X_fit)
     X_main_features = pca.transform(X_main_features)
 
