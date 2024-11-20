@@ -4,9 +4,11 @@
 
     In V6.0, we will be SCRAPING only 6 features, instead of many.
     These 6 features will be:
-    -   High, Low, Open, Close
+    -   High, Low, Open, Close (model training data pre-processing removable)
     -   ToD (minute)
     -   Volume (of minute)
+    - JUST ADDED 
+    -   DoW
 
     With these features we will use this python file to create hopefully a few hundred features.
     These features will consist of a large sets of slightly altered dimensions of the provided data.
@@ -20,13 +22,29 @@
                                 [value ranges low to high] %favorable_increments
                                 {estimated total features}
 
-    -   Price difference (velocity)             [1 - 60]                {60}
-    -   Rate of price difference (acceleration) [1 - 60]                {60}
-    -   Stochastic K, D, K-D (K is fast)        k=[5-60]%5   d=[k-60]%5 {78}
-    -   RSI                                     [1 - 60]                {60}
-    -   Bar height
+        !! NOTE NOTE HUGE FINALIZATION NOTE: THERE SHOULD BE NO SUBTRACTION, ONLY DIVISION
+        TO AVOID ACTUAL VALUE USAGE, IT SHOULD BE ACTUAL PERCENT USAGE SO ALL FUNCTIONS
+        SHOULD LOOK SOMETHING LIKE feature = 100*(val1/val2-1) [this is representation of percent difference] 
 
-    work in progress from here
+    -   Price difference (velocity)             [1 - 60]                {60} 60
+    -   Rate of price difference (acceleration) [1 - 60]                {60} 120
+    -   Stochastic K, D, K-D (K is fast)        k=[5-60]%5   d=[k-60]%5 {78}    468
+    -   RSI                                     [1 - 60]                {60} 180
+    -   close - Moving average                  [1-60]%5 , [60-200]%20  {68}    536
+    -   Mov-avg-diff                    [5, 10, 15, 30, 60, 120]        {30} 210
+    -   close - lowest low                [5, 15, 30, 60, 120]          {5}
+    -   close - highest high              [5, 15, 30, 60, 120]          {5}  220
+    -   hihi - lolo                      [custom 2 pairs above]         {20} 240 
+    -   bar height                                                      {1}
+    -   wick height                                                     {1}
+    -   uwick - lwick                                                   {1}     539
+    -   high - (close, open, low)(, high holds) [1-5]                   {15} 255
+    -   (high, close, open) - low(, low holds)  [1-5]                   {15} 270
+    -   total volume                            [1-60]                  {60} 330
+    -   total vol chunk difference              [1-60]%5                {11}    550
+    -   volume - average volume                 [1-60]                  {60} 390
+
+                                                550 features predicted
 
     remaining old data labels and features:
     HL2,H2L,HLdiff12,HLdiff21,vol,vol10,vol15,FT,vol30,vol60,volD10,volD15,volD30,volD60,
