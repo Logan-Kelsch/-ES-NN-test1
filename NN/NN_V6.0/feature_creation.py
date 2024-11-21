@@ -52,7 +52,34 @@
 
     ENGINEERED TARGET CATEGORIES:
 
-    -   Price Difference
+    -   Price Difference (will start here)
+        -   price difference                    [1 - 60]                {60}
+
+    NOTE can create these later
     -   Direction Classifications
     -   Volume Classifications
 '''
+
+'''
+    NOTE ALL DATASETS HANDLED IN THESE FUNCTIONS WILL HANDLED AS PANDAS DATAFRAMES
+         TO ALLOW FOR USAGE OF NAMES OF FEATURES/TARGET COLUMNS
+'''
+
+import pandas as pd
+import numpy as np
+
+# main function to create all features, takes in dataset
+def generate_augmented_features(X):
+    #X is assumed to come in as H, L, O, C, vol, ToD, DoW
+    #This function will contain all functions to take or generate all sets of features
+
+
+
+
+    return X
+
+
+def generate_targets(X):
+    #X is assumed to come in as H, L, O, C, vol, ToD, DoW
+    y = None
+    return y
