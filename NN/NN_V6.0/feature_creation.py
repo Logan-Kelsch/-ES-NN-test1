@@ -69,17 +69,49 @@ import pandas as pd
 import numpy as np
 
 # main function to create all features, takes in dataset
-def generate_augmented_features(X):
-    #X is assumed to come in as H, L, O, C, vol, ToD, DoW
+def augmod_dataset(X):
+    #X is assumed to come in as H, L, O, C, vol, ToD, DoW (((possibly with other index close values)))
     #This function will contain all functions to take or generate all sets of features
+    y = None
 
 
 
-
-    return X
+    return X, y
 
 
 def generate_targets(X):
     #X is assumed to come in as H, L, O, C, vol, ToD, DoW
     y = None
     return y
+
+'''
+    NOTE FEATURE SPECIFIC FUNCTIONS
+    NOTE fe_ denotes 'feature engineering'
+'''
+
+'''NOTE NOTE NOTE#############################################
+    this code has not been executed, may not be working.
+'''###########################################################
+def fe_vel(X):
+    #comes in as H,L,O,C,etc
+    #will be using NOTE X[column 4]
+    # Number of new features to create
+
+    # Extract the 4th feature
+    close = X.iloc[:, 3].values
+
+    # Create a new DataFrame for the 60 features
+    new_data = []
+    for i in range(len(close)-60):
+        row = []
+        for displace in range(1,61):
+            # Calculate i + feature_num and handle out-of-bounds by wrapping around using modulo
+            j = (i + displace)
+            row.append(close[i] - close[j])
+        new_data.append(row)
+
+    # Convert to a new DataFrame
+    feature_set = pd.DataFrame(new_data, columns=[f'Feature_{i+1}' for i in range(60)])
+
+    print(feature_set)
+    return feature_set
