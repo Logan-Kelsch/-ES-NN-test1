@@ -97,29 +97,19 @@ def generate_targets(X):
 #velocities in 100th percent change
 '''NOTE WORKING NOTE'''
 def fe_vel(X):
-    #comes in as H,L,O,C,etc
-    #will be using NOTE X[column 4]
-    # Number of new features to create
-
-    # Extract the 4th feature
     close = X.iloc[:, 3].values
-
-    # Create a new DataFrame for the 60 features
+    #in original file, should start on sample 122
     new_data = []
-    for i in range(len(close)-61):
+    for sample in range(120,len(X)-60):
         row = []
         for displace in range(1,61):
-            # Calculate i + feature_num and handle out-of-bounds by wrapping around using modulo
-            j = (i + displace)
-            #actual value in csv is 100th of percent move
-            vel = (close[i]/close[j]-1)*10000
-            row.append(round(vel,2))
+            row.append(close[sample] - close[sample-displace])
         new_data.append(row)
-    # Convert to a new DataFrame
-    feature_set = pd.DataFrame(new_data, columns=[f'vel{i+1}' for i in range(60)])
+    
+    feature_set = pd.DataFrame(new_data, columns=[f'vel{i}' for i in range(1,61)])
 
-    #print(feature_set)
     return feature_set
+
 
 #acceleration in 100th percent change per minute
 '''NOTE WORKING NOTE'''
@@ -133,15 +123,15 @@ def fe_acc(X):
 
     # Create a new DataFrame for the 60 features
     new_data = []
-    for i in range(len(close)-61):
+    for i in range(120,len(close)-60):
         row = []
         for displace in range(1,61):
             # Calculate i + feature_num and handle out-of-bounds by wrapping around using modulo
-            j = (i + displace)
+            j = (i - displace)
             #actual value in csv is 100th of percent move
-            vel1 = (close[i]/close[j]-1)*10000
-            vel2 = (close[i+1]/close[j+1]-1)*10000
-            row.append(round(vel1-vel2,2))
+            vel1 = close[i-1]-close[j-1]
+            vel2 = close[i]-close[j]
+            row.append(vel2-vel1)
         new_data.append(row)
     # Convert to a new DataFrame
     feature_set = pd.DataFrame(new_data, columns=[f'acc{i+1}' for i in range(60)])
@@ -159,12 +149,12 @@ def fe_stoch_k(X):
     high = X.iloc[:, 0].values
     close = X.iloc[:, 3].values
     i = 0
-    for sample in range(len(close)-121):
+    for sample in range(120,len(close)-60):
         row = []
         for i in range(5,125,5):
-            lowest_k = np.min(low[sample:sample+i])
+            lowest_k = np.min(low[sample-i:sample])
             c1 = close[sample] - lowest_k
-            c2 = np.max(high[sample:sample+i]) - lowest_k
+            c2 = np.max(high[sample-i:sample]) - lowest_k
             k = 0
             if(c2!=0):
                 k = c1/c2*100
@@ -193,20 +183,22 @@ def fe_stoch_d(f_stochK):
 #simple price difference for 1-60 minutes 
 #to start off target engineering
 def te_vel(X):
+    #comes in as H,L,O,C,etc
+    #will be using NOTE X[column 4]
+    # Number of new features to create
+
+    # Extract the 4th feature
     close = X.iloc[:, 3].values
 
+    # Create a new DataFrame for the 60 features
     new_data = []
-    for sample in range(len(X)):
+    for i in range(120,len(close)-60):
         row = []
         for displace in range(1,61):
-            #segmentation fault avoidance
-            if((sample-displace)<0):
-                row.append(0)
-            else:
-                
-                row.append(close[sample-displace] - close[sample])
+            row.append(close[i + displace] - close[i])
         new_data.append(row)
-    
-    feature_set = pd.DataFrame(new_data, columns=[f't_{i}' for i in range(1,61)])
+    # Convert to a new DataFrame
+    feature_set = pd.DataFrame(new_data, columns=[f't_{i+1}' for i in range(60)])
 
+    #print(feature_set)
     return feature_set
