@@ -89,10 +89,10 @@ def generate_targets(X):
     y = None
     return y
 
-'''
+'''-------------------------------------------------------------------------------
     NOTE FEATURE SPECIFIC FUNCTIONS
     NOTE fe_ denotes 'feature engineering'
-'''
+'''#------------------------------------------------------------------------------
 
 #velocities in 100th percent change
 '''NOTE WORKING NOTE'''
@@ -159,9 +159,9 @@ def fe_stoch_k(X):
     high = X.iloc[:, 0].values
     close = X.iloc[:, 3].values
     i = 0
-    for sample in range(len(close)-61):
+    for sample in range(len(close)-121):
         row = []
-        for i in range(5,65,5):
+        for i in range(5,125,5):
             lowest_k = np.min(low[sample:sample+i])
             c1 = close[sample] - lowest_k
             c2 = np.max(high[sample:sample+i]) - lowest_k
@@ -169,20 +169,44 @@ def fe_stoch_k(X):
             if(c2!=0):
                 k = c1/c2*100
             row.append(round(k,2))
-        for i in range()
         new_data.append(row)
     
-    features_set = pd.DataFrame(new_data, columns=[f'stchK{i}' for i in range(5, 65, 5)])
+    features_set = pd.DataFrame(new_data, columns=[f'stchK{i}' for i in range(5, 125, 5)])
     
     return features_set
             
 #this function is directly interacting with collected stochK data
+#this will be a lot of features if working with k values
+#up to two hours old, 
+#NOTE will come back to this later if wanted
 def fe_stoch_d(f_stochK):
 
     new_data = []
 
-    for sample in range(len(f_stochK)-1):
-
-        for feature in sample:
-            pass
     return new_data
+
+'''-------------------------------------------------------------------------------
+    NOTE TARGET SPECIFIC FUNCTIONS
+    NOTE te_ denotes 'target engineering'
+'''#------------------------------------------------------------------------------
+
+#simple price difference for 1-60 minutes 
+#to start off target engineering
+def te_vel(X):
+    close = X.iloc[:, 3].values
+
+    new_data = []
+    for sample in range(len(X)):
+        row = []
+        for displace in range(1,61):
+            #segmentation fault avoidance
+            if((sample-displace)<0):
+                row.append(0)
+            else:
+                
+                row.append(close[sample-displace] - close[sample])
+        new_data.append(row)
+    
+    feature_set = pd.DataFrame(new_data, columns=[f't_{i}' for i in range(1,61)])
+
+    return feature_set
