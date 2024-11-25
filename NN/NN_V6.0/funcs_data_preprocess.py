@@ -88,11 +88,11 @@ def normalize_from_tt_split(X_sctran, X_scfit, test_size):
 #various test_sizes are used around different models
 def reform_with_PCA_isolated(X_pcatran, X_pcafit, test_size, num_isol_feats, comps_PCA):
     fit_cutter_fit = int(len(X_pcafit)*(1-test_size))
-    X_main_features_fit = X_pcafit[:, :-num_isol_feats]
+    X_main_features_fit = X_pcafit#[:, :-num_isol_feats]
     X_fit = X_main_features_fit[:fit_cutter_fit]#update fit values for PCA
 
-    X_main_features = X_pcatran[:, :-num_isol_feats]
-    X_time_features = X_pcatran[:, -num_isol_feats:]
+    X_main_features = X_pcatran#[:, :-num_isol_feats]
+    #X_time_features = X_pcatran[:, -num_isol_feats:]
     
     pca = PCA()
 
@@ -100,7 +100,8 @@ def reform_with_PCA_isolated(X_pcatran, X_pcafit, test_size, num_isol_feats, com
     pca.fit(X_fit)
     X_main_features = pca.transform(X_main_features)
 
-    return np.hstack((X_main_features, X_time_features))
+    #return np.hstack((X_main_features, X_time_features))
+    return X_main_features
 
 
 
