@@ -73,37 +73,102 @@
 import pandas as pd
 import numpy as np
 
-# main function to create all features, takes in dataset
-def augmod_dataset(X, with_targets=True):
-    #X is assumed to come in as H, L, O, C, vol, ToD, DoW (((possibly with other index close values)))
-    #This function will contain all functions to take or generate all sets of features
-    y = None
+######### '''NOTE NOTE''''''NOTE NOTE''' #########
+###* * MOST IMPORTANT FUNCTION IN THIS FILE * *###
+######______________________________________######
 
+#this function will take in a dataset and generate 
+#all requested features sets as well as target sets
+#the output will be a pandas dataframe, fully concatenated
+def augmod_dataset(data):
 
+    #FEATURE ENGINEERING
+    f_vel = fe_vel(data)
+    f_acc = fe_acc(data)
+    f_stchK = fe_stoch_k(data)
+    f_ToD = fe_ToD(data)
+    f_DoW = fe_DoW(data)
 
-    return X, y
+    #TARGET ENGINEERING
+    targets = te_vel(data)
 
+    #list of dataframes
+    df_list = [data, f_ToD, f_DoW, f_vel, f_acc, f_stchK, targets]
 
-def generate_targets(X):
-    #X is assumed to come in as H, L, O, C, vol, ToD, DoW
-    y = None
-    return y
+    #cut off error head and error tail of dataframes
+    df_trunk_1 = [df.iloc[:-60] for df in df_list]
+    df_trunk_2 = [df.iloc[120:] for df in df_trunk_1]
+
+    #concat all dataframes into one parallel set
+    full_augmod = pd.concat(df_trunk_2, axis=1)
+
+    return full_augmod
 
 '''-------------------------------------------------------------------------------
     NOTE FEATURE SPECIFIC FUNCTIONS
     NOTE fe_ denotes 'feature engineering'
 '''#------------------------------------------------------------------------------
 
-#velocities in 100th percent change
-'''NOTE WORKING NOTE'''
-def fe_vel(X):
-    close = X.iloc[:, 3].values
-    #in original file, should start on sample 122
+#return Time of Day in minutes
+#this function requires no cutting
+def fe_ToD(X):
+    #orig feature #5
+    # # # deals with time since 1/1/1970@12:00am in seconds
+    full_time = X.iloc[:, 4].values
     new_data = []
-    for sample in range(120,len(X)-60):
+
+    l = len(X)
+    for sample in range(l):
+        '''
+            take full time
+            minus time zone adjustment
+            modulate total seconds around days
+            convert into minutes
+        '''
+        tod = (((full_time[sample] - 18000) % 86400) / 60)
+        new_data.append(tod)
+    
+    feature = pd.DataFrame(new_data, columns=['ToD'])
+
+    return feature
+
+#returns Day of Week (0-7 Sun-Sat, 1-5 Mon-Fri)
+#this function requires no cutting
+def fe_DoW(X):
+    #orig feature #5
+    # # # deals with time since 1/1/1970@12:00am in seconds
+    full_time = X.iloc[:, 4].values
+    new_data = []
+
+    l = len(X)
+    for sample in range(l):
+        '''
+            take full time
+            minus time zone and week adjustments
+            convert into days
+            modulate total days around weeks
+            floor division for integer output
+        '''
+        dow = ((((full_time[sample] - 277200) / 86400) % 7) // 1)
+        new_data.append(dow)
+
+    feature = pd.DataFrame(new_data, columns=['DoW'])
+
+    return feature
+
+#velocities
+#this function requires cutting first 60 samples (df.iloc[60:])
+def fe_vel(X):
+    #orig feature #3
+    # # # deals with all close of minute values
+    close = X.iloc[:, 2].values
+    new_data = []
+
+    l = len(X)
+    for sample in range(l):
         row = []
         for displace in range(1,61):
-            row.append(close[sample] - close[sample-displace])
+            row.append(close[sample %l] - close[(sample-displace) %l])
         new_data.append(row)
     
     feature_set = pd.DataFrame(new_data, columns=[f'vel{i}' for i in range(1,61)])
@@ -111,26 +176,23 @@ def fe_vel(X):
     return feature_set
 
 
-#acceleration in 100th percent change per minute
-'''NOTE WORKING NOTE'''
+#accelerations
+#this function requires cutting first 61 samples (df.iloc[61:])
 def fe_acc(X):
-    #comes in as H,L,O,C,etc
-    #will be using NOTE X[column 4]
-    # Number of new features to create
-
-    # Extract the 4th feature
-    close = X.iloc[:, 3].values
-
-    # Create a new DataFrame for the 60 features
+    #orig feature #3
+    # # # deals with all close of minute values
+    close = X.iloc[:, 2].values
     new_data = []
-    for i in range(120,len(close)-60):
+
+    l = len(X)
+    for i in range(l):
         row = []
         for displace in range(1,61):
             # Calculate i + feature_num and handle out-of-bounds by wrapping around using modulo
             j = (i - displace)
             #actual value in csv is 100th of percent move
-            vel1 = close[i-1]-close[j-1]
-            vel2 = close[i]-close[j]
+            vel1 = close[(i-1)  %l] - close[(j-1)   %l]
+            vel2 = close[i      %l] - close[j       %l]
             row.append(vel2-vel1)
         new_data.append(row)
     # Convert to a new DataFrame
@@ -140,25 +202,32 @@ def fe_acc(X):
     return feature_set
 
 #Stochastic K ONLY
-'''NOTE WORKING NOTE'''
+#this function requires cutting first 120 samples (df.iloc[120:])
+#used zero-out method for Null values instead of looping.
 def fe_stoch_k(X):
 
     new_data = []
     #get high, low, close values
     low = X.iloc[:, 1].values
     high = X.iloc[:, 0].values
-    close = X.iloc[:, 3].values
+    close = X.iloc[:, 2].values
     i = 0
-    for sample in range(120,len(close)-60):
+
+    l = len(X)
+    for sample in range(l):
         row = []
         for i in range(5,125,5):
-            lowest_k = np.min(low[sample-i:sample])
-            c1 = close[sample] - lowest_k
-            c2 = np.max(high[sample-i:sample]) - lowest_k
-            k = 0
-            if(c2!=0):
-                k = c1/c2*100
-            row.append(round(k,2))
+            #zero-out to avoid segmentation bound error
+            if(sample-i<0):
+                row.append(0)
+            else:
+                lowest_k = np.min(low[sample-i:sample])
+                c1 = close[sample] - lowest_k
+                c2 = np.max(high[sample-i:sample]) - lowest_k
+                k = 0
+                if(c2!=0):
+                    k = c1/c2*100
+                row.append(round(k,2))
         new_data.append(row)
     
     features_set = pd.DataFrame(new_data, columns=[f'stchK{i}' for i in range(5, 125, 5)])
@@ -181,21 +250,18 @@ def fe_stoch_d(f_stochK):
 '''#------------------------------------------------------------------------------
 
 #simple price difference for 1-60 minutes 
-#to start off target engineering
+#this function requires cutting first 60 samples (df.iloc[60:])
 def te_vel(X):
-    #comes in as H,L,O,C,etc
-    #will be using NOTE X[column 4]
-    # Number of new features to create
-
-    # Extract the 4th feature
-    close = X.iloc[:, 3].values
-
-    # Create a new DataFrame for the 60 features
+    #orig feature #3
+    # # # deals with all close of minute values
+    close = X.iloc[:, 2].values
     new_data = []
-    for i in range(120,len(close)-60):
+
+    l = len(X)
+    for i in range(l):
         row = []
         for displace in range(1,61):
-            row.append(close[i + displace] - close[i])
+            row.append(close[(i + displace) %l] - close[i %l])
         new_data.append(row)
     # Convert to a new DataFrame
     feature_set = pd.DataFrame(new_data, columns=[f't_{i+1}' for i in range(60)])
