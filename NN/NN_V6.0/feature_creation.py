@@ -30,13 +30,14 @@
         
     # NOTE indicates complete
 
+    -   Derivative of (looping index only) feature set A set
     -   #Price difference (velocity)             [1 - 60]                {60} 60
     -   #Rate of price difference (acceleration) [1 - 60]                {60} 120
     -   Stochastic K, D, K-D (K is fast)        k=[5-60]%5   d=[k-60]%5 {78}    468
     -   -   D is just moving average, come back to this, K-D can be same function
     -   #-   K
     -   RSI                                     [1 - 60]                {60} 180
-    -   close - Moving average                  [1-60]%5 , [60-200]%20  {68}    536
+    -   #close - Moving average                  [1-60]%5 , [60-240]%20  {68}    536
     -   Mov-avg-diff                    [5, 10, 15, 30, 60, 120]        {30} 210
     -   close - lowest low                [5, 15, 30, 60, 120]          {5}
     -   close - highest high              [5, 15, 30, 60, 120]          {5}  220
@@ -46,9 +47,9 @@
     -   #uwick - lwick                                                   {1}     539
     -   high - (close, open, low)(, high holds) [1-5]                   {15} 255
     -   (high, close, open) - low(, low holds)  [1-5]                   {15} 270
-    -   total volume                            [1-60]                  {60} 330
+    -   #total volume                            [1-60]                  {60} 330
     -   total vol chunk difference              [1-60]%5                {11}    550
-    -   volume - average volume                 [1-60]                  {60} 390
+    -   #volume - average volume                 [1-60]                  {60} 390
     -   consider h - l 1min vel with moving averages
                                                 550 features predicted
 
@@ -82,7 +83,7 @@ import numpy as np
 #all requested features sets as well as target sets
 #the output will be a pandas dataframe, fully concatenated
 def augmod_dataset(data):
-
+    '''
     #FEATURE ENGINEERING
     f_vel = fe_vel(data)#set
     f_acc = fe_acc(data)#set
@@ -92,16 +93,19 @@ def augmod_dataset(data):
     f_barH = fe_height_bar(data)#single
     f_wickH = fe_height_wick(data)#single
     f_wickD = fe_diff_hl_wick(data)#single
+    f_volData = fe_vol_sz_diff(data)#set
+    '''
+    f_maData = fe_ma_disp(data)#set
 
     #TARGET ENGINEERING
     targets = te_vel(data)
 
     #list of dataframes
-    df_list = [data, f_ToD, f_DoW, f_vel, f_acc, f_stchK, targets]
+    df_list = [f_maData]#[data, f_ToD, f_DoW, f_vel, f_acc, f_stchK, targets]
 
     #cut off error head and error tail of dataframes
     df_trunk_1 = [df.iloc[:-60] for df in df_list]
-    df_trunk_2 = [df.iloc[120:] for df in df_trunk_1]
+    df_trunk_2 = [df.iloc[240:] for df in df_trunk_1]
 
     #concat all dataframes into one parallel set
     full_augmod = pd.concat(df_trunk_2, axis=1)
@@ -124,18 +128,70 @@ def fe_vol_sz_diff(X):
     l = len(X)
     for sample in range(l):
         row = []
+        #creating 59 areas of total volume from 2 -> 60 minutes
         for i in range(1,60):
             t_vol = volume[sample]
             for j in range(1,i+1):
                 t_vol+=volume[(sample - j) %l]
             row.append(t_vol)
+        
+        #creating 59 diffs for vol - avgvol from 2 -> 60 minutes
+        for i in range(1,60):
+            avg_vol = round(row[i-1]/(i+1),2)
+            row.append(volume[sample] - avg_vol)
+
+        #this is all data for each given sample
         new_data.append(row)
 
+    #custom feature name
+    cols = [f'vol_m{i}' for i in range(2,61)]+[f'vol_avgDiff{i}' for i in range(2,61)]
+
     #CONTINUE HERE THERE ARE ONLY 59 FEATURES
+    feature_set = pd.DataFrame(new_data, columns=cols)
 
-    feature = None
+    return feature_set
 
-    return feature
+#returns moving averages and close-ma difference
+#this function requires cutting of first 240 samples
+def fe_ma_disp(X):
+    #orig feature #3
+    # # # deals with all close of minute values
+    close = X.iloc[:, 2].values
+    new_data = []
+
+    l = len(X)
+    for sample in range(l):
+        row = []
+        '''first create price MAs'''
+        # 2-59 total mins, 58 cases
+        for i in range(1,59):
+            avg_price = close[sample]
+            for j in range(1,i+1):
+                avg_price+= close[(sample - j) %l]
+            #convert price*time to an average
+            row.append(round(avg_price / (i+1),2))
+        # 60-240 %20 total mins, 10 cases 
+        for i in range(59,240,20):
+            avg_price = close[sample]
+            for j in range(1,i+1):
+                avg_price+= close[(sample - j) %l]
+            #convert price*time to an average
+            row.append(round(avg_price / (i+1),2))
+        '''second create MA-close diffs'''
+        for ma in range(68):
+            ma_disp = round(close[sample] - row[ma],2)
+            row.append(ma_disp)
+        
+        new_data.append(row)
+
+    cols = [f'ma{i}' for i in range(2,60)]+\
+           [f'ma{i}' for i in range(60,241,20)]+\
+           [f'disp_ma{i}' for i in range(2,60)]+\
+           [f'disp_ma{i}' for i in range(60,241,20)]
+    
+    feature_set = pd.DataFrame(new_data, columns=cols)
+
+    return feature_set
 
 
 #return Time of Day in minutes
