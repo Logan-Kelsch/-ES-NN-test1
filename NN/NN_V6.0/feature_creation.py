@@ -33,16 +33,17 @@
     -   #Price difference (velocity)             [1 - 60]                {60} 60
     -   #Rate of price difference (acceleration) [1 - 60]                {60} 120
     -   Stochastic K, D, K-D (K is fast)        k=[5-60]%5   d=[k-60]%5 {78}    468
-    -   -   D is just moving average, come back to this
+    -   -   D is just moving average, come back to this, K-D can be same function
+    -   #-   K
     -   RSI                                     [1 - 60]                {60} 180
     -   close - Moving average                  [1-60]%5 , [60-200]%20  {68}    536
     -   Mov-avg-diff                    [5, 10, 15, 30, 60, 120]        {30} 210
     -   close - lowest low                [5, 15, 30, 60, 120]          {5}
     -   close - highest high              [5, 15, 30, 60, 120]          {5}  220
     -   hihi - lolo                      [custom 2 pairs above]         {20} 240 
-    -   bar height                                                      {1}
-    -   wick height                                                     {1}
-    -   uwick - lwick                                                   {1}     539
+    -   #bar height                                                      {1}
+    -   #wick height                                                     {1}
+    -   #uwick - lwick                                                   {1}     539
     -   high - (close, open, low)(, high holds) [1-5]                   {15} 255
     -   (high, close, open) - low(, low holds)  [1-5]                   {15} 270
     -   total volume                            [1-60]                  {60} 330
@@ -83,11 +84,14 @@ import numpy as np
 def augmod_dataset(data):
 
     #FEATURE ENGINEERING
-    f_vel = fe_vel(data)
-    f_acc = fe_acc(data)
-    f_stchK = fe_stoch_k(data)
-    f_ToD = fe_ToD(data)
-    f_DoW = fe_DoW(data)
+    f_vel = fe_vel(data)#set
+    f_acc = fe_acc(data)#set
+    f_stchK = fe_stoch_k(data)#set
+    f_ToD = fe_ToD(data)#single
+    f_DoW = fe_DoW(data)#single
+    f_barH = fe_height_bar(data)#single
+    f_wickH = fe_height_wick(data)#single
+    f_wickD = fe_diff_hl_wick(data)#single
 
     #TARGET ENGINEERING
     targets = te_vel(data)
@@ -108,6 +112,31 @@ def augmod_dataset(data):
     NOTE FEATURE SPECIFIC FUNCTIONS
     NOTE fe_ denotes 'feature engineering'
 '''#------------------------------------------------------------------------------
+
+#returns vol*time area and avg vol difference
+#thsi function requires cutting first 60 samples 
+def fe_vol_sz_diff(X):
+    #orig feature #4
+    # # # deals with volume of each minute
+    volume = X.iloc[:, 3].values
+    new_data = []
+
+    l = len(X)
+    for sample in range(l):
+        row = []
+        for i in range(1,60):
+            t_vol = volume[sample]
+            for j in range(1,i+1):
+                t_vol+=volume[(sample - j) %l]
+            row.append(t_vol)
+        new_data.append(row)
+
+    #CONTINUE HERE THERE ARE ONLY 59 FEATURES
+
+    feature = None
+
+    return feature
+
 
 #return Time of Day in minutes
 #this function requires no cutting
@@ -153,6 +182,66 @@ def fe_DoW(X):
         new_data.append(dow)
 
     feature = pd.DataFrame(new_data, columns=['DoW'])
+
+    return feature
+
+#difference of upper/lower wick size
+#this function requires cutting first 1 sample
+def fe_diff_hl_wick(X):
+    new_data = []
+    #get high, low, close values
+    low = X.iloc[:, 1].values
+    high = X.iloc[:, 0].values
+    close = X.iloc[:, 2].values
+
+    l = len(X)
+    for sample in range(l):
+        #height of upper wick
+        u_wick = high[sample] - close[sample]
+        #height of lower wick
+        l_wick = close[(sample - 1) %l] - low[sample]
+
+        new_data.append(u_wick - l_wick)
+
+    feature = pd.DataFrame(new_data, columns=['diff_wick'])
+
+    return feature
+
+
+#high of candle (bar)
+#this function requires cutting first 1 sample
+def fe_height_bar(X):
+    #orig feature #3
+    # # # deals with all close of minute values
+    close = X.iloc[:, 2].values
+    new_data = []
+
+    l = len(X)
+    for sample in range(l):
+        #abs difference from close and open
+        h = abs(close[sample] - close[(sample - 1) %l])
+        new_data.append(h)
+
+    feature = pd.DataFrame(new_data, columns=['barH'])
+
+    return feature
+
+#height of wicks and bar
+#this function requires cutting first 1 sample
+def fe_height_wick(X):
+    #orig feature #1, #2
+    # # # deals with open and close
+    high = X.iloc[:, 0].values
+    low = X.iloc[:, 0].values
+    new_data = []
+
+    l = len(X)
+    for sample in range(l):
+        #high minus low of each candle/wick
+        h = high[sample] - low[sample]
+        new_data.append(h)
+
+    feature = pd.DataFrame(new_data, columns=['wickH'])
 
     return feature
 
