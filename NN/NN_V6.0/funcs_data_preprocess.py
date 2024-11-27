@@ -25,7 +25,7 @@ def reformat_to_lstm(X, y, time_steps):
     X_lstm = np.array(X_lstm)
 
     y_lstm = y[time_steps:]
-    y_lstm = np.array(y)
+    y_lstm = np.array(y_lstm)
     
     return X_lstm, y_lstm
 
@@ -59,10 +59,6 @@ def grab_wanted_times(X, start_time, end_time):
     #intersection of both
     indices = np.intersect1d(head_indices, tail_indices, return_indices=True)
     '''
-    time_test = X[indices, 5]
-
-    print(np.min(time_test))
-    print(np.max(time_test))
 
     return indices
 
