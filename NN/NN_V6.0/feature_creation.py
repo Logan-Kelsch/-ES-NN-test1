@@ -38,9 +38,9 @@
     -   #-   K
     -   RSI                                     [1 - 60]                {60} 180
     -   #close - Moving average                  [1-60]%5 , [60-240]%20  {68}    536
-    -   Mov-avg-diff                    [5, 10, 15, 30, 60, 120]        {30} 210
-    -   close - lowest low                [5, 15, 30, 60, 120]          {5}
-    -   close - highest high              [5, 15, 30, 60, 120]          {5}  220
+    -   #Mov-avg-diff                    [5, 10, 15, 30, 60, 120]        {30} 210
+    -   #close - lowest low                [5, 15, 30, 60, 120]          {5}
+    -   #close - highest high              [5, 15, 30, 60, 120]          {5}  220
     -   hihi - lolo                      [custom 2 pairs above]         {20} 240 
     -   #bar height                                                      {1}
     -   #wick height                                                     {1}
@@ -83,7 +83,7 @@ import numpy as np
 #all requested features sets as well as target sets
 #the output will be a pandas dataframe, fully concatenated
 def augmod_dataset(data):
-    '''
+    
     #FEATURE ENGINEERING
     f_vel = fe_vel(data)#set
     f_acc = fe_acc(data)#set
@@ -94,14 +94,20 @@ def augmod_dataset(data):
     f_wickH = fe_height_wick(data)#single
     f_wickD = fe_diff_hl_wick(data)#single
     f_volData = fe_vol_sz_diff(data)#set
-    '''
     f_maData = fe_ma_disp(data)#set
+    f_maDiff = fe_ma_diff(f_maData)#set
+    f_lolo = fe_lolo_diff(data)#set
+    f_hihi = fe_hihi_diff(data)#set
+    f_hilo = fe_hilo_diff(f_hihi,f_lolo)#set
 
     #TARGET ENGINEERING
     targets = te_vel(data)
 
     #list of dataframes
-    df_list = [f_maData]#[data, f_ToD, f_DoW, f_vel, f_acc, f_stchK, targets]
+    df_list = [data, f_ToD, f_DoW, f_vel, f_acc, \
+               f_stchK, f_barH, f_wickH, f_wickD,\
+                f_volData, f_maDiff, f_hihi, f_lolo,\
+                    f_hilo, targets]
 
     #cut off error head and error tail of dataframes
     df_trunk_1 = [df.iloc[:-60] for df in df_list]
@@ -116,6 +122,78 @@ def augmod_dataset(data):
     NOTE FEATURE SPECIFIC FUNCTIONS
     NOTE fe_ denotes 'feature engineering'
 '''#------------------------------------------------------------------------------
+
+#returns lowest close of different ranges
+#and the close difference to each
+#this function requires cutting first 240 samples
+def fe_lolo_diff(X):
+    #orig feature #3
+    # # # deals with all close of minute values
+    close = X.iloc[:, 2].values
+    new_data = []
+    #time ranges
+    times = [5,15,30,60,120,240]
+
+    l = len(X)
+    for sample in range(l):
+        row = []
+
+        #getting lowest lows
+        for dist in times:
+            if(sample-dist < 0):
+                row.append(0)
+            else:
+                lolo = np.min(close[sample-dist:sample])
+                row.append(lolo)
+
+        #getting lolo close displacements
+        for i in range(len(times)):
+            disp = close[sample] - row[i]
+            row.append(disp)
+
+        new_data.append(row)
+
+    cols = [f'lolo{i}' for i in times]+[f'disp_lolo{i}' for i in times]
+
+    feature_set = pd.DataFrame(new_data, columns=cols)
+
+    return feature_set
+
+#returns highest close of different ranges
+#and the close difference to each
+#this function requires cutting first 240 samples
+def fe_hihi_diff(X):
+    #orig feature #3
+    # # # deals with all close of minute values
+    close = X.iloc[:, 2].values
+    new_data = []
+    #time ranges
+    times = [5,15,30,60,120,240]
+
+    l = len(X)
+    for sample in range(l):
+        row = []
+
+        #getting lowest lows
+        for dist in times:
+            if(sample-dist < 0):
+                row.append(0)
+            else:
+                hihi = np.max(close[sample-dist:sample])
+                row.append(hihi)
+
+        #getting lolo close displacements
+        for i in range(len(times)):
+            disp = close[sample] - row[i]
+            row.append(disp)
+
+        new_data.append(row)
+
+    cols = [f'hihi{i}' for i in times]+[f'disp_hihi{i}' for i in times]
+
+    feature_set = pd.DataFrame(new_data, columns=cols)
+
+    return feature_set
 
 #returns vol*time area and avg vol difference
 #thsi function requires cutting first 60 samples 
@@ -388,6 +466,82 @@ def fe_stoch_d(f_stochK):
     new_data = []
 
     return new_data
+
+#function return the set of ma differences from a set
+#this function requires cutting first 120 samples
+def fe_ma_diff(maData):
+
+    #all used moving averages
+    ma5 = maData.iloc[:, 3].values
+    ma15 = maData.iloc[:, 13].values
+    ma30 = maData.iloc[:, 28].values
+    ma60 = maData.iloc[:, 58].values
+    ma120 = maData.iloc[:, 61].values
+    ma240 = maData.iloc[:, 67].values
+
+    #array of arrays for ease of access
+    mas = [ma5, ma15, ma30, ma60, ma120, ma240]
+
+    new_data = []
+
+    l = len(maData)
+    for sample in range(l):
+        row = []
+        #nested to access two ma values at once for comparison
+        for i in range(len(mas)):
+            for j in range(i+1,len(mas)):
+                ma_1 = mas[i][sample]
+                ma_2 = mas[j][sample]
+                row.append(round(ma_1 - ma_2, 2))
+        new_data.append(row)
+    
+    cols = []
+    lengths = [5,15,30,60,120,240]
+
+    #prepping the feature names according to ma's used
+    for i in range(len(lengths)):
+        for j in range(i+1,len(lengths)):
+            cols.append(f'diff_ma_{lengths[i]}_{lengths[j]}')
+
+    feature_set = pd.DataFrame(new_data, columns=cols)
+
+    return feature_set
+
+#function return the differences between hihi and lolo of time sets
+#this function requires cutting first 240 samples
+def fe_hilo_diff(hihi_data, lolo_data):
+
+    lengths = [5,15,30,60,120,240]
+    
+    hihi = hihi_data.values
+    lolo = lolo_data.values
+
+    new_data = []
+
+    l = len(hihi)
+    for sample in range(l):
+        row = []
+        #nested to access two ma values at once for comparison
+        for i in range(len(lengths)):
+            for j in range(i+1,len(lengths)):
+                hi = hihi[i][sample]
+                lo = lolo[j][sample]
+                row.append(round(hi - lo, 2))
+        new_data.append(row)
+    
+    cols = []
+
+    #prepping the feature names according to ma's used
+    for i in range(len(lengths)):
+        for j in range(i+1,len(lengths)):
+            cols.append(f'diff_hilo_{lengths[i]}_{lengths[j]}')
+
+    feature_set = pd.DataFrame(new_data, columns=cols)
+
+    return feature_set
+
+
+
 
 '''-------------------------------------------------------------------------------
     NOTE TARGET SPECIFIC FUNCTIONS
