@@ -98,7 +98,7 @@ def augmod_dataset(data):
     f_maDiff = fe_ma_diff(f_maData)#set
     f_lolo = fe_lolo_diff(data)#set
     f_hihi = fe_hihi_diff(data)#set
-    f_hilo = fe_hilo_diff(f_hihi,f_lolo)#set
+    #f_hilo = fe_hilo_diff(f_hihi,f_lolo)#set
 
     #TARGET ENGINEERING
     targets = te_vel(data)
@@ -107,7 +107,7 @@ def augmod_dataset(data):
     df_list = [data, f_ToD, f_DoW, f_vel, f_acc, \
                f_stchK, f_barH, f_wickH, f_wickD,\
                 f_volData, f_maDiff, f_hihi, f_lolo,\
-                    f_hilo, targets]
+                    targets]#not working - f_hilo
 
     #cut off error head and error tail of dataframes
     df_trunk_1 = [df.iloc[:-60] for df in df_list]
