@@ -41,7 +41,8 @@
     -   #Mov-avg-diff                    [5, 10, 15, 30, 60, 120]        {30} 210
     -   #close - lowest low                [5, 15, 30, 60, 120]          {5}
     -   #close - highest high              [5, 15, 30, 60, 120]          {5}  220
-    -   hihi - lolo                      [custom 2 pairs above]         {20} 240 
+    -   #hihi - lolo                      [custom 2 pairs above]         {20} 240 
+    -   hilo stoch
     -   #bar height                                                      {1}
     -   #wick height                                                     {1}
     -   #uwick - lwick                                                   {1}     539
@@ -75,9 +76,7 @@
 import pandas as pd
 import numpy as np
 
-times1 = list(range(5,120))
-times2 = list(range(120,241,5))
-times = times1+times2
+times = [5,15,30,60,120,240]
 
 ######### '''NOTE NOTE''''''NOTE NOTE''' #########
 ###* * MOST IMPORTANT FUNCTION IN THIS FILE * *###
@@ -102,7 +101,7 @@ def augmod_dataset(data):
     f_maDiff = fe_ma_diff(f_maData)#set
     f_lolo = fe_lolo_diff(data)#set
     f_hihi = fe_hihi_diff(data)#set
-    #f_hilo = fe_hilo_diff(f_hihi,f_lolo)#set
+    f_hilo = fe_hilo_diff(f_hihi,f_lolo)#set
 
     #TARGET ENGINEERING
     targets = te_vel(data)
@@ -111,7 +110,7 @@ def augmod_dataset(data):
     df_list = [data, f_ToD, f_DoW, f_vel, f_acc, \
                f_stchK, f_barH, f_wickH, f_wickD,\
                 f_volData, f_maDiff, f_hihi, f_lolo,\
-                     targets]#not working - f_hilo
+                    f_hilo, targets]#not working - f_hilo
 
     #cut off error head and error tail of dataframes
     df_trunk_1 = [df.iloc[:-60] for df in df_list]
@@ -135,8 +134,6 @@ def fe_lolo_diff(X):
     # # # deals with all close of minute values
     close = X.iloc[:, 2].values
     new_data = []
-    #time ranges
-    #times = range(5,120)+range(120,241,5)#[5,15,30,60,120,240]
 
     l = len(X)
     for sample in range(l):
@@ -171,8 +168,6 @@ def fe_hihi_diff(X):
     # # # deals with all close of minute values
     close = X.iloc[:, 2].values
     new_data = []
-    #time ranges
-    #times = range(5,120)+range(120,241,5)#[5,15,30,60,120,240]
 
     l = len(X)
     for sample in range(l):
@@ -546,7 +541,30 @@ def fe_hilo_diff(hihi_data, lolo_data):
 
 #function returns location percent (like stochastic) between hihi lolo for each
 #this function requires cutting first -- samples
-#''''''def fe_hilo_perc()
+def fe_hilo_stoch(X, hihi_data, lolo_data):
+    #orig feature #3
+    # # # deals with all close of minute values
+    close = X.iloc[:, 2].values
+
+    #   j       -nested in-   i       
+    #low ranges -nested in- high ranges
+    hihi = hihi_data.values
+    lolo = lolo_data.values
+
+
+    new_data = []
+
+    l = len(X)
+    #for each sample
+    for sample in range(l):
+        for i in range(len(times)):
+            for j in range(len(times)):
+                pass
+
+
+    feature_set = None
+
+    return feature_set
 
 '''-------------------------------------------------------------------------------
     NOTE FEATURE NAME FUNCTIONS
