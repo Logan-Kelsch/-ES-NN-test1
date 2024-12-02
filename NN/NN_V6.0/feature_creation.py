@@ -75,6 +75,10 @@
 import pandas as pd
 import numpy as np
 
+times1 = list(range(5,120))
+times2 = list(range(120,241,5))
+times = times1+times2
+
 ######### '''NOTE NOTE''''''NOTE NOTE''' #########
 ###* * MOST IMPORTANT FUNCTION IN THIS FILE * *###
 ######______________________________________######
@@ -107,7 +111,7 @@ def augmod_dataset(data):
     df_list = [data, f_ToD, f_DoW, f_vel, f_acc, \
                f_stchK, f_barH, f_wickH, f_wickD,\
                 f_volData, f_maDiff, f_hihi, f_lolo,\
-                    targets]#not working - f_hilo
+                     targets]#not working - f_hilo
 
     #cut off error head and error tail of dataframes
     df_trunk_1 = [df.iloc[:-60] for df in df_list]
@@ -132,7 +136,7 @@ def fe_lolo_diff(X):
     close = X.iloc[:, 2].values
     new_data = []
     #time ranges
-    times = [5,15,30,60,120,240]
+    #times = range(5,120)+range(120,241,5)#[5,15,30,60,120,240]
 
     l = len(X)
     for sample in range(l):
@@ -168,7 +172,7 @@ def fe_hihi_diff(X):
     close = X.iloc[:, 2].values
     new_data = []
     #time ranges
-    times = [5,15,30,60,120,240]
+    #times = range(5,120)+range(120,241,5)#[5,15,30,60,120,240]
 
     l = len(X)
     for sample in range(l):
@@ -215,8 +219,8 @@ def fe_vol_sz_diff(X):
         
         #creating 59 diffs for vol - avgvol from 2 -> 60 minutes
         for i in range(1,60):
-            avg_vol = round(row[i-1]/(i+1),2)
-            row.append(volume[sample] - avg_vol)
+            avg_vol = row[i-1]/(i+1)
+            row.append(round(volume[sample] - avg_vol, 2))
 
         #this is all data for each given sample
         new_data.append(row)
@@ -523,9 +527,9 @@ def fe_hilo_diff(hihi_data, lolo_data):
         row = []
         #nested to access two ma values at once for comparison
         for i in range(len(lengths)):
-            for j in range(i+1,len(lengths)):
-                hi = hihi[i][sample]
-                lo = lolo[j][sample]
+            for j in range(len(lengths)):
+                hi = hihi[sample, i]
+                lo = lolo[sample, j]
                 row.append(round(hi - lo, 2))
         new_data.append(row)
     
@@ -533,15 +537,46 @@ def fe_hilo_diff(hihi_data, lolo_data):
 
     #prepping the feature names according to ma's used
     for i in range(len(lengths)):
-        for j in range(i+1,len(lengths)):
+        for j in range(len(lengths)):
             cols.append(f'diff_hilo_{lengths[i]}_{lengths[j]}')
 
     feature_set = pd.DataFrame(new_data, columns=cols)
 
     return feature_set
 
+#function returns location percent (like stochastic) between hihi lolo for each
+#this function requires cutting first -- samples
+#''''''def fe_hilo_perc()
 
+'''-------------------------------------------------------------------------------
+    NOTE FEATURE NAME FUNCTIONS
+    NOTE fn_ denotes 'feature(/set) names' for mass feature dropping
+'''#------------------------------------------------------------------------------
 
+#fe_vel
+#fe_acc
+#fe_stoch_k
+#fe_ToD
+#fe_DoW
+#fe_height_bar
+#fe_height_wick
+#fe_diff_hl_wick
+#fe_vol_sz_diff
+#fe_ma_disp
+#fe_ma_diff
+#fe_lolo_diff
+#fe_hihi_diff
+#fe_hilo_diff
+def fn_hilo_diff():
+    lengths = [5,15,30,60,120,240]
+    cols = []
+
+    #prepping the feature names according to ma's used
+    for i in range(len(lengths)):
+        for j in range(len(lengths)):
+            cols.append(f'diff_hilo_{lengths[i]}_{lengths[j]}')
+    
+    return cols
 
 '''-------------------------------------------------------------------------------
     NOTE TARGET SPECIFIC FUNCTIONS
