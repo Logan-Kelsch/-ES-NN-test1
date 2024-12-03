@@ -102,6 +102,7 @@ def augmod_dataset(data):
     f_lolo = fe_lolo_diff(data)#set
     f_hihi = fe_hihi_diff(data)#set
     f_hilo = fe_hilo_diff(f_hihi,f_lolo)#set
+    f_stochHiLo = fe_hilo_stoch(data, f_hihi, f_lolo)#set
 
     #TARGET ENGINEERING
     targets = te_vel(data)
@@ -110,7 +111,7 @@ def augmod_dataset(data):
     df_list = [data, f_ToD, f_DoW, f_vel, f_acc, \
                f_stchK, f_barH, f_wickH, f_wickD,\
                 f_volData, f_maDiff, f_hihi, f_lolo,\
-                    f_hilo, targets]#not working - f_hilo
+                    f_hilo, f_stochHiLo, targets]
 
     #cut off error head and error tail of dataframes
     df_trunk_1 = [df.iloc[:-60] for df in df_list]
@@ -551,24 +552,88 @@ def fe_hilo_stoch(X, hihi_data, lolo_data):
     hihi = hihi_data.values
     lolo = lolo_data.values
 
-
     new_data = []
 
     l = len(X)
     #for each sample
     for sample in range(l):
+        row = []
         for i in range(len(times)):
             for j in range(len(times)):
-                pass
+                lowest_k = np.min(lolo[sample, j])
+                c1 = close[sample] - lowest_k
+                c2 = np.max(hihi[sample, i]) - lowest_k
+                k = 0
+                if(c2!=0):
+                    k = c1/c2*100
+                row.append(round(k,2))
+        new_data.append(row)
+    cols = []
 
+    #prepping the feature names according to ma's used
+    for i in range(len(times)):
+        for j in range(len(times)):
+            cols.append(f'hilo_stoch_{times[i]}_{times[j]}')
 
-    feature_set = None
+    feature_set = pd.DataFrame(new_data, columns=cols)
 
     return feature_set
 
 '''-------------------------------------------------------------------------------
-    NOTE FEATURE NAME FUNCTIONS
+    NOTE TARGET SPECIFIC FUNCTIONS
+    NOTE te_ denotes 'target engineering'
+'''#------------------------------------------------------------------------------
+
+#simple price difference for 1-60 minutes 
+#this function requires cutting first 60 samples (df.iloc[60:])
+def te_vel(X):
+    #orig feature #3
+    # # # deals with all close of minute values
+    close = X.iloc[:, 2].values
+    new_data = []
+
+    l = len(X)
+    for i in range(l):
+        row = []
+        for displace in range(1,61):
+            row.append(close[(i + displace) %l] - close[i %l])
+        new_data.append(row)
+    # Convert to a new DataFrame
+    feature_set = pd.DataFrame(new_data, columns=[f't_{i+1}' for i in range(60)])
+
+    #print(feature_set)
+    return feature_set
+
+#simple classification set for 1-60 minutes
+#this function requires cutting first 60 samples
+def te_vel_class_d5(X):
+    #orig feature #3
+    # # # deals with all close of minute values
+    close = X.iloc[:, 2].values
+    new_data = []
+
+    l = len(X)
+    for i in range(l):
+        row = []
+        for displace in range(1,61):
+            movement = close[(i + displace) %l] - close[i %l]
+            c = np.sign(movement) + 1
+            mag = 0
+            if(abs(movement) >= 5):
+                mag=1
+            c+=mag
+            row.append(c)
+        new_data.append(row)
+    # Convert to a new DataFrame
+    feature_set = pd.DataFrame(new_data, columns=[f'tc_5_{i+1}' for i in range(60)])
+
+    #print(feature_set)
+    return feature_set
+
+'''-------------------------------------------------------------------------------
+    NOTE FEATURE/TARGET NAME FUNCTIONS
     NOTE fn_ denotes 'feature(/set) names' for mass feature dropping
+    NOTE tn_ denotes 'target (/set) names' for mass target  dropping
 '''#------------------------------------------------------------------------------
 
 #fe_vel
@@ -596,27 +661,11 @@ def fn_hilo_diff():
     
     return cols
 
-'''-------------------------------------------------------------------------------
-    NOTE TARGET SPECIFIC FUNCTIONS
-    NOTE te_ denotes 'target engineering'
-'''#------------------------------------------------------------------------------
+def fn_orig_price():
+    return ['high','low','close']
 
-#simple price difference for 1-60 minutes 
-#this function requires cutting first 60 samples (df.iloc[60:])
-def te_vel(X):
-    #orig feature #3
-    # # # deals with all close of minute values
-    close = X.iloc[:, 2].values
-    new_data = []
+def fn_orig_vol():
+    return ['volume']
 
-    l = len(X)
-    for i in range(l):
-        row = []
-        for displace in range(1,61):
-            row.append(close[(i + displace) %l] - close[i %l])
-        new_data.append(row)
-    # Convert to a new DataFrame
-    feature_set = pd.DataFrame(new_data, columns=[f't_{i+1}' for i in range(60)])
-
-    #print(feature_set)
-    return feature_set
+def fn_orig_time():
+    return ['time']

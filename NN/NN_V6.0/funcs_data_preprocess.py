@@ -48,10 +48,10 @@ def remove_extra_filter(X, y, timeSteps, timeStart, timeStop):
 
 #returns indices of sample times that are KEPT, to filter out all others
 #after LSTM data formation
-def grab_wanted_times(X, start_time, end_time):
+def grab_wanted_times(X, start_time, end_time, time_steps):
     #[:, 5] is time of day in minutes
 
-    indices = np.where((X[:, 5] >= start_time) & (X[:, 5] <= end_time))[0]
+    indices = np.where((X[:-time_steps, 5] >= start_time) & (X[:-time_steps, 5] <= end_time))[0]
     '''
     head_indices = (X[:, 5] >= start_time)
     tail_indices = (X[:, 5] <= end_time)
@@ -67,7 +67,7 @@ def grab_wanted_times(X, start_time, end_time):
 #this function may be considered redundant
 #take indices of samples to be kept and remove all others
 def filter_times(X, y, keep_indices):
-    keep_indices = keep_indices[:-10]
+    #keep_indices = keep_indices[:]
     return X[keep_indices,:,:], y[keep_indices]
 
 def normalize_from_tt_split(X_sctran, X_scfit, test_size):
