@@ -189,7 +189,8 @@ def fe_hihi_diff(X):
 
         new_data.append(row)
 
-    cols = [f'hihi{i}' for i in times]+[f'disp_hihi{i}' for i in times]
+    cols = [f'hihi{i}' for i in times]+\
+        [f'disp_hihi{i}' for i in times]
 
     feature_set = pd.DataFrame(new_data, columns=cols)
 
@@ -222,7 +223,8 @@ def fe_vol_sz_diff(X):
         new_data.append(row)
 
     #custom feature name
-    cols = [f'vol_m{i}' for i in range(2,61)]+[f'vol_avgDiff{i}' for i in range(2,61)]
+    cols = [f'vol_m{i}' for i in range(2,61)]+\
+        [f'vol_avgDiff{i}' for i in range(2,61)]
 
     #CONTINUE HERE THERE ARE ONLY 59 FEATURES
     feature_set = pd.DataFrame(new_data, columns=cols)
@@ -669,3 +671,14 @@ def fn_orig_vol():
 
 def fn_orig_time():
     return ['time']
+
+def fn_hilo_prices():
+    fn_hihi = [f'hihi{i}' for i in times]
+    fn_lolo = [f'lolo{i}' for i in times]
+    cols = fn_hihi+fn_lolo
+    return cols
+
+def fn_ma_prices():
+    cols = [f'ma{i}' for i in range(2,60)]+\
+           [f'ma{i}' for i in range(60,241,20)]
+    return cols
