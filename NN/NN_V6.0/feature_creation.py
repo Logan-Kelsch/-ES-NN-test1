@@ -110,7 +110,7 @@ def augmod_dataset(data):
     #list of dataframes
     df_list = [data, f_ToD, f_DoW, f_vel, f_acc, \
                f_stchK, f_barH, f_wickH, f_wickD,\
-                f_volData, f_maDiff, f_hihi, f_lolo,\
+                f_volData, f_maData, f_maDiff, f_hihi, f_lolo,\
                     f_hilo, f_stochHiLo, targets]
 
     #cut off error head and error tail of dataframes
@@ -121,6 +121,18 @@ def augmod_dataset(data):
     full_augmod = pd.concat(df_trunk_2, axis=1)
 
     return full_augmod
+
+#this function returns the set of all names that are being requested.
+#these are feature names that will likely be used to drop from the used dataset
+def return_name_collection():
+
+    set1 = fn_hilo_prices()
+    set2 = fn_ma_prices()
+    set3 = fn_orig_price()
+
+    full_set = set1+set2+set3
+
+    return full_set
 
 '''-------------------------------------------------------------------------------
     NOTE FEATURE SPECIFIC FUNCTIONS
