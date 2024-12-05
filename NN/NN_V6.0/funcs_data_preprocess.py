@@ -11,6 +11,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import RobustScaler
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.decomposition import PCA
+from sklearn.model_selection import train_test_split
 #import matplotlib as plt
 
 #setting data for LSTM
@@ -100,11 +101,30 @@ def reform_with_PCA_isolated(X_pcatran, X_pcafit, test_size, num_isol_feats, com
     #return np.hstack((X_main_features, X_time_features))
     return X_main_features
 
+#this function cuts a few corners and saves some lines in data processing phase.
+#This function takes the set of all samples and applies the sci-kit learn
+#train test split function to split the 3D LSTM data into 3 sections
+#'_train' is for model training
+#'_val' is for the validation set
+#'_ind' is for the independent set
+def split_into_train_val_ind(X, y, test_size, indp_size, time_steps):
+    #split data into trained and not trained
+    X_train, X_test, y_train, y_test =\
+        train_test_split(X, y, train_size=(1-test_size-indp_size), shuffle=False)
+    #calcluate precent of test samples that are for validaiton set
+    val_size = (test_size)/(test_size+indp_size)
+    #split test samples into what is used in validation and what is for
+    #post-model building performance testing
+    X_val, X_ind, y_val, y_ind =\
+        train_test_split(X_test, y_test, train_size=val_size, shuffle=False)
+    #trim out all overlapping samples in the time step dimension of LSTM layers
+    #the front half of training samples are not overlapping and need no trimming
+    X_val = X_val[time_steps:]
+    y_val = y_val[time_steps:]
+    X_ind = X_ind[time_steps:]
+    y_ind = y_ind[time_steps:]
 
-
-def lstm_train_test_cut(X, y, test_size=0.2, time_steps=5):
-    X_train, X_test, y_train, y_test = 0
-    return X_train, X_test, y_train, y_test
+    return X_train, X_val, X_ind, y_train, y_val, y_ind
 
 #LOSS FUNCTION
 from keras.saving import get_custom_objects
