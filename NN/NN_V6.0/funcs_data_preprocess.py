@@ -79,8 +79,10 @@ def normalize_from_tt_split(X_sctran, X_scfit, test_size):
     scaler1 = StandardScaler()
     scaler2 = RobustScaler()
     scaler3 = MinMaxScaler(feature_range=(0,1))
-    scaler3.fit(X_fit)
-    return scaler3.transform(X_sctran)
+
+    scaler = scaler1
+    scaler.fit(X_fit)
+    return scaler.transform(X_sctran)
 
 #this function will need to be re-evaluated if 
 #various test_sizes are used around different models
@@ -123,8 +125,17 @@ def split_into_train_val_ind(X, y, test_size, indp_size, time_steps):
     y_val = y_val[time_steps:]
     X_ind = X_ind[time_steps:]
     y_ind = y_ind[time_steps:]
-
     return X_train, X_val, X_ind, y_train, y_val, y_ind
+
+#this function has the best name of all time
+#this function is used when the standard scaler is used, and removes all samples after
+#   LSTM data structuring that are outside of a given deviation range?
+def remove_stinky_samples():
+    #get stinky samples indices
+    #filter out sinky samples
+    #return good smelling samples
+    return
+
 
 #LOSS FUNCTION
 from keras.saving import get_custom_objects
