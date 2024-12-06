@@ -14,6 +14,19 @@ from sklearn.decomposition import PCA
 from sklearn.model_selection import train_test_split
 #import matplotlib as plt
 
+class model_params:
+    target_type = None
+    num_classes = None
+    target_activation = None
+    target_neurons = None
+
+    
+
+def get_model_params(m_type):
+    params = model_params()
+    params.target_type = m_type
+
+
 #setting data for LSTM
 def reformat_to_lstm(X, y, time_steps):
     X_lstm = []

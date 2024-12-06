@@ -105,13 +105,14 @@ def augmod_dataset(data):
     f_stochHiLo = fe_hilo_stoch(data, f_hihi, f_lolo)#set
 
     #TARGET ENGINEERING
-    targets = te_vel(data)
+    target_r = te_vel_reg(data)
+    target_c = te_vel_class(data)
 
     #list of dataframes
     df_list = [data, f_ToD, f_DoW, f_vel, f_acc, \
                f_stchK, f_barH, f_wickH, f_wickD,\
                 f_volData, f_maData, f_maDiff, f_hihi, f_lolo,\
-                    f_hilo, f_stochHiLo, targets]
+                    f_hilo, f_stochHiLo, target_r, target_c]
 
     #cut off error head and error tail of dataframes
     df_trunk_1 = [df.iloc[:-60] for df in df_list]
@@ -600,7 +601,7 @@ def fe_hilo_stoch(X, hihi_data, lolo_data):
 
 #simple price difference for 1-60 minutes 
 #this function requires cutting first 60 samples (df.iloc[60:])
-def te_vel(X):
+def te_vel_reg(X):
     #orig feature #3
     # # # deals with all close of minute values
     close = X.iloc[:, 2].values
@@ -613,14 +614,14 @@ def te_vel(X):
             row.append(close[(i + displace) %l] - close[i %l])
         new_data.append(row)
     # Convert to a new DataFrame
-    feature_set = pd.DataFrame(new_data, columns=[f't_{i+1}' for i in range(60)])
+    feature_set = pd.DataFrame(new_data, columns=[f'tr_{i+1}' for i in range(60)])
 
     #print(feature_set)
     return feature_set
 
 #simple classification set for 1-60 minutes
 #this function requires cutting first 60 samples
-def te_vel_class_d5(X):
+def te_vel_class(X):
     #orig feature #3
     # # # deals with all close of minute values
     close = X.iloc[:, 2].values
@@ -629,7 +630,15 @@ def te_vel_class_d5(X):
     l = len(X)
     for i in range(l):
         row = []
-        for displace in range(1,61):
+        #two class data
+        for displace in range(5,61,5):
+            movement = close[(i + displace) %l] - close[i %l]
+            if(movement < 0):
+                row.append(0)
+            else:
+                row.append(1) 
+        #three class data
+        for displace in range(5,61,5):
             movement = close[(i + displace) %l] - close[i %l]
             c = np.sign(movement) + 1
             mag = 0
@@ -637,9 +646,27 @@ def te_vel_class_d5(X):
                 mag=1
             c+=mag
             row.append(c)
+        #four class data
+        for displace in range(5,61,5):
+            movement = close[(i + displace) %l] - close[i %l]
+            if(movement < 0):
+                s = 0
+            else:
+                s = 1
+            if(abs(movement) >= 5):
+                m = 1
+            else:
+                m = 0
+            c = s+m+(m*np.sign(movement))
+            row.append(c)
+
         new_data.append(row)
+
+    cols = [f'tc_2c_{i}m' for i in range(5, 61, 5)]+\
+        [f'tc_3c_5p_{i}m' for i in range(5, 61, 5)]+\
+        [f'tc_4c_5p_{i}m' for i in range(5, 61, 5)]
     # Convert to a new DataFrame
-    feature_set = pd.DataFrame(new_data, columns=[f'tc_5_{i+1}' for i in range(60)])
+    feature_set = pd.DataFrame(new_data, columns=cols)
 
     #print(feature_set)
     return feature_set
