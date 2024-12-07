@@ -13,8 +13,11 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.decomposition import PCA
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelBinarizer
-#import matplotlib as plt
+import matplotlib.pyplot as plt
 
+#class that holds all interchangable variables used in 
+#model building between regression and classification
+#                              (binary and multiclass)
 class model_params:
     def __init__(self):
         self.model_type = None
@@ -26,9 +29,21 @@ class model_params:
         self.loss_function = None
         self.r_target_min = None
 
-    
-
+''' NOTE
+    ANY CHANGE OF METRICS ARRAY WILL CAUSE ERROR IN 
+    performance_printout.py. Either implement array methodology
+    in printout of history in performance_printout file, or 
+    manually change function in performance_prinout to match
+    metrics used.
+    NOTE
+    Did not implement array methodology as I don't immediately
+    foresee changing the metrics used..
+'''
+#this function initiates a parameters class for implementation
+#of fast changable variables for all variables that differ in
+#           REGRESSION, BINARY, AND MULTICLASS CLASSIFICATION
 def get_model_params(m_type, r_target, c_split_val, c_class_cnt):
+    #initialize class and pull in model type
     params = model_params()
     params.model_type = m_type
     match(params.model_type):
@@ -56,6 +71,9 @@ def get_model_params(m_type, r_target, c_split_val, c_class_cnt):
                              {params.model_type}.")
     return params
 
+#function that uses the model.predict function, but allows
+#for the execution of regression and classification predictions
+#while the proper and required data structures hold true
 def model_predict(model, params, X_eval, y_eval):
     if(params.model_type == 'Regression'):
             #regression scenario
@@ -65,7 +83,7 @@ def model_predict(model, params, X_eval, y_eval):
             y_pred = model.predict(X_eval)
             y_pred = (y_pred > 0.5)
         else: #multiclass scenario
-            #Convert one-hot to class indices if needed
+            #convert one-hot to class indices if needed
             y_eval = np.argmax(y_eval, axis=1)
             y_pred = np.argmax(model.predict(X_eval), axis=1)
     return y_pred, y_eval
@@ -78,7 +96,6 @@ def y_preprocess(params, y):
         labelencoder = LabelBinarizer()
         y = labelencoder.fit_transform(y)
     return y
-
 
 #setting data for LSTM
 def reformat_to_lstm(X, y, time_steps):
