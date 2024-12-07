@@ -14,6 +14,7 @@ from sklearn.decomposition import PCA
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelBinarizer
 import matplotlib.pyplot as plt
+from feature_creation import *
 
 #class that holds all interchangable variables used in 
 #model building between regression and classification
@@ -21,13 +22,17 @@ import matplotlib.pyplot as plt
 class model_params:
     def __init__(self):
         self.model_type = None
-        self.class_split_val = None
-        self.num_classes = None
         self.target_activation = None
         self.target_neurons = None
         self.performance_metrics = None
         self.loss_function = None
-        self.r_target_min = None
+        self.target_time = None
+        self.monitor_parameter = None
+        self.monitor_condition = None
+        #classification specfic
+        self.class_split_val = None
+        self.num_classes = None
+        self.class_weights = None
 
 ''' NOTE
     ANY CHANGE OF METRICS ARRAY WILL CAUSE ERROR IN 
@@ -42,34 +47,50 @@ class model_params:
 #this function initiates a parameters class for implementation
 #of fast changable variables for all variables that differ in
 #           REGRESSION, BINARY, AND MULTICLASS CLASSIFICATION
-def get_model_params(m_type, r_target, c_split_val, c_class_cnt):
+def get_model_params(m_type, target_time, c_split_val, c_class_cnt):
     #initialize class and pull in model type
     params = model_params()
     params.model_type = m_type
+    params.target_time = target_time
     match(params.model_type):
         case 'Regression':#################################
             params.target_activation = 'linear'
             params.target_neurons = 1
             params.performance_metrics = \
                 ['R2Score','root_mean_squared_error']
-            params.r_target_min = r_target
             params.loss_function = 'mse'
+            params.monitor_parameter = 'val_mse'
+            params.monitor_condition = 'min'
         case 'Classification':#############################
             params.num_classes = c_class_cnt
             params.class_split_val = c_split_val
-            params.loss_function = 'sigmoid' if \
+            params.target_activation = 'sigmoid' if \
                 (c_class_cnt == 2) else 'softmax'
-            params.target_activation = \
+            params.loss_function = \
                 'binary_crossentropy' if (c_class_cnt == 2)\
                 else 'categorical_crossentropy'
             params.target_neurons = 1 if (c_class_cnt == 2)\
                 else c_class_cnt
             params.performance_metrics = \
                 ['precision','recall','accuracy']
+            params.monitor_parameter = 'val_accuracy'
+            params.monitor_condition = 'max'
         case _:
             raise ValueError(f"Invalid m_type (model type) \
                              {params.model_type}.")
     return params
+
+#function will return dataset after dropping all unused targets
+def set_target(data, params):
+    if(params.model_type == 'Regression'):
+        data = data.drop(columns=tn_classification())
+        data = data.drop(columns=tn_regression_excpetion(params.target_time))
+    else:   ### CLASSIFICATION #################
+        data = data.drop(columns=tn_regression())
+        data = data.drop(columns=tn_classification_exception(\
+            params.num_classes, params.class_split_val, params.target_time))
+    print(f'TARGET: {data.columns[-1]}')
+    return data
 
 #function that uses the model.predict function, but allows
 #for the execution of regression and classification predictions
@@ -95,7 +116,17 @@ def y_preprocess(params, y):
         #Encoding data
         labelencoder = LabelBinarizer()
         y = labelencoder.fit_transform(y)
-    return y
+    return y, labelencoder
+
+from sklearn.utils.class_weight import compute_class_weight
+
+#this function will generate class weights if the model is classification
+def update_class_weights(y, params):
+    classes = np.unique(y)
+    weights = compute_class_weight('balanced', classes=classes, y=y)
+    class_weights = {int(cls): weight for cls, weight in zip(classes,weights)}
+    params.class_weights = class_weights
+    return params
 
 #setting data for LSTM
 def reformat_to_lstm(X, y, time_steps):
@@ -146,7 +177,29 @@ def grab_wanted_times(X, start_time, end_time, time_steps):
 
     return indices
 
-
+#this function is going to replace the model.fit function
+#this is to allow for the use of class weights.
+#this function also returns the history
+def model_fit(X, y, model, epochs, shuffle, verbose, validation_data,\
+              batch_size, callbacks, params):
+    if(params.model_type == 'Regression'):
+        history = model.fit(X, y, 
+                epochs=epochs,
+                shuffle=shuffle, 
+                verbose=verbose,
+                validation_data=validation_data,
+                batch_size=batch_size, 
+                callbacks=callbacks)
+    else:   ### CLASSIFICATION  ################
+        history = model.fit(X, y, 
+                epochs=epochs,
+                shuffle=shuffle, 
+                verbose=verbose,
+                validation_data=validation_data,
+                batch_size=batch_size, 
+                callbacks=callbacks,
+                class_weight=params.class_weights)
+    return history
 
 #this function may be considered redundant
 #take indices of samples to be kept and remove all others
@@ -243,91 +296,3 @@ def skew_loss(y_true,y_pred,sFact=4):
             0,
             ops.square(error)-(1/fact)
         ))
-
-'''
-def show_all_results(used_model, history, X_test, y_test):
-    # LOSS
-    epochs = range(1, len(history.history['loss']) + 1)
-    plt.figure(figsize=(12, 6))
-    plt.plot(epochs, history.history['loss'], 'y', label='Training Loss')
-    plt.plot(epochs, history.history['val_loss'], 'r', label='Validation Loss')
-    plt.title('Training and Validation Loss')
-    plt.xlabel('Epoch')
-    plt.ylabel('Loss')
-    plt.legend(['Train', 'Validation'], loc='upper right')
-    plt.show()
-    # ACCURACY
-
-    plt.plot(epochs, history.history['R2Score'], 'y', label='Training R2')
-    plt.plot(epochs, history.history['val_R2Score'], 'r', label='Validation R2')
-    plt.title('Training and Validation R2Score')
-    plt.xlabel('Epoch')
-    plt.ylabel('R2Score')
-    plt.legend(['Train', 'Validation'], loc='upper right')
-    plt.show()
-
-
-    #predicting the test set results
-    y_pred = used_model.predict(X_test) 
-
-
-    plt.scatter(y_pred, y_test, s=1)
-    plt.axis('tight')
-    plt.title('Testing Outputs')
-    plt.xlabel('y_pred')
-    plt.xlim(-.25,.25)
-    plt.ylim(-.25,.25)
-    plt.ylabel('y_test')
-    ax = plt.gca()
-    x_vals = np.array(ax.get_xlim())
-    y_vals = x_vals  # Since y = x
-    plt.plot(x_vals, y_vals, '-', color='black', label='y = x', linewidth=0.5)
-    plt.axhline(0, color='black', linewidth=0.5)
-    plt.axvline(0,color='black',linewidth=0.5)
-    plt.show()
-
-    #SCATTERPLOT #SCATTERPLOT  #SCATTERPLOT  #SCATTERPLOT  #SCATTERPLOT  #SCATTERPLOT  #SCATTERPLOT  #SCATTERPLOT  
-    plt.scatter(y_pred, y_test, s=1)
-    plt.grid()
-    plt.axis('tight')
-    plt.title('Testing Outputs')
-    plt.xlabel('y_pred')
-    plt.xlim(-1,1)
-    plt.ylim(-1,1)
-    plt.ylabel('y_test')
-    ax = plt.gca()
-    x_vals = np.array(ax.get_xlim())
-    y_vals = x_vals  # Since y = x
-    plt.plot(x_vals, y_vals, '-', color='black', label='y = x', linewidth=0.5)
-    plt.axhline(0, color='black', linewidth=0.5)
-    plt.axvline(0,color='black',linewidth=0.5)
-    plt.show()
-    #DIRECTIONAL ACCURACY #DIRECTIONAL ACCURACY  #DIRECTIONAL ACCURACY  #DIRECTIONAL ACCURACY  #DIRECTIONAL ACCURACY  
-    tp, fp, tn, fn = 0, 0, 0, 0
-    tp5, fp5, tn5, fn5 = 0, 0, 0, 0
-    for i in range(len(y_pred)):
-        if(y_pred[i]>0):
-            if(y_test[i]>0):
-                tp+=1
-            if(y_test[i]<0):
-                fp+=1
-            if(y_pred[i]>=5):
-                if(y_test[i]>0):
-                    tp5+=1
-                if(y_test[i]<0):
-                    fp5+=1
-        if(y_pred[i]<0):
-            if(y_test[i]<0):
-                tn+=1
-            if(y_test[i]>0):
-                fn+=1
-            if(y_pred[i]<=-5):
-                if(y_test[i]<0):
-                    tn5+=1
-                if(y_test[i]>0):
-                    fn5+=1
-    directionalAccuracy = ((tp+tn)/(tp+fp+tn+fn))*10000//1/100
-    print('Directional Accuracy:\t\t',directionalAccuracy)
-    directionalAccuracy5guess = ((tp5+tn5)/(tp5+fp5+tn5+fn5))*10000//1/100
-    print('Directional Accuracy >(+/-)5:\t',directionalAccuracy5guess)
-    '''

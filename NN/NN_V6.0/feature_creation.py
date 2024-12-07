@@ -657,7 +657,7 @@ def te_vel_class(X):
                 m = 1
             else:
                 m = 0
-            c = s+m+(m*np.sign(movement))
+            c = s+1+(m*np.sign(movement))
             row.append(c)
 
         new_data.append(row)
@@ -721,3 +721,43 @@ def fn_ma_prices():
     cols = [f'ma{i}' for i in range(2,60)]+\
            [f'ma{i}' for i in range(60,241,20)]
     return cols
+
+def tn_regression():
+    cols = [f'tr_{i}' for i in range(1,61)]
+    return cols
+
+def tn_regression_excpetion(exc):
+    cols = [f'tr_{i}' for i in range(1,exc)]+\
+        [f'tr_{i}' for i in range(exc+1,61)]
+    return cols
+
+def tn_classification():
+    cols = [f'tc_2c_{i}m' for i in range(5, 61, 5)]+\
+        [f'tc_3c_5p_{i}m' for i in range(5, 61, 5)]+\
+        [f'tc_4c_5p_{i}m' for i in range(5, 61, 5)]
+    return cols
+
+def tn_classification_exception(num_classes, class_split, minute):
+    #value split is currently constant at 5,
+    #so class_split is not used
+    cols = []
+    if(num_classes == 2):
+        cols+=\
+            [f'tc_2c_{i}m' for i in range(5, minute, 5)]+\
+            [f'tc_2c_{i}m' for i in range(minute+5, 61, 5)]+\
+            [f'tc_3c_5p_{i}m' for i in range(5, 61, 5)]+\
+            [f'tc_4c_5p_{i}m' for i in range(5, 61, 5)]
+    if(num_classes == 3):
+        cols+=\
+            [f'tc_2c_{i}m' for i in range(5, 61, 5)]+\
+            [f'tc_3c_5p_{i}m' for i in range(5, minute, 5)]+\
+            [f'tc_3c_5p_{i}m' for i in range(minute+5, 61, 5)]+\
+            [f'tc_4c_5p_{i}m' for i in range(5, 61, 5)]
+    if(num_classes == 4):
+        cols+=\
+            [f'tc_2c_{i}m' for i in range(5, 61, 5)]+\
+            [f'tc_3c_5p_{i}m' for i in range(5, 61, 5)]+\
+            [f'tc_4c_5p_{i}m' for i in range(5, minute, 5)]+\
+            [f'tc_4c_5p_{i}m' for i in range(minute+5, 61, 5)]
+    return cols
+    
