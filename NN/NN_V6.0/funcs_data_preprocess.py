@@ -12,19 +12,72 @@ from sklearn.preprocessing import RobustScaler
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.decomposition import PCA
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelBinarizer
 #import matplotlib as plt
 
 class model_params:
-    target_type = None
-    num_classes = None
-    target_activation = None
-    target_neurons = None
+    def __init__(self):
+        self.model_type = None
+        self.class_split_val = None
+        self.num_classes = None
+        self.target_activation = None
+        self.target_neurons = None
+        self.performance_metrics = None
+        self.loss_function = None
+        self.r_target_min = None
 
     
 
-def get_model_params(m_type):
+def get_model_params(m_type, r_target, c_split_val, c_class_cnt):
     params = model_params()
-    params.target_type = m_type
+    params.model_type = m_type
+    match(params.model_type):
+        case 'Regression':#################################
+            params.target_activation = 'linear'
+            params.target_neurons = 1
+            params.performance_metrics = \
+                ['R2Score','root_mean_squared_error']
+            params.r_target_min = r_target
+            params.loss_function = 'mse'
+        case 'Classification':#############################
+            params.num_classes = c_class_cnt
+            params.class_split_val = c_split_val
+            params.loss_function = 'sigmoid' if \
+                (c_class_cnt == 2) else 'softmax'
+            params.target_activation = \
+                'binary_crossentropy' if (c_class_cnt == 2)\
+                else 'categorical_crossentropy'
+            params.target_neurons = 1 if (c_class_cnt == 2)\
+                else c_class_cnt
+            params.performance_metrics = \
+                ['precision','recall','accuracy']
+        case _:
+            raise ValueError(f"Invalid m_type (model type) \
+                             {params.model_type}.")
+    return params
+
+def model_predict(model, params, X_eval, y_eval):
+    if(params.model_type == 'Regression'):
+            #regression scenario
+        y_pred = model.predict(X_eval)
+    else:   #binary class scenario
+        if(params.num_classes == 2):
+            y_pred = model.predict(X_eval)
+            y_pred = (y_pred > 0.5)
+        else: #multiclass scenario
+            #Convert one-hot to class indices if needed
+            y_eval = np.argmax(y_eval, axis=1)
+            y_pred = np.argmax(model.predict(X_eval), axis=1)
+    return y_pred, y_eval
+
+#this function is used after X y split for if y needs
+#binarized for classification
+def y_preprocess(params, y):
+    if(params.model_type == 'Classification'):
+        #Encoding data
+        labelencoder = LabelBinarizer()
+        y = labelencoder.fit_transform(y)
+    return y
 
 
 #setting data for LSTM
