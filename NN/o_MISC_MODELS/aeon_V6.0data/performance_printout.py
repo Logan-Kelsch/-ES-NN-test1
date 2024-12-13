@@ -9,6 +9,42 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 from sklearn.metrics import confusion_matrix
+from sklearn.metrics import r2_score
+from sklearn.metrics import accuracy_score
+import matplotlib.pyplot as plt
+
+from sklearn.tree import DecisionTreeRegressor
+def new_dt(max_depth):
+    return DecisionTreeRegressor(max_depth=max_depth)
+
+#function returns metric type as a string for printout as well as actual score
+#metrics are accuracy are r2 for classifcation and regression respectively
+def score_model(y_true, y_pred, threshold, params):
+    if(params.model_type=='Classification'):
+        y_pred = y_pred > threshold
+        return 'ACCURACY', accuracy_score(y_true, y_pred)
+    else:
+        return 'R2-SCORE', r2_score(y_true, y_pred)
+
+def param_score_search(model, params, X_train, y_train, X_test, y_test, dynamic_param_name, val_range):
+    scores = []
+    score_type = None
+    print('value: ',sep='',end='')
+    for i in val_range:
+        print(i,end='..',sep='')
+        if(dynamic_param_name=='max_depth'):
+            setattr(model, 'base_estimator', new_dt(i))
+        else:
+            setattr(model, dynamic_param_name, i)
+        model.fit(X_train, y_train)
+        y_pred = model.predict(X_test)
+        score_type, score = score_model(y_test, y_pred, 0.5, params)
+        scores.append(score)
+    plt.plot(val_range, scores)
+    plt.xlabel('Parameter Value')
+    plt.ylabel(score_type)
+    plt.title(f'{score_type} for values of {dynamic_param_name}')
+    plt.show()
 
 #function to print out loss function, should be universal
 def graph_loss(epochs, history):
