@@ -216,7 +216,7 @@ def normalize_from_tt_split(X_sctran, X_scfit, test_size):
     scaler2 = RobustScaler()
     scaler3 = MinMaxScaler(feature_range=(0,1))
 
-    scaler = scaler1
+    scaler = scaler3
     scaler.fit(X_fit)
     return scaler.transform(X_sctran)
 
@@ -245,16 +245,26 @@ def reform_with_PCA_isolated(X_pcatran, X_pcafit, test_size, num_isol_feats, com
 #'_train' is for model training
 #'_val' is for the validation set
 #'_ind' is for the independent set
-def split_into_train_val_ind(X, y, test_size, indp_size, time_steps):
-    #split data into trained and not trained
-    X_train, X_test, y_train, y_test =\
-        train_test_split(X, y, train_size=(1-test_size-indp_size), shuffle=False)
+def split_into_train_val_ind(X, y, test_size, indp_size, time_steps, params):
     #calcluate precent of test samples that are for validaiton set
     val_size = (test_size)/(test_size+indp_size)
-    #split test samples into what is used in validation and what is for
-    #post-model building performance testing
-    X_val, X_ind, y_val, y_ind =\
-        train_test_split(X_test, y_test, train_size=val_size, shuffle=False)
+    #split data into trained and not trained based off of model type
+    '''NOTE currently no difference cannot stratify on sklearn tts without shuffle, need to find new function .END NOTE'''
+    match(params.model_type):
+        case 'Classification':
+            X_train, X_test, y_train, y_test =\
+                train_test_split(X, y, train_size=(1-test_size-indp_size), shuffle=False)
+            #split test samples into what is used in validation and what is for
+            #post-model building performance testing
+            X_val, X_ind, y_val, y_ind =\
+                train_test_split(X_test, y_test, train_size=val_size, shuffle=False)
+        case 'Regression':
+            X_train, X_test, y_train, y_test =\
+                train_test_split(X, y, train_size=(1-test_size-indp_size), shuffle=False)
+            #split test samples into what is used in validation and what is for
+            #post-model building performance testing
+            X_val, X_ind, y_val, y_ind =\
+                train_test_split(X_test, y_test, train_size=val_size, shuffle=False)
     #trim out all overlapping samples in the time step dimension of LSTM layers
     #the front half of training samples are not overlapping and need no trimming
     X_val = X_val[time_steps:]
