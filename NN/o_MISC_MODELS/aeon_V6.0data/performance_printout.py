@@ -14,8 +14,12 @@ from sklearn.metrics import accuracy_score
 import matplotlib.pyplot as plt
 
 from sklearn.tree import DecisionTreeRegressor
-def new_dt(max_depth):
-    return DecisionTreeRegressor(max_depth=max_depth)
+from sklearn.tree import DecisionTreeClassifier
+def new_dt(mt, max_depth):
+    if(mt=='Regression'):
+        return DecisionTreeRegressor(max_depth=max_depth)
+    else:
+        return DecisionTreeClassifier(max_depth=max_depth)
 
 #function returns metric type as a string for printout as well as actual score
 #metrics are accuracy are r2 for classifcation and regression respectively
@@ -33,7 +37,7 @@ def param_score_search(model, params, X_train, y_train, X_test, y_test, dynamic_
     for i in val_range:
         print(i,end='..',sep='')
         if(dynamic_param_name=='max_depth'):
-            setattr(model, 'base_estimator', new_dt(i))
+            setattr(model, 'base_estimator', new_dt(params.model_type, i))
         else:
             setattr(model, dynamic_param_name, i)
         model.fit(X_train, y_train)
