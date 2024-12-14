@@ -3,3 +3,5 @@ NN/NN_V6.0/betaset.csv
 NN/NN_V6.0/betaset_tmp.csv
 NN/o_MISC_MODELS/using_NNV6/betaset_tmp.csv
 NN/o_MISC_MODELS/aeon_V6.0data/betaset_tmp.csv
+.tf_/
+.torch_/
