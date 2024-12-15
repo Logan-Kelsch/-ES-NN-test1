@@ -67,8 +67,9 @@ def preprocess_data(
  
 	#printout number of features and the target
 	if(verbose==1):
+		print(f'# of Samples:	{len(data.index)}')
 		print(f'# of Features:	{len(data.columns) - 1}')
-		print(f'Target:			{data.columns[-1]}\n')
+		print(f'Target:		{data.columns[-1]}\n')
  
 	#split data into features and targets
 	X = data.iloc[:, :-1].values
@@ -117,7 +118,6 @@ def preprocess_data(
 	#index_keep = index_keep[:] 
 	X, y = X[index_keep, :], y[index_keep]	# NOTE X IS OVER-WRITTEN HERE #END NOTE
  
-	print(X.shape) 
  
 	#output number of samples dropped
 	print(f'{len_samples - len(index_keep)} Samples Dropped.\n')
@@ -145,12 +145,13 @@ def preprocess_data(
 	del X, y
  
 	#output shape of X and y
-	print('\nX_train shape == {}.'.format(X_train.shape))
-	print('y_train shape == {}.'.format(y_train.shape))
-	print('X_val shape == {}.'.format(X_val.shape))
-	print('y_val shape == {}.'.format(y_val.shape))
-	print('X_ind shape == {}.'.format(X_ind.shape))
-	print('y_ind shape == {}.\n'.format(y_ind.shape))
+	if(verbose):
+		print('X_train:\t{}.'	.format(X_train.shape))
+		print('y_train:\t{}.'	.format(y_train.shape))
+		print('X_val:  \t{}.'		.format(X_val.shape))
+		print('y_val:  \t{}.'		.format(y_val.shape))
+		print('X_ind:  \t{}.'		.format(X_ind.shape))
+		print('y_ind:  \t{}.'		.format(y_ind.shape))
  
 	#manually collect all garbage this far
 	gc.collect()
