@@ -6,14 +6,14 @@
 #### Looks like the amount that can be adjusted for a model like this is pretty vast, will have to construct a plan.
 
 -   Data Preprocessing - - Should end in returning split and reformatted datasets (train/val/ind)
--   -   -   This should be standard, but broken down into functional code for readability and malleability
+-   -   -   This should be as standard as the previous versions, but broken down into functional code for readability and malleability
 
 -   Data Rotating      - - Should end with an array of 'rotations' of data for n models from the train split
--   -   -   This should have a few options, full random pick, option to keep some features in all models, ... 
--   -   -   -   ... random pick from each category, overlapping or non overlapping features
+-   -   -   This should have a few options, pick random from all, option to keep some features in all models, ... 
+-   -   -   -   ... random pick but category specific, overlapping or model unique features
 
 -   ModelSet Training  - - Training all models on their set split of data
--   -   -   the double rotation model will be built first, an optimal hyperparameter set seeking algorithm should be built for this
+-   -   -   the double rotation model will be built first, an optimal-hyperparameter-set seeking algorithm should be built for this
 -   -   -   LSTM NN will have to come later
 
 -   Model Stacking and Prediction fusion
