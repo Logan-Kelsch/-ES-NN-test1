@@ -59,9 +59,9 @@ def preprocess_data(
 			num_class, split_val, target_t))
 	
  	#grab list of all indices of samples in good times
-	index_keep = np.where((X[:-time_steps, 5] >= t_start) \
-     					& (X[:-time_steps, 5] <= t_end))[0]
-	 
+	index_keep = np.where((data.values[:-time_steps, 5] >= t_start) \
+     					& (data.values[:-time_steps, 5] <= t_end))[0]
+  
 	#drop any immediately unwanted features
 	data = data.drop(columns=return_name_collection())
  
@@ -107,17 +107,21 @@ def preprocess_data(
   
 		X, y = X_lstm, y_lstm	# NOTE X IS OVER-WRITTEN HERE #END NOTE
   
-	#X\y'_lstm' will no longer be used
-	del X_lstm, y_lstm
- 
+		#X\y'_lstm' will no longer be used
+		del X_lstm, y_lstm
+
 	#collect original number of samples
 	len_samples = len(X)
  
-	#remove samples of data that 
+	#remove samples of data that
+	#index_keep = index_keep[:] 
 	X, y = X[index_keep, :], y[index_keep]	# NOTE X IS OVER-WRITTEN HERE #END NOTE
+ 
+	print(X.shape) 
  
 	#output number of samples dropped
 	print(f'{len_samples - len(index_keep)} Samples Dropped.\n')
+
  
 	#split data into train validation and independent
 	#	split data into trained and not trained
