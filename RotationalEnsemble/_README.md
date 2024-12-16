@@ -25,3 +25,31 @@
 -   Model evaluation
 -   -   -   Copy over the printout functions of previous versions
 -   -   -   consider adding some sort of proba printouts?
+
+#### KEY FOR FOLLOWING INFORMATION:
+-   k:  number of model types, or numbers of models in a given model-set.
+-   n:  number of rotated-feature-sets, or numbers of rotation on the training set.
+-   m:  number of sample-sets, the partitioned sets can be shuffled because they do not interact(but probably shouldnt be).
+-   c:  consider this, now, with the following line. (also it serves as a smiley face)
+## CURRENT LARGE SCALE PLAN
+-   At this indentation I will specify the DIMENSIONS OF PREDICTIONS INVOLVED. (WILL BE IMPORTANT)
+-   non-rotation method (no meta-model, no ensemble): 
+-   0dim: singular prediction from singular model
+- c: in the look-forward, is SMOTE essential? what about limiting to binary classification.
+-   -   -   try to incorporate SMOTE to balance classes if finding balancing issues (ONLY IF NON LSTM)
+- c: form a working meta-model before building hyperparameter-seeker?
+-   -   -   Initiate project by using 1 model type (rotation forest? DT for easy testing?) with hyperparameter-seeker for each model on all rotations.
+-   rotational method with one base estimator (meta-model now required):
+-   1dim: a set of n rotated-feature-set model predictions
+-   -   -   -   Program this so that it can be expanded to multiple (pre-specified) types of models!!!!!!
+-   rotational method with k different base estimators (log-reg should still suffice, may now consider a NN):
+-   2dim: a set of n rotated-feature-sets CONTAINING a set of k model-types' predictions.
+- c: create multiple methods anyways? are all models of equal compatibility!?!?
+-   -   -   Use logistic regression as meta-model OR neural network as meta model
+-   -   FROM HERE, training is only partitioned along features. For each n rotation of features and its k model-types,
+- c: partition with shuffling? section vs sliding window? how to assert that?
+-   -   consider implementing sample partitioning. This would create a grid of m sample-sets X n rot-feat-sets X k model-types.
+- c: use fully connected? use conv? tree based? THREE DIMENSION OF PREDICTIONS! is there conv3d??
+-   -   -   If this were to be done.. think twice about what type of meta-model would be required for understanding the 3D grid of predictions.
+-   double rotational method with k different base estimators (NN? LSTM? Conv? What to even do here, this is 3D predictions):
+-   3dim: a set of n rotated-feature-sets partitioned into m different sample sets, all CONTAINING a set of k model-type's predictions.
