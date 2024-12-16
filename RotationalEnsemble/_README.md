@@ -42,6 +42,7 @@
 -   rotational method with one base estimator (meta-model now required):
 -   1dim: a set of n rotated-feature-set model predictions
 -   -   -   -   Program this so that it can be expanded to multiple (pre-specified) types of models!!!!!!
+- c: PLEASE try different meta-models before 2d at least. TRY ALL. bi-log-reg, naive-bayes, lin-reg, pop-vote, average
 -   rotational method with k different base estimators (log-reg should still suffice, may now consider a NN):
 -   2dim: a set of n rotated-feature-sets CONTAINING a set of k model-types' predictions.
 - c: create multiple methods anyways? are all models of equal compatibility!?!?
