@@ -767,6 +767,19 @@ def fn_all_subsets(real_prices: bool = False):
     
 	return fnsub
 
+def fnsubset_to_indexdictlist(pddf_features, fnsub):
+    '''This function takes: 
+    -   a dataframe 
+    -   list of lists of feature names
+      and turns it into 
+    -   a list of dicts
+      The dicts are each feature name in each subset with its corresponding index in the dataframe.
+      '''
+    feature_dicts = [{pddf_features.get_loc(feature): \
+                      feature for feature in sublist} \
+                      for sublist in fnsub]
+    return feature_dicts
+
 #this function returns the set of all names that are being requested.
 #these are feature names that will likely be used to drop from the used dataset
 def return_name_collection():
