@@ -88,19 +88,19 @@ times = [5,15,30,60,120,240]
 def augmod_dataset(data):
     
     #FEATURE ENGINEERING
+    f_ToD = fe_ToD(data)#single
+    f_DoW = fe_DoW(data)#single
     f_vel = fe_vel(data)#set
     f_acc = fe_acc(data)#set
     f_stchK = fe_stoch_k(data)#set
-    f_ToD = fe_ToD(data)#single
-    f_DoW = fe_DoW(data)#single
     f_barH = fe_height_bar(data)#single
     f_wickH = fe_height_wick(data)#single
     f_wickD = fe_diff_hl_wick(data)#single
     f_volData = fe_vol_sz_diff(data)#set
     f_maData = fe_ma_disp(data)#set
     f_maDiff = fe_ma_diff(f_maData)#set
-    f_lolo = fe_lolo_diff(data)#set
     f_hihi = fe_hihi_diff(data)#set
+    f_lolo = fe_lolo_diff(data)#set
     f_hilo = fe_hilo_diff(f_hihi,f_lolo)#set
     f_stochHiLo = fe_hilo_stoch(data, f_hihi, f_lolo)#set
 
@@ -122,18 +122,6 @@ def augmod_dataset(data):
     full_augmod = pd.concat(df_trunk_2, axis=1)
 
     return full_augmod
-
-#this function returns the set of all names that are being requested.
-#these are feature names that will likely be used to drop from the used dataset
-def return_name_collection():
-
-    set1 = fn_hilo_prices()
-    set2 = fn_ma_prices()
-    set3 = fn_orig_price()
-
-    full_set = set1+set2+set3
-
-    return full_set
 
 '''-------------------------------------------------------------------------------
     NOTE FEATURE SPECIFIC FUNCTIONS
@@ -168,7 +156,8 @@ def fe_lolo_diff(X):
 
         new_data.append(row)
 
-    cols = [f'lolo{i}' for i in times]+[f'disp_lolo{i}' for i in times]
+    cols = [f'lolo{i}' for i in times]+\
+        [f'disp_lolo{i}' for i in times]
 
     feature_set = pd.DataFrame(new_data, columns=cols)
 
@@ -677,11 +666,61 @@ def te_vel_class(X):
     NOTE tn_ denotes 'target (/set) names' for mass target  dropping
 '''#------------------------------------------------------------------------------
 
-#fe_vel
-#fe_acc
-#fe_stoch_k
-#fe_ToD
-#fe_DoW
+def fn_vel():
+    return [f'vel{i}' for i in range(1,61)]
+def fn_acc():
+    return [f'acc{i+1}' for i in range(60)]
+def fn_stoch_k():
+    return [f'stchK{i}' for i in range(5, 125, 5)]
+def fn_vol_m():
+    '''NOTE subset 1 of fe_vol_sz_diff feature set END NOTE'''
+    return [f'vol_m{i}' for i in range(2,61)]
+def fn_vol_avgDiff():
+    '''NOTE subset 2 of fe_vol_sz_diff feature set END NOTE'''
+    return [f'vol_avgDiff{i}' for i in range(2,61)]
+def fn_ma_s60():
+    '''NOTE the sub 60m subset of ma feature set'''
+    return [f'ma{i}' for i in range(2,60)]
+def fn_ma_s240():
+    '''NOTE the sub 240m subset of ma feature set'''
+    return [f'ma{i}' for i in range(60,241,20)]
+def fn_disp_ma60():
+    '''NOTE the sub 60m subset of ma feature set'''
+    return [f'disp_ma{i}' for i in range(2,60)]
+def fn_disp_ma240():
+    '''NOTE the sub 240m subset of ma feature set'''
+    return [f'disp_ma{i}' for i in range(60,241,20)]
+def fn_ma_diff():
+    cols = []
+    lengths = [5,15,30,60,120,240]
+    for i in range(len(lengths)):
+        for j in range(i+1,len(lengths)):
+            cols.append(f'diff_ma_{lengths[i]}_{lengths[j]}')
+    return cols
+
+'''NOTE TIMES-------------REFERENCE NOTE'''
+#NOTE times = [5,15,30,60,120,240]''' NOTE#
+'''NOTE TIMES-------------REFERENCE NOTE'''
+
+def fn_hihi():
+    '''NOTE first subset of fe_hihi_diff END NOTE'''
+    return [f'hihi{i}' for i in times]
+def fn_disp_hihi():
+    '''NOTE second subset of fe_hihi_diff END NOTE'''
+    return [f'disp_hihi{i}' for i in times]
+def fn_lolo():
+    '''NOTE first subset of fe_lolo_diff END NOTE'''
+    return [f'lolo{i}' for i in times]
+def fn_disp_lolo():
+    '''NOTE second subset of fe_lolo_diff END NOTE'''
+    return [f'disp_lolo{i}' for i in times]
+def fn_hilo_stoch():
+    cols = []
+    #prepping the feature names according to ma's used
+    for i in range(len(times)):
+        for j in range(len(times)):
+            cols.append(f'hilo_stoch_{times[i]}_{times[j]}')
+    return cols
 #fe_height_bar
 #fe_height_wick
 #fe_diff_hl_wick
@@ -691,15 +730,58 @@ def te_vel_class(X):
 #fe_lolo_diff
 #fe_hihi_diff
 #fe_hilo_diff
+
+def fn_all_subsets():
+    ''' Data subsets are in the following order:
+    orig_datapoints, f_ToD, f_DoW, f_vel, f_acc, \
+               f_stchK, f_barH, f_wickH, f_wickD,\
+                f_volData, f_maData, f_maDiff, f_hihi, f_lolo,\
+                    f_hilo, f_stochHiLo,
+    '''
+    #feature name subsets
+    fnsub = []
+    # will append each individual feature/f_set here
+    fnsub.append(['high','low','close','time','volume'])#removable real prices
+    fnsub.append(['ToD','DoW'])
+    fnsub.append(fn_vel())
+    fnsub.append(fn_acc())
+    fnsub.append(fn_stoch_k())
+    fnsub.append(['barH','wickH','diff_wick'])
+    fnsub.append(fn_vol_m())
+    fnsub.append(fn_vol_avgDiff())
+    fnsub.append(fn_ma_s60())#removable
+    fnsub.append(fn_ma_s240())#removable
+    fnsub.append(fn_disp_ma60())
+    fnsub.append(fn_disp_ma240())
+    fnsub.append(fn_ma_diff())
+    fnsub.append(fn_hihi())#removable
+    fnsub.append(fn_disp_hihi())
+    fnsub.append(fn_lolo())#removable
+    fnsub.append(fn_disp_lolo())
+    fnsub.append(fn_hilo_diff())
+    fnsub.append(fn_hilo_stoch())
+    
+    return fnsub
+
+#this function returns the set of all names that are being requested.
+#these are feature names that will likely be used to drop from the used dataset
+def return_name_collection():
+
+    set1 = fn_hilo_prices()
+    set2 = fn_ma_prices()
+    set3 = fn_orig_price()
+
+    full_set = set1+set2+set3
+
+    return full_set
+
 def fn_hilo_diff():
     lengths = [5,15,30,60,120,240]
     cols = []
-
     #prepping the feature names according to ma's used
     for i in range(len(lengths)):
         for j in range(len(lengths)):
             cols.append(f'diff_hilo_{lengths[i]}_{lengths[j]}')
-    
     return cols
 
 def fn_orig_price():
