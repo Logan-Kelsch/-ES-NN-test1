@@ -731,37 +731,41 @@ def fn_hilo_stoch():
 #fe_hihi_diff
 #fe_hilo_diff
 
-def fn_all_subsets():
-    ''' Data subsets are in the following order:
-    orig_datapoints, f_ToD, f_DoW, f_vel, f_acc, \
+def fn_all_subsets(real_prices: bool = False):
+	''' Data subsets are in the following order:
+	orig_datapoints, f_ToD, f_DoW, f_vel, f_acc, \
                f_stchK, f_barH, f_wickH, f_wickD,\
                 f_volData, f_maData, f_maDiff, f_hihi, f_lolo,\
                     f_hilo, f_stochHiLo,
-    '''
-    #feature name subsets
-    fnsub = []
-    # will append each individual feature/f_set here
-    fnsub.append(['high','low','close','time','volume'])#removable real prices
-    fnsub.append(['ToD','DoW'])
-    fnsub.append(fn_vel())
-    fnsub.append(fn_acc())
-    fnsub.append(fn_stoch_k())
-    fnsub.append(['barH','wickH','diff_wick'])
-    fnsub.append(fn_vol_m())
-    fnsub.append(fn_vol_avgDiff())
-    fnsub.append(fn_ma_s60())#removable
-    fnsub.append(fn_ma_s240())#removable
-    fnsub.append(fn_disp_ma60())
-    fnsub.append(fn_disp_ma240())
-    fnsub.append(fn_ma_diff())
-    fnsub.append(fn_hihi())#removable
-    fnsub.append(fn_disp_hihi())
-    fnsub.append(fn_lolo())#removable
-    fnsub.append(fn_disp_lolo())
-    fnsub.append(fn_hilo_diff())
-    fnsub.append(fn_hilo_stoch())
+	'''
+	#feature name subsets
+	fnsub = []
+	# will append each individual feature/f_set here
+	if(real_prices):
+		fnsub.append(['high','low','close','time','volume'])#removable real prices
+	fnsub.append(['ToD','DoW'])
+	fnsub.append(fn_vel())
+	fnsub.append(fn_acc())
+	fnsub.append(fn_stoch_k())
+	fnsub.append(['barH','wickH','diff_wick'])
+	fnsub.append(fn_vol_m())
+	fnsub.append(fn_vol_avgDiff())
+	if(real_prices):
+		fnsub.append(fn_ma_s60())#removable
+		fnsub.append(fn_ma_s240())#removable
+	fnsub.append(fn_disp_ma60())
+	fnsub.append(fn_disp_ma240())
+	fnsub.append(fn_ma_diff())
+	if(real_prices):	
+		fnsub.append(fn_hihi())#removable
+	fnsub.append(fn_disp_hihi())
+	if(real_prices):	
+		fnsub.append(fn_lolo())#removable
+	fnsub.append(fn_disp_lolo())
+	fnsub.append(fn_hilo_diff())
+	fnsub.append(fn_hilo_stoch())
     
-    return fnsub
+	return fnsub
 
 #this function returns the set of all names that are being requested.
 #these are feature names that will likely be used to drop from the used dataset

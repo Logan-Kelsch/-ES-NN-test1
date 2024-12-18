@@ -34,8 +34,14 @@ def preprocess_data(
 	,scaler:	Literal['Standard','Robust','MinMaxScaler']= 'Standard'
 	,frmt_lstm:	bool	=		False
 	,time_steps:int		=		5
+	,keep_price:bool	=		True
 ):
-	
+	'''
+	Here is a cool area to put function info.
+
+	Parameters:
+	- frmt_lstm (bool): Optionally transform data into 3D time series data (LSTM).
+ 	'''
  	#Input validate All variables
 	assert 0 <= indp_size < 1, "Independent set size must be of domain [0,1)."
 	assert 0 <  test_size < 1, "Test set size must be of domain (0, 1)."
