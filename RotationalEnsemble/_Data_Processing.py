@@ -102,7 +102,7 @@ def preprocess_data(
 	print("Success.\nTrying to encode y and make class weights...",end='') if verbose else do_nothing()
 	#update class weights.. if necessary? #determining unneeded
 	#label encoder implementation? #determining unneeded
-	print("Failed (ERR (NON-FATAL): NOT IMPLEMENTED." if 1 else "Success.") if verbose else do_nothing()
+	print("Failed [NON-FATAL: NOT IMPLEMENTED]" if 1 else "Success.") if verbose else do_nothing()
 
 	print("Trying to standardize all featurespace from training featurespace...",end='') if verbose else do_nothing()
 	#Standarize features
@@ -113,7 +113,7 @@ def preprocess_data(
 	scaler.fit(X[:fit_cutter])
 	X = scaler.transform(X)	#NOTE X IS OVER-WRITTEN HERE #END NOTE
 
-	print("Success.\n" if frmt_lstm else "Trying to format data into 3D LSTM (Time Series) data...",end="") if verbose else do_nothing()
+	print("Success.\nTrying to format data into 3D LSTM (Time Series) data..." if frmt_lstm else "Success.\n",end="") if verbose else do_nothing()
 	#write into LSTM format
 	if(frmt_lstm):
 		X_lstm = []
