@@ -79,6 +79,7 @@ def preprocess_data(
 	if(keep_price==False):
 		print("Success.\nTrying to drop price features...",end="") if verbose else do_nothing()
 		data = data.drop(columns=return_name_collection())
+	
 	print("Success...") if verbose else do_nothing()
 	#printout number of features and the target
 	if(verbose==1):
@@ -136,6 +137,7 @@ def preprocess_data(
 	#remove samples of data that
 	#index_keep = index_keep[:] 
 	X, y = X[index_keep, :], y[index_keep]	# NOTE X IS OVER-WRITTEN HERE #END NOTE
+	
 	print("Success.") if verbose else do_nothing()
 	#output number of samples dropped
 	print(f'\t{len_samples - len(index_keep)} Samples Dropped.\n')

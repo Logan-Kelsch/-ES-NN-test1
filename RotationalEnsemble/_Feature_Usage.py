@@ -742,12 +742,11 @@ def fn_all_subsets(real_prices: bool = False):
 	fnsub = []
 	# will append each individual feature/f_set here
 	if(real_prices):
-		fnsub.append(['high','low','close','time','volume'])#removable real prices
-	fnsub.append(['ToD','DoW'])
+		fnsub.append(['high','low','close','time','volume',\
+                      'ToD','DoW','barH','wickH','diff_wick'])#removable real prices
 	fnsub.append(fn_vel())
 	fnsub.append(fn_acc())
 	fnsub.append(fn_stoch_k())
-	fnsub.append(['barH','wickH','diff_wick'])
 	fnsub.append(fn_vol_m())
 	fnsub.append(fn_vol_avgDiff())
 	if(real_prices):
