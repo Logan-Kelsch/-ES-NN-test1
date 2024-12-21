@@ -23,7 +23,7 @@ def rotate_partitions(
 	,no_feat_overlap:	bool	=	False
 	,feats_for_all	:	list	=	[]
 	#rotation half of parameters
-	,rotation_type	:	Literal['PCA','Other']='PCA'
+	,rotation_type	:	Literal['PCA','Other','None']	='PCA'
 	,rotation_filter:	bool	=	False
 	,filter_type	:	Literal['Retention','Count']	='Retention'
 	,filter_value	:	Union[float, int] = 0.5
@@ -142,7 +142,7 @@ def split_by_features(
 		case 'full_set':
 			
 			#for the number of requested partitions
-			for partition in num_parts:
+			for partition in range(num_parts):
        
 				#include all univeral inclusion features to each partitions features
 				feature_indices = [k for k, v in all_feats.items() if v in univ_incl]
@@ -158,7 +158,7 @@ def split_by_features(
 		case 'by_subset':
 		
 			#for each partition of requested total
-			for partition in num_parts:
+			for partition in range(num_parts):
        
 				#include all univeral inclusion features to each partitions features
 				feature_indices = [k for k, v in all_feats.items() if v in univ_incl]
@@ -199,8 +199,8 @@ def split_by_features(
 
 def data_rotation(
 	X_partitions:	list							=	[]
-	,rotn_type	:	Literal['PCA','Other']			=	'PCA'
-	,filter_		:	bool							=	False
+	,rotn_type	:	Literal['PCA','Other','None']	=	'PCA'
+	,filter_	:	bool							=	False
 	,fltr_type	:	Literal['Retention','Count']	=	'Retention'
 	,fltr_param	:	Union[float, int]				=	1.0
 ):
@@ -292,6 +292,14 @@ def data_rotation(
 				pca = PCA(n_components=n_components)
 				#append this rotated space to the 
 				X_pca_parts.append(pca.fit_transform(partition))
+
+		#in the case there is no rotation requested
+		case 'None':
+			
+			#increasing dimensionality of arrays (to follow for program wiring)
+			#while not actually doing anything at all to each partitions
+			for partition in X_partitions:
+				X_pca_parts.append(partition)
 
 		#other rotation types/methods. not implemented and illegal cases here.
 		case 'Other':
