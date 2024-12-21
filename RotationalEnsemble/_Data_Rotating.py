@@ -4,33 +4,81 @@
 -   -   -   -   ... random pick but category specific, overlapping or model unique features
 '''
 
-
-'''
-moving into this finally.
-
-NOTE 1
-things to plan on building:
-	
--	there should be a "ZERO" case for this function, where
-given a certain (default) function parameter entry, there 
-is no effect on the data at all except for the transformation
-across the entire feature space through a rotation matrix
-(which we can assume will be with the eigenvector matrix)
-
-
-NOTE 2 
-
-two variables 
-
-This should end with n 'rotations' of the feature space [1-len(features)]
-which will be an array of n variables, all being a set of training data for models.
-'''
-
 from _Utility import *
+from sklearn.decomposition import PCA
 from typing import Literal, Union
+import gc
 import traceback
-import random
 import numpy as np
+
+
+def rotate_partitions(
+	#partition half of parameters
+	X
+	,n_partitions	:	int		=	5
+	,feat_subsets	:	list	=	[]
+	,partition_type	:	Literal['full_set','by_subset']='by_subset'
+	,fraction_feats	:	float	=	0.5
+	,no_feat_overlap:	bool	=	False
+	,feats_for_all	:	list	=	[]
+	#rotation half of parameters
+	,rotation_type	:	Literal['PCA','Other']='PCA'
+	,rotation_filter:	bool	=	False
+	,filter_type	:	Literal['Retention','Count']='Retention'
+	,filter_value	:	Union[float, int] = 0.5
+)	->	list:
+	'''
+		This function is used as an easy method of executing 
+		'data_partition' and 'data_rotation' with
+		more readable parameters.
+	Params:
+	- X:
+	-	_Dataset coming in, supposed to be 'X-train'.
+	- n-partitions:
+	-	_Number of partitions to be made from the dataset 'X'.
+	- feat-subsets:
+	-	_List of dictionaries of featuresets. (dict== feat-index:feat-name) 
+	- partition-type:
+	-	_Type of partitions made, either across all features or by featureset.
+	- fraction-feats:
+	-	_What fraction of features are to be included in each partition
+	- no-feat-overlap:
+	-	_Option to remove possibility of features being in multiple partitions.
+	- feats-for-all:
+	-	_Optional list to put names of any features to keep in all partitions.
+	- rotation-type:
+	-	_Type of rotation made on partitions 'PCA' or 'Other'.
+	- rotation-filter:
+	-	_Option to limit dimensionality of rotated partitions.
+	- filter-type:
+	-	_Type of filter used on rotation if chosen, by data or dimension retention.
+	- filter-value:
+	-	_Parameter for rotation filtering, fraction for 'data', integer for 'dimension'.
+	'''
+
+	#this is a no variable execution and return of both functions.
+
+	#three comments below maps where 
+	#the original X input finds use.
+
+	#return rotated partitions from ...
+	return data_rotation(
+			#the partitions created here ...
+			X_partitions=data_partition(
+					#using original X input !!!
+					X=X
+					,feat_sbst=feat_subsets
+					,num_parts=n_partitions
+					,part_type=partition_type
+					,full_excl=no_feat_overlap
+					,univ_incl=feats_for_all
+					,part_sbst=fraction_feats
+					)
+			,rotn_type=rotation_type
+			,filter_=rotation_filter
+			,fltr_type=filter_type
+			,fltr_param=filter_value
+	)
 
 def data_partition(
 	X
@@ -139,19 +187,18 @@ def data_partition(
 def data_rotation(
 	X_partitions:	list							=	[]
 	,rotn_type	:	Literal['PCA','Other']			=	'PCA'
-	,filter		:	bool							=	False
+	,filter_		:	bool							=	False
 	,fltr_type	:	Literal['Retention','Count']	=	'Retention'
 	,fltr_param	:	Union[float, int]				=	1.0
 ):
 	'''
 		This function takes in a set of data and applies a rotation along the
 		feature space.
-  
   Params:
 - rotn-type:
 -	_Type of rotation (transformation) applied to the feature-space.
 -	_Currently only using PCA, can implement more later.
-- filter:
+- filter-:
 -	_Decide whether or not to decrease dimentionality of feature-space (post-rotation)
 - fltr-type:
 -	_Method of decreasing dimetionality. (Data retention (%), Dimension Count)
@@ -159,6 +206,94 @@ def data_rotation(
 -	_Parameter for filtering. (Percent of data retained, Number of PC retained)
 	'''
 	
+	#ensure X_partitions came in with any data
+	if(len(X_partitions) < 1):
+		print("FATAL: Some silly person decided to try and rotate ZERO partitions of data.")
+		traceback.print_exc()
+		raise
 
-	return #a new dataset that is transformed by eigenvector matrix multiplication
-														#through PCA decomposition
+	#each partition now should be coming in as features ALREADY SELECTED
+	# and now ready for transformation, analysis, and further selection.
+
+	#new variable for storing PCA partitinos
+	X_pca_parts = []
+
+	#splitting up the function first by what type of rotation method is used
+	match(rotn_type):
+
+		#rotate features by primary components
+		case 'PCA':
+			
+			#for each partition of the (training) dataset. (a subset of the dataset)
+			for partition in X_partitions:
+				
+				#ensure partition is coming in ready to be fitted with PCA decomposer
+				if(not isinstance(partition, np.ndarray)):
+					traceback.print_exc()
+					raise TypeError(f"FATAL: partition in X_partitions is not of type 'np.ndarray', came in as '{type(partition)}'.")
+				
+				#create and fit to this partition
+				pca = PCA()
+				pca.fit(partition)
+
+				#set default number of components for PCA (all components of partition)
+				n_components = partition.shape[1]
+
+				#if a type of filter is declared, n_components (and nothing else) is altered in here.
+				if(filter_):
+
+					#ensuring any filter value is greater than illegal zero value
+					if(fltr_param <= 0):
+						traceback.print_exc()
+						raise ValueError("FATAL: So why are you trying to filter components down to <= ZERO data/comps retained?")
+
+					#filtering by data retention (in percent format)
+					if(fltr_type == 'Retention'):
+						#a fraction is wanted for retention, anything over 1.0 is asking for >100% data retention.
+						if(fltr_param > 1.0):
+							traceback.print_exc()
+							raise ValueError(f"FATAL: In data_rotation, filter was of type '{fltr_type}', but value was not a fraction ({fltr_param}).")
+						
+						#calculate cumulative variance
+						cumulative_variance = np.cumsum(pca.explained_variance_ratio_)
+
+						#match the number of components for data to be retained in this partition (+ 1, zero index fixer)
+						n_components = np.argmax(cumulative_variance >= fltr_param) + 1
+
+					#filter by number of features (dimensions) (in float/int format, forced to int by int(np.ceil(value)) at end)
+					if(fltr_type == 'Count'):
+						#a whole number is wanted for count, anything under 1.0 is asking for fraction of one component.
+						if(fltr_param < 1.0):
+							traceback.print_exc()
+							raise ValueError(f"FATAL: In data_rotation, filter was of type '{fltr_type}', but value was not an integer ({fltr_param}).")
+						
+						#ensuring the number of requested primary components are less than the total number of components to pick from
+						if(fltr_param > partition.shape[1]):
+							traceback.print_exc()
+							raise ValueError(f"FATAL: In data_rotation, {fltr_param} components were requested from {partition.shape[1]} components.")
+						
+						#lean towards conservative end of any complex calculation or entry (non int)
+						n_components = int(np.ceil(fltr_param))
+
+				#make formulated sized PCA
+				pca = PCA(n_components=n_components)
+				#append this rotated space to the 
+				X_pca_parts.append(pca.fit_transform(partition))
+
+		#other rotation types/methods. not implemented and illegal cases here.
+		case 'Other':
+			traceback.print_exc()
+			raise NotImplementedError(f"FATAL: in data_rotation, rotating by method 'Other' is not implemented, must be by 'PCA'.")
+		case _:
+			traceback.print_exc()
+			raise ValueError(f"FATAL: in data_rotation, rotn_type cannot be '{rotn_type}', must be 'PCA' or 'Other'.")
+		
+	#cleaning up and dumping no longer needed (likely large) data
+	#QUICKLY QUICKLY!! 
+	del X_partitions
+	#GO GO GO GO GO CLEAN CLEAN CLEAN YEAAAH GOOOOOOOOOOOOOOOOOOOO
+	#QUICK I NEED MY RAM TO FREE UP GET THIS DATAFRAME OUT OF HERE
+	gc.collect()
+
+	#a new list of partitions that are transformed by eigenvector matrix multiplication through PCA decomposition
+	return X_pca_parts
