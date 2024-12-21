@@ -6,6 +6,7 @@
 
 from _Utility import *
 from sklearn.decomposition import PCA
+from sklearn.utils import shuffle
 from typing import Literal, Union
 import gc
 import traceback
@@ -13,23 +14,27 @@ import numpy as np
 
 
 def rotate_partitions(
-	#partition half of parameters
+	#feature partition section of parameters
 	X
-	,n_partitions	:	int		=	5
+	,n_feat_parts	:	int		=	5
 	,feat_subsets	:	list	=	[]
-	,partition_type	:	Literal['full_set','by_subset']='by_subset'
+	,feat_part_type	:	Literal['full_set','by_subset']	='by_subset'
 	,fraction_feats	:	float	=	0.5
 	,no_feat_overlap:	bool	=	False
 	,feats_for_all	:	list	=	[]
 	#rotation half of parameters
 	,rotation_type	:	Literal['PCA','Other']='PCA'
 	,rotation_filter:	bool	=	False
-	,filter_type	:	Literal['Retention','Count']='Retention'
+	,filter_type	:	Literal['Retention','Count']	='Retention'
 	,filter_value	:	Union[float, int] = 0.5
+	#sample partition section of parameters
+	,n_sample_parts	:	int		=	5
+	,smpl_part_type	:	Literal['Even','Sliding']		='Even'
+	,sample_shuffle	:	bool	=	False
 )	->	list:
 	'''
 		This function is used as an easy method of executing 
-		'data_partition' and 'data_rotation' with
+		'split_by_features' and 'data_rotation' with
 		more readable parameters.
 	Params:
 	- X:
@@ -58,18 +63,20 @@ def rotate_partitions(
 
 	#this is a no variable execution and return of both functions.
 
-	#three comments below maps where 
+	#some comments below maps where 
 	#the original X input finds use.
 
-	#return rotated partitions from ...
-	return data_rotation(
-			#the partitions created here ...
-			X_partitions=data_partition(
+	#return sample partitions from ...
+	return split_by_samples(
+		#the rotation of partitions ...
+		X_partitions=data_rotation(
+			#made along the features ...
+			X_partitions=split_by_features(
 					#using original X input !!!
 					X=X
 					,feat_sbst=feat_subsets
-					,num_parts=n_partitions
-					,part_type=partition_type
+					,num_parts=n_feat_parts
+					,part_type=feat_part_type
 					,full_excl=no_feat_overlap
 					,univ_incl=feats_for_all
 					,part_sbst=fraction_feats
@@ -78,9 +85,15 @@ def rotate_partitions(
 			,filter_=rotation_filter
 			,fltr_type=filter_type
 			,fltr_param=filter_value
+			)
+		,num_parts=n_sample_parts
+		,splt_type=smpl_part_type
+		,shuffle=sample_shuffle
 	)
 
-def data_partition(
+####################################################################################
+
+def split_by_features(
 	X
 	,feat_sbst	:	list		=	[]
 	,num_parts	:	int			=	5
@@ -297,3 +310,74 @@ def data_rotation(
 
 	#a new list of partitions that are transformed by eigenvector matrix multiplication through PCA decomposition
 	return X_pca_parts
+
+
+def split_by_samples(
+	X_partitions:	list	=	[]
+	,num_parts	:	int		=	5
+	,splt_type	:	Literal['Even','Sliding']='Even'
+	,shuffle	:	bool	=	False
+)	->	list:
+	'''
+		This function will take a list of partitions of a dataset (partitions along featurespace, and likely rotated).
+		and partition it along the samplespace as to prepare for bagging (or boosting?)
+	Params:
+- X-partitions:
+-	_List of partitions made from the featurespace of the dataset
+- num-parts:
+-	_Number of partitions to make of the dataset_partitions along the samplespace
+- splt-type:
+-	_Method of splitting across samplespace. Even divides samples into num-parts, Sliding makes splits alike LSTM formation.
+- shuffle:
+-	_Option to shuffle the samples before partitioning.
+	'''
+
+	#this object will be returned. (first index: along feature space) (second index: along sample space)
+	#this object is a list.
+	#	this list is of partitions across the feature space of dataset X.
+	#	Each partition of the feature space contains a list.
+	#		This list is of partitions along the sample space.
+	double_partitions = []
+
+	#grab the length of samples in dataset, by reaching into first partition
+	ds_length = len(X_partitions[0])
+
+	#length of each partition made along sample space, floor function to leverage safe 
+	# non loop function for last partition formation in next for loop
+	ss_part_length = int(np.floor((ds_length / num_parts)))
+
+	#for each feature space partition
+	for fs_part in X_partitions:
+
+		#assembly of the partitions made across sample space
+		sample_parts = []
+
+		#fs_part can be altered, but only as a temporary variable, therefore shuffle is here
+		if(shuffle):
+			#This can be implemented without too much hassle, just need to add y as a parameter
+			#into this function to allow the y to be shuffled WITH, also need to check function
+			#To know that shuffling for any segment of samples will have a consistent
+			#and correct y label values to maintain truth
+			raise NotImplementedError("FATAL: Shuffle has not yet been implemented into split_by_samples.")
+
+		if(splt_type == 'Even'):
+			#for making partitions, used simple p-q-r notation
+			#for all sample partitions to be made except last partition, made after loop
+			for i in range(num_parts - 1):
+				p = i*ss_part_length
+				q = (i+1)*ss_part_length
+				sample_parts.append(fs_part[p:q, :])
+			#final partition creation
+			q = (num_parts-1)*ss_part_length
+			r = ds_length
+			sample_parts.append(fs_part[q:r, :])
+
+		if(splt_type == 'Sliding'):
+			#not currently implemented
+			raise NotImplementedError(f"FATAL: Split type in split_by_sample of '{splt_type}' is not yet implemented.")
+
+		#append a list of sample space partitions of this given (fs_part) feature space partition
+		double_partitions.append(sample_parts)
+
+	#returns a 2d array, with first dimension being splits along feature space, and second dimension being splits along sample space.
+	return double_partitions
