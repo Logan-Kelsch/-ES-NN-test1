@@ -137,7 +137,8 @@ def data_partition(
 
 
 def data_rotation(
-	rotn_type	:	Literal['PCA','Other']			=	'PCA'
+	X_partitions:	list							=	[]
+	,rotn_type	:	Literal['PCA','Other']			=	'PCA'
 	,filter		:	bool							=	False
 	,fltr_type	:	Literal['Retention','Count']	=	'Retention'
 	,fltr_param	:	Union[float, int]				=	1.0
@@ -158,5 +159,6 @@ def data_rotation(
 -	_Parameter for filtering. (Percent of data retained, Number of PC retained)
 	'''
 	
+
 	return #a new dataset that is transformed by eigenvector matrix multiplication
 														#through PCA decomposition
