@@ -5,3 +5,14 @@
 '''
 
 
+def train_models(
+    model
+    ,data_parts  :   list    =   []
+    ,
+):
+    '''
+        This function trains a set of models (identical type?) on a list of dataset partitions
+        
+        model should be typed as model delcaration with parameter definition in this funcitons use.
+    '''
+    return

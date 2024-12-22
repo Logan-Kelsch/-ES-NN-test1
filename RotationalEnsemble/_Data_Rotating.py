@@ -65,7 +65,37 @@ def rotate_partitions(
 
 	#some comments below maps where 
 	#the original X input finds use.
-
+ 
+	X_feat_parts =split_by_features(
+					#using original X input !!!
+					X=X
+					,feat_sbst=feat_subsets
+					,num_parts=n_feat_parts
+					,part_type=feat_part_type
+					,full_excl=no_feat_overlap
+					,univ_incl=feats_for_all
+					,part_sbst=fraction_feats
+					)
+ 
+	X_feat_rots=data_rotation(
+			#made along the features ...
+			X_partitions=X_feat_parts
+			,rotn_type=rotation_type
+			,filter_=rotation_filter
+			,fltr_type=filter_type
+			,fltr_param=filter_value
+			)
+ 
+	X_partro = split_by_samples(
+		#the rotation of partitions ...
+		X_partitions=X_feat_rots
+		,num_parts=n_sample_parts
+		,splt_type=smpl_part_type
+		,shuffle=sample_shuffle
+	)
+ 
+	return X_partro
+'''
 	#return sample partitions from ...
 	return split_by_samples(
 		#the rotation of partitions ...
@@ -90,6 +120,7 @@ def rotate_partitions(
 		,splt_type=smpl_part_type
 		,shuffle=sample_shuffle
 	)
+ '''
 
 ####################################################################################
 

@@ -6,6 +6,48 @@
 -   -   -   this I guess is called level-0 models vs level-1 model
 '''
 
+from typing import Literal
+import numpy as np
+
+def pred_proba_fusion(
+	models#			:	any
+	,type_model		:	type
+	,X_test			:	np.ndarray
+	,fusion_type	:	Literal['Popular','Log_regression','Neural_Net'] = 'Popular'
+)   ->    list:
+	'''
+		This function takes in a list of trained models
+  		and an X dataset to predict. It then evaluates all 
+		models on the provided test set, fuses them with
+  		a prefferred method, and returns a list of predictions.
+	'''
+	probas = []
+	for model in models:
+		probas.append(model.predict_proba(X_test))
+
+	proba_fusion = []
+
+	#splitting here based on the method that will be used to combine predictions
+	match(fusion_type):
+     
+     
+		case 'Popular':
+			for i in range(len(X_test)):
+				vote_0, vote_1 = 0, 0
+				for m in range(len(probas)):
+					if(probas[m][i][0] > probas[m][i][1]):
+						vote_0+=1
+					else:
+						vote_1+=1
+				proba_fusion.append(0 if (vote_0 > vote_1) else 1)
+    
+		case 'Log_regression':
+			raise NotImplementedError(f'FATAL: {fusion_type} has not been added to pred_proba_fusion.')
+		case 'Neural_Net':
+			raise NotImplementedError(f'FATAL: {fusion_type} has not been added to pred_proba_fusion.')
+
+	return proba_fusion
+
 '''
 NOTE NOTE NOTE NOTE
 GPT example metamodel
@@ -16,8 +58,8 @@ import numpy as np
 
 # Example base model predictions (n_samples, n_models)
 base_model_preds = np.array([[0.2, 0.6, 0.8],
-                              [0.9, 0.7, 0.3],
-                              [0.1, 0.2, 0.5]])
+							  [0.9, 0.7, 0.3],
+							  [0.1, 0.2, 0.5]])
 
 # Actual labels
 y = np.array([1, 0, 0])
