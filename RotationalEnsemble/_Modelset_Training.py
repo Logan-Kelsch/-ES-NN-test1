@@ -8,6 +8,8 @@ from typing import Union
 def train_models(
 	model_types	:	list	=	[]
 	,data_parts :   list    =   []
+	,use_tuner	:	bool	=	False
+	,use_default:	bool	=	True
 	,cst_mod_prm:	list	=	[]
 ):
 	'''
@@ -26,33 +28,51 @@ def train_models(
 	#Checking for empty list error
 	if(len(model_types)<1):
 		raise ValueError("FATAL: A list was provided for 'model_types', but nothing was in the list.")
+	else:
+		if(len(cst_mod_prm) != len(model_types)):
+			print('NON-FATAL: Dimensions of Custom Parameters (cst_mod_prm) does not match \
+				Dimensions of "Model_Types".\nALL MODEL PARAMETERS ARE FORCED TO DEFAULT.')
 
 	#create 2D list of models to follow 2D array of training sets
 	models = []
 
+	#for each feature space (set of models and data)
 	for feature_space in range(len(data_parts)):
 
-		#
+		#the array of models built from this given featurespace
 		feat_local_models = []
 
+		#for each sample space (of this featurespace)
 		for sample_space in range(len(data_parts[feature_space])):
 
 			#this list should be of length model_types used!
 			#all models here are trained on individual 
 			smpl_local_models = []
 
+			#current selected training set within the 2D array of training sets
 			example_training_set = data_parts[feature_space][sample_space]
 
+			#for each model within the list of model types
 			for m in range(len(model_types)):
 
-				if(model_types[m] == 'aeon_rotation_forest'):
+				#if the model type is a decision tree
+				if(model_types[m] == 'decision_tree'):
+					try:
+						model = DecisionTreeClassifier(**cst_mod_prm[m])
+					except TypeError as e:
+						if 'unexpected keyword argument' in str(e):
+							raise TypeError(f'Model-Type ({model_types[m]}) does not fit to **kwargs ({cst_mod_prm[m]})')
+						#check if error is related to keywords
+
+				#if the model type is a rotation forest
+				elif(model_types[m] == 'aeon_rotation_forest'):
 					model = RotationForestClassifier()
 
 
+	return
 
-
-					'''
-					# List of tuples
+'''
+# List of tuples
 # Dictionary of parameters
 params = {
     "max_depth": 5,
@@ -67,7 +87,4 @@ def decision_tree(max_depth=None, random_state=None):
 decision_tree(**params)
 
 
-					'''
-					
-
-	return
+'''
