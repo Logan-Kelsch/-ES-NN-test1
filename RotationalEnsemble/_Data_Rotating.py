@@ -6,6 +6,7 @@
 
 from _Utility import *
 from sklearn.decomposition import PCA
+from sklearn.preprocessing import FunctionTransformer
 from sklearn.utils import shuffle
 from typing import Literal, Union
 import gc
@@ -33,9 +34,13 @@ def rotate_partitions(
 	,sample_shuffle	:	bool	=	False
 )	->	list:
 	'''
-		This function is used as an easy method of executing 
+	This function is used as an easy method of executing 
 		'split_by_features' and 'data_rotation' with
 		more readable parameters.
+	Returns: (3 items)
+	-	_2D list of training sets
+	-	_1D list of partition feature indices (parallel to feature-space) 
+	-	_1D list of partition transformation functions (parallel to feature_space)
 	Params:
 	- X:
 	-	_Dataset coming in, supposed to be 'X-train'.
@@ -66,7 +71,7 @@ def rotate_partitions(
 	#some comments below maps where 
 	#the original X input finds use.
  
-	X_feat_parts =split_by_features(
+	X_feat_parts, X_part_find =split_by_features(
 					#using original X input !!!
 					X=X
 					,feat_sbst=feat_subsets
@@ -77,7 +82,7 @@ def rotate_partitions(
 					,part_sbst=fraction_feats
 					)
  
-	X_feat_rots=data_rotation(
+	X_feat_rots, X_part_trans=data_rotation(
 			#made along the features ...
 			X_partitions=X_feat_parts
 			,rotn_type=rotation_type
@@ -94,7 +99,7 @@ def rotate_partitions(
 		,shuffle=sample_shuffle
 	)
  
-	return X_partro
+	return X_partro, X_part_find, X_part_trans
 '''
 	#return sample partitions from ...
 	return split_by_samples(
@@ -132,10 +137,11 @@ def split_by_features(
 	,full_excl	:	bool		=	False
 	,univ_incl	:	list		=	[]
 	,part_sbst	:	float		=	0.5
-)	->	list:
+):
 	'''
 		This function is used to split the data for future rotation.
-		It will return a list of (training) data partitions.
+		It will return a list of (training) data partitions and a list
+		of the feature indices, correlated by index of each list.
   Params:
 - X:
 -	_Training set of data.
@@ -165,6 +171,8 @@ def split_by_features(
  
 	#an array (of training sets) of different selections of the featurespace
 	X_partition = []
+	#array of the feature indices for each partition
+	X_part_find = []
 
 	#split function cases first by partition type:
 	match(part_type):
@@ -184,6 +192,7 @@ def split_by_features(
     
 				#create new partitions for each
 				X_partition.append(X[:, feature_indices])
+				X_part_find.append(feature_indices)
 				
 		#features will be picked with consideration of feature-set
 		case 'by_subset':
@@ -216,6 +225,7 @@ def split_by_features(
     
 				#create new partitions for each
 				X_partition.append(X[:, feature_indices])
+				X_part_find.append(feature_indices)
 
 		#illegal case, neither option (of 2) entered
 		case _:
@@ -225,11 +235,13 @@ def split_by_features(
 			raise
 
 	#an array of training sets of different selections of the featurespace
-	return X_partition
+	#AND an array of each partitions feature indices for applying to test data
+	return X_partition, X_part_find
 
 
 def data_rotation(
 	X_partitions:	list							=	[]
+	,X_part_find:	list							=	[]
 	,rotn_type	:	Literal['PCA','Other','None']	=	'PCA'
 	,filter_	:	bool							=	False
 	,fltr_type	:	Literal['Retention','Count']	=	'Retention'
@@ -261,6 +273,8 @@ def data_rotation(
 
 	#new variable for storing PCA partitinos
 	X_pca_parts = []
+	#parallel list to carry all transformations made across partitions
+	X_feat_trans = []
 
 	#splitting up the function first by what type of rotation method is used
 	match(rotn_type):
@@ -323,6 +337,7 @@ def data_rotation(
 				pca = PCA(n_components=n_components)
 				#append this rotated space to the 
 				X_pca_parts.append(pca.fit_transform(partition))
+				X_feat_trans.append(pca)
 
 		#in the case there is no rotation requested
 		case 'None':
@@ -331,6 +346,9 @@ def data_rotation(
 			#while not actually doing anything at all to each partitions
 			for partition in X_partitions:
 				X_pca_parts.append(partition)
+				#create an identity transformation as a placeholder in the list of partition transformers
+				identity_transform = FunctionTransformer()
+				X_feat_trans.append(identity_transform)
 
 		#other rotation types/methods. not implemented and illegal cases here.
 		case 'Other':
@@ -347,8 +365,9 @@ def data_rotation(
 	#QUICK I NEED MY RAM TO FREE UP GET THIS DATAFRAME OUT OF HERE
 	gc.collect()
 
-	#a new list of partitions that are transformed by eigenvector matrix multiplication through PCA decomposition
-	return X_pca_parts
+	#return list of rotated partitions of training set
+	#return a list of feature transforming function for each partition
+	return X_pca_parts, X_feat_trans
 
 
 def split_by_samples(
