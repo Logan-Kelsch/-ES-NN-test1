@@ -50,3 +50,14 @@ def get_int_arguments(func):
     return [param.name for param in signature.parameters.values() 
             if param.annotation is int]
 '''
+
+
+def hyperparameter_tuner(
+        model_with_start_params:any=None
+        ,tuner_verbose:bool=True
+        )   ->  any:
+    '''Model parameter should probably honestly be turned into a string, 
+        and then types should be caught here
+        and then the default parameters could be grabbed from the function
+            predefined in modelset_training!'''
+    return None
