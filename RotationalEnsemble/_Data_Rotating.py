@@ -17,6 +17,7 @@ import numpy as np
 def rotate_partitions(
 	#feature partition section of parameters
 	X
+	,y
 	,n_feat_parts	:	int		=	5
 	,feat_subsets	:	list	=	[]
 	,feat_part_type	:	Literal['full_set','by_subset']	='by_subset'
@@ -37,13 +38,16 @@ def rotate_partitions(
 	This function is used as an easy method of executing 
 		'split_by_features' and 'data_rotation' with
 		more readable parameters.
-	Returns: (3 items)
+	Returns: (4 items)
 	-	_2D list of training sets
 	-	_1D list of partition feature indices (parallel to feature-space) 
 	-	_1D list of partition transformation functions (parallel to feature_space)
+	-	_1D list of partitions in sample space of target array (y)
 	Params:
 	- X:
 	-	_Dataset coming in, supposed to be 'X-train'.
+	- y:
+	-	_i forgor💀, oh yeah, targets parallel to X
 	- n-partitions:
 	-	_Number of partitions to be made from the dataset 'X'.
 	- feat-subsets:
@@ -72,60 +76,35 @@ def rotate_partitions(
 	#the original X input finds use.
  
 	X_feat_parts, X_part_find =split_by_features(
-					#using original X input !!!
-					X=X
-					,feat_sbst=feat_subsets
-					,num_parts=n_feat_parts
-					,part_type=feat_part_type
-					,full_excl=no_feat_overlap
-					,univ_incl=feats_for_all
-					,part_sbst=fraction_feats
-					)
+		#using original X input !!!
+		X=X
+		,feat_sbst=feat_subsets
+		,num_parts=n_feat_parts
+		,part_type=feat_part_type
+		,full_excl=no_feat_overlap
+		,univ_incl=feats_for_all
+		,part_sbst=fraction_feats
+		)
  
 	X_feat_rots, X_part_trans=data_rotation(
-			#made along the features ...
-			X_partitions=X_feat_parts
-			,rotn_type=rotation_type
-			,filter_=rotation_filter
-			,fltr_type=filter_type
-			,fltr_param=filter_value
-			)
+		#made along the features ...
+		X_partitions=X_feat_parts
+		,rotn_type=rotation_type
+		,filter_=rotation_filter
+		,fltr_type=filter_type
+		,fltr_param=filter_value
+		)
  
-	X_partro = split_by_samples(
+	X_partro, y_parts = split_by_samples(
 		#the rotation of partitions ...
 		X_partitions=X_feat_rots
+		,y_train=y
 		,num_parts=n_sample_parts
 		,splt_type=smpl_part_type
 		,shuffle=sample_shuffle
 	)
  
-	return X_partro, X_part_find, X_part_trans
-'''
-	#return sample partitions from ...
-	return split_by_samples(
-		#the rotation of partitions ...
-		X_partitions=data_rotation(
-			#made along the features ...
-			X_partitions=split_by_features(
-					#using original X input !!!
-					X=X
-					,feat_sbst=feat_subsets
-					,num_parts=n_feat_parts
-					,part_type=feat_part_type
-					,full_excl=no_feat_overlap
-					,univ_incl=feats_for_all
-					,part_sbst=fraction_feats
-					)
-			,rotn_type=rotation_type
-			,filter_=rotation_filter
-			,fltr_type=filter_type
-			,fltr_param=filter_value
-			)
-		,num_parts=n_sample_parts
-		,splt_type=smpl_part_type
-		,shuffle=sample_shuffle
-	)
- '''
+	return X_partro, X_part_find, X_part_trans, y_parts
 
 ####################################################################################
 
@@ -241,7 +220,6 @@ def split_by_features(
 
 def data_rotation(
 	X_partitions:	list							=	[]
-	,X_part_find:	list							=	[]
 	,rotn_type	:	Literal['PCA','Other','None']	=	'PCA'
 	,filter_	:	bool							=	False
 	,fltr_type	:	Literal['Retention','Count']	=	'Retention'
@@ -371,7 +349,8 @@ def data_rotation(
 
 
 def split_by_samples(
-	X_partitions:	list	=	[]
+	y_train	
+	,X_partitions:	list	=	[]
 	,num_parts	:	int		=	5
 	,splt_type	:	Literal['Even','Sliding']='Even'
 	,shuffle	:	bool	=	False
@@ -397,8 +376,19 @@ def split_by_samples(
 	#		This list is of partitions along the sample space.
 	double_partitions = []
 
+	#list of partitions made of y, allows for forced dimensionality
+	y_partitions = []
+
+	#boolean function to act as single toggle as this partition only needs to be made one time.
+	#will set this to false each iteration so that it only goes first time
+	part_y = True
+
 	#grab the length of samples in dataset, by reaching into first partition
 	ds_length = len(X_partitions[0])
+
+	#ensure target length is the same as the sample length
+	if(len(y_train)!=ds_length):
+		raise ValueError(f"FATAL: (in split_by_samples) Length of target data ({len(y_train)}) does not match length of sample data ({ds_length}).")
 
 	#length of each partition made along sample space, floor function to leverage safe 
 	# non loop function for last partition formation in next for loop
@@ -425,17 +415,25 @@ def split_by_samples(
 				p = i*ss_part_length
 				q = (i+1)*ss_part_length
 				sample_parts.append(fs_part[p:q, :])
-			#final partition creation
+				if(part_y):
+					y_partitions.append(y_train[p:q])
+			#final partition creation, q here equals q above always.
 			q = (num_parts-1)*ss_part_length
 			r = ds_length
 			sample_parts.append(fs_part[q:r, :])
+			if(part_y):
+				y_partitions.append(y_train[q:r])
 
 		if(splt_type == 'Sliding'):
 			#not currently implemented
 			raise NotImplementedError(f"FATAL: Split type in split_by_sample of '{splt_type}' is not yet implemented.")
+		
+		#toggle off partition, reaching here means a SINGLE set of samplespace partitions has occured
+		part_y = False
 
 		#append a list of sample space partitions of this given (fs_part) feature space partition
 		double_partitions.append(sample_parts)
 
 	#returns a 2d array, with first dimension being splits along feature space, and second dimension being splits along sample space.
-	return double_partitions
+	#and a list of y_train samplespace partitions
+	return double_partitions, y_partitions

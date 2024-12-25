@@ -46,7 +46,7 @@ def train_models(
 	,param_mode	:	Literal['default','tuner','custom']	=	'default'
 	,cst_mod_prm:	list	=	[]
 	,tnr_verbose:	bool	=	True
-):
+)	->	list:
 	'''
 		This function trains a set of models (identical type?) on a list of dataset partitions.
 		Returns a 3D array of models NOTE CORRECT THIS reference ln275 NOTE for the 2d array of dataparts (is 2d no matter what)
@@ -284,4 +284,4 @@ def train_models(
 	#entering end-of-function space
 
 	#returns a 3D array of models, fit to their respective datasets!
-	return
+	return models
