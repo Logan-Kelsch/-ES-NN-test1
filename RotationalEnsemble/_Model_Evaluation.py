@@ -22,6 +22,8 @@
 '''
 
 from typing import Literal
+import matplotlib.pyplot as plt
+from sklearn.metrics import accuracy_score
 #import libraries that will contain used model type functions - for .predict()
 from sklearn.tree import DecisionTreeClassifier
 from aeon.classification.sklearn import RotationForestClassifier
@@ -33,6 +35,7 @@ def evaluate_models(
 		,prfm_gnrl	:	Literal['by_each','by_mspace','by_sspace','by_fspace','by_set','all']	=	'all'
 		,prfm_stat	:	Literal['avg','std_dev','high_low','all']	=	'all'
 		,disp_mthd	:	Literal['as_graph','as_value','as_both']	=	'as_both'
+		,pred_type	:	Literal['regression','classification']		=	'classification'
 ):
 	'''
 	This function will take a 3D array of trained models and evaluate them on a given dataset.
@@ -65,6 +68,20 @@ def evaluate_models(
 	-	as-graph:   _Show visualizations of statistics only. 
 	-	as-value:   _Show numerical values of statistics only.
 	-	as-both:    _Show both numerical values and visualizations of statistics.
+	- pred-type:
+	-	_Declare what type of predictions the model is making, regression or classification.
 	'''
 
 	'''NOTE(D1:featurespace, D2:samplespace, D3:modelspace)NOTE'''
+
+	#begin function by type of prediction being made
+	match(pred_type):
+
+		#if models are predicting a regression value
+		case 'regression':
+			raise NotImplementedError(f'FATAL: Prediction Type ({pred_type}) not yet implemented in "evaluate_models"')
+		
+		#if models are predicting classifications
+		case 'classification':
+			pass
+
