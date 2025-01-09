@@ -30,11 +30,14 @@ from aeon.classification.sklearn import RotationForestClassifier
 
 def evaluate_models(
 		models
+		,X_train
+		,y_train
 		,X_test
 		,y_test
 		,prfm_gnrl	:	Literal['by_each','by_mspace','by_sspace','by_fspace','by_set','all']	=	'all'
 		,prfm_stat	:	Literal['avg','std_dev','high_low','all']	=	'all'
 		,disp_mthd	:	Literal['as_graph','as_value','as_both']	=	'as_both'
+		,test_whch	:	Literal['independent','train','unseen_train','all_unseen','all']	=	'all'
 		,pred_type	:	Literal['regression','classification']		=	'classification'
 ):
 	'''
@@ -68,9 +71,21 @@ def evaluate_models(
 	-	as-graph:   _Show visualizations of statistics only. 
 	-	as-value:   _Show numerical values of statistics only.
 	-	as-both:    _Show both numerical values and visualizations of statistics.
+	- test-whch:
+	-	_Choose what sets the models will attempt to predict.
+	-	independent:    _Score the models on a dataset fully disconnected from training set.
+	-	train:          _Score the models on the dataset (specific samples and features) they were trained on.
+	-	unseen-train:   _Score the models on the sections of the training dataset never seen by each model.
+	-	all-unseen:     _Score the models on independed plus unseen-train data.
+	-	all:            _Score the models on seen and unseen data (unseen true-averaged).
 	- pred-type:
 	-	_Declare what type of predictions the model is making, regression or classification.
+
+		Definitions:
+	- true-averaged:
+	-	Averaging two sets of performances by accounting for number of samples to ensure equality of samples.
 	'''
+	
 
 	'''NOTE(D1:featurespace, D2:samplespace, D3:modelspace)NOTE'''
 
@@ -83,5 +98,14 @@ def evaluate_models(
 		
 		#if models are predicting classifications
 		case 'classification':
-			pass
+			'''
+			First, collect the data in an array/list format of some sort of tuple-like datastructure.
+				Tuple should be the accuracy, and the index for the feature,sample,model space of the model.
+			With this, all accuracies are collected, and all performances are seperable with index variables.
+			'''
+			'''NOTE THINK ABOUT BRINGING IN AND INCORPORATION OF:
+					-	MODEL SPECIFIC FEATURE INDICES FOR TRANSFORMATION 
+					-	TRANSFORMING FUNCIONS 
+					-	MODEL SPECIFIC SAMPLE INDICES
+			'''
 
