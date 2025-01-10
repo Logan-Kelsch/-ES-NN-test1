@@ -28,8 +28,12 @@ from sklearn.metrics import accuracy_score
 from sklearn.tree import DecisionTreeClassifier
 from aeon.classification.sklearn import RotationForestClassifier
 
+'''Iterations of models should run along iterations of X,y first two dimensions'''
+
 def evaluate_models(
 		models
+		,X_find
+		,X_trans
 		,X_train
 		,y_train
 		,X_test
@@ -48,6 +52,14 @@ def evaluate_models(
 
 	- models:
 	-	_3D array of models (D1:featurespace, D2:samplespace, D3:modelspace)
+	- X-find:
+	-	_1D array of feature-index lists for model specific feature grouping. (Iterates parallel to D1 of models)
+	- X-trans:
+	-	_1D array of find partition specific transformer functions. (Iterates parallel to D1 of models)
+	- X-train:
+	-	_2D array of feature/samplespace partition training sets. (Iterates parallel to D1,D2 of models)
+	- y-train:
+	-	_1D array of samplespace partitions of targets. (Iterates parallel to D2 of models)
 	- X-test:
 	-	_Feature half of dataset, for .predict of models
 	- y-test:
