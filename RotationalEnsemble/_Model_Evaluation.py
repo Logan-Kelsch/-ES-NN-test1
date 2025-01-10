@@ -24,6 +24,9 @@
 from typing import Literal
 import matplotlib.pyplot as plt
 from sklearn.metrics import accuracy_score
+from sklearn.metrics import recall_score
+from sklearn.metrics import precision_score
+from sklearn.metrics import confusion_matrix
 #import libraries that will contain used model type functions - for .predict()
 from sklearn.tree import DecisionTreeClassifier
 from aeon.classification.sklearn import RotationForestClassifier
@@ -115,6 +118,41 @@ def evaluate_models(
 				Tuple should be the accuracy, and the index for the feature,sample,model space of the model.
 			With this, all accuracies are collected, and all performances are seperable with index variables.
 			'''
+
+			seen_performances = []
+			indp_performances = []
+			#iterate through the 3D array of models. (fspace=featurespace, sspace=samplespace)
+			for f_index, a_given_fspace in enumerate(models):
+				for s_index, a_given_sspace in enumerate(a_given_fspace):
+					for m_index, model in enumerate(a_given_sspace):
+
+						'''NOTE HERE we are looking at a specific model at location (f,s,m) in models HERE NOTE'''
+						#NOTE refer to function argument definitions for any indexing questions.
+
+						#if user has requested self test for all models
+						if(test_whch in ('train','all')):
+
+							#all data in X_train is pre-transformed, so X_train[f][s] is ready to go!
+							local_y_pred = model.predict(X_train[f_index][s_index])
+
+							#collect all datapoints with parallel targets at y_train[s]
+							accuracy = accuracy_score(	y_train[s_index], local_y_pred)
+							precision= precision_score(	y_train[s_index], local_y_pred)
+							recall   = recall_score(	y_train[s_index], local_y_pred)
+							conf_matx= confusion_matrix(y_train[s_index], local_y_pred)
+
+							#turn all data into a tuple to add to the flatten performance list.
+							local_performance = (f_index, s_index, m_index, accuracy, precision, recall, conf_matx)
+							seen_performances.append(local_performance)
+
+						#if user requests to test unseen section of training data
+						if(test_whch in ('unseen_train','all_unseen','all')):
+							pass
+
+						#if user requests independent test for all models
+						if(test_whch in ('independent','all')):
+							pass
+
 			'''NOTE THINK ABOUT BRINGING IN AND INCORPORATION OF:
 					-	MODEL SPECIFIC FEATURE INDICES FOR TRANSFORMATION 
 					-	TRANSFORMING FUNCIONS 
