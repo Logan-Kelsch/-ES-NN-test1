@@ -119,7 +119,8 @@ def evaluate_models(
 			With this, all accuracies are collected, and all performances are seperable with index variables.
 			'''
 
-			seen_performances = []
+			seen_performances = [] #seen/ training data relative to each model
+			unsn_performances = [] #unseen/ 
 			indp_performances = []
 			#iterate through the 3D array of models. (fspace=featurespace, sspace=samplespace)
 			for f_index, a_given_fspace in enumerate(models):
@@ -147,10 +148,41 @@ def evaluate_models(
 
 						#if user requests to test unseen section of training data
 						if(test_whch in ('unseen_train','all_unseen','all')):
-							pass
+							
+							#create a flat list of predictions variable
+							local_y_pred = []
+
+							#create a custom target list for performance evaluation
+							local_y_true = []
+
+							#iterate through all X_train unseen
+							for f, fspace in enumerate(X_train):
+								for s, train_subset in enumerate(fspace):
+									#if the training subset is not the models training data (if is unseen data)
+									if(f!=f_index|s!=s_index):
+										local_y_pred.extend(model.predict(train_subset))
+										local_y_true.extend(y_train[s])
+
+							#collect all datapoints with parallel targets at y_train[s]
+							accuracy = accuracy_score(	local_y_true, local_y_pred)
+							precision= precision_score(	local_y_true, local_y_pred)
+							recall   = recall_score(	local_y_true, local_y_pred)
+							conf_matx= confusion_matrix(local_y_true, local_y_pred)
+
+							#turn all data into a tuple to add to the flatten performance list.
+							local_performance = (f_index, s_index, m_index, accuracy, precision, recall, conf_matx)
+							unsn_performances.append(local_performance)
+
 
 						#if user requests independent test for all models
 						if(test_whch in ('independent','all')):
+							
+							#bring in and transform the X_test according to model specific transformation function and feature collection
+
+							#predict transformed X test set
+
+							#collect performances and add it to indp performances
+							
 							pass
 
 			'''NOTE THINK ABOUT BRINGING IN AND INCORPORATION OF:
