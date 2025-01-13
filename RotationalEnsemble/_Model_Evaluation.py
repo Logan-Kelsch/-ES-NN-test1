@@ -185,7 +185,7 @@ def evaluate_models(
 
 							#local_independent set is now ready for prediction on current model
 							#predict transformed X test set
-							localy_y_pred = model.predict(local_indp)
+							local_y_pred = model.predict(local_indp)
 
 							#collect all datapoints with parallel targets y_test
 							accuracy = accuracy_score(	y_test, local_y_pred)
@@ -199,7 +199,8 @@ def evaluate_models(
 
 			#NOTE HERE we have collected a flat list of all model performances 
 			# by location in modelset and performances as a tuple in the following format
-			#(feature-space, sample-space, model-space, model accuracy, model precision, model recall, confusion matrix)
+			#(feature-space, sample-space, model-space, 
+			# 										   model accuracy, model precision, model recall, confusion matrix)
 
 			#here is where different meta models will be created, can consider saving models at a different time,
 			#im sure errors will arrise by this point, so try first to get up to and through meta model creation and performance
