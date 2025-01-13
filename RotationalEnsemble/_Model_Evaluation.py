@@ -35,7 +35,7 @@ from aeon.classification.sklearn import RotationForestClassifier
 
 def evaluate_models(
 		models
-		,X_find
+		,X_findx
 		,X_trans
 		,X_train
 		,y_train
@@ -55,7 +55,7 @@ def evaluate_models(
 
 	- models:
 	-	_3D array of models (D1:featurespace, D2:samplespace, D3:modelspace)
-	- X-find:
+	- X-findx:
 	-	_1D array of feature-index lists for model specific feature grouping. (Iterates parallel to D1 of models)
 	- X-trans:
 	-	_1D array of find partition specific transformer functions. (Iterates parallel to D1 of models)
@@ -119,9 +119,9 @@ def evaluate_models(
 			With this, all accuracies are collected, and all performances are seperable with index variables.
 			'''
 
-			seen_performances = [] #seen/ training data relative to each model
-			unsn_performances = [] #unseen/ 
-			indp_performances = []
+			seen_performances = [] #'seen'  		training data relative to each model
+			unsn_performances = [] #'unseen'		training data relative to each model
+			indp_performances = [] #'independent'	test data transformed for each model
 			#iterate through the 3D array of models. (fspace=featurespace, sspace=samplespace)
 			for f_index, a_given_fspace in enumerate(models):
 				for s_index, a_given_sspace in enumerate(a_given_fspace):
@@ -177,17 +177,36 @@ def evaluate_models(
 						#if user requests independent test for all models
 						if(test_whch in ('independent','all')):
 							
-							#bring in and transform the X_test according to model specific transformation function and feature collection
+							#bring in the test set, transform according to current model
+							#X_trans is the list of feature transforming functions (ex: pca)
+							#X_trans[f] is an actual transforming function
+							#X_test[:, findx] is the testing featureset of the current models featurespace
+							local_indp = X_trans[f_index].transform(X_test[:, X_findx[f_index]])
 
+							#local_independent set is now ready for prediction on current model
 							#predict transformed X test set
+							localy_y_pred = model.predict(local_indp)
 
-							#collect performances and add it to indp performances
-							
-							pass
+							#collect all datapoints with parallel targets y_test
+							accuracy = accuracy_score(	y_test, local_y_pred)
+							precision= precision_score(	y_test, local_y_pred)
+							recall   = recall_score(	y_test, local_y_pred)
+							conf_matx= confusion_matrix(y_test, local_y_pred)
 
-			'''NOTE THINK ABOUT BRINGING IN AND INCORPORATION OF:
-					-	MODEL SPECIFIC FEATURE INDICES FOR TRANSFORMATION 
-					-	TRANSFORMING FUNCIONS 
-					-	MODEL SPECIFIC SAMPLE INDICES
-			'''
+							#turn all data into a tuple to add to the flatten performance list.
+							local_performance = (f_index, s_index, m_index, accuracy, precision, recall, conf_matx)
+							indp_performances.append(local_performance)
+
+			#NOTE HERE we have collected a flat list of all model performances 
+			# by location in modelset and performances as a tuple in the following format
+			#(feature-space, sample-space, model-space, model accuracy, model precision, model recall, confusion matrix)
+
+			#here is where different meta models will be created, can consider saving models at a different time,
+			#im sure errors will arrise by this point, so try first to get up to and through meta model creation and performance
+			#output before considering further, in execution should not take that long
+
+			#NOTE NOTE NOTE META MODEL IDEAS TO CONSIDER
+			#TRY ALL. bi-log-reg / log-reg, naive-bayes, lin-reg, pop-vote, average, NN, LSTM NN, DT, timeseries DT
+			#can start with just one, actually yeah just start with one BUT the option for all with notimplemented error for
+			#incompleted methods, just to have a working method first! we are very close.
 
