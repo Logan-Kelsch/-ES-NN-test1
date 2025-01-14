@@ -6,6 +6,15 @@
 -   -   -   this I guess is called level-0 models vs level-1 model
 '''
 
+			#NOTE NOTE NOTE META MODEL IDEAS TO CONSIDER
+			#TRY ALL. bi-log-reg / log-reg, naive-bayes, lin-reg, pop-vote, average, NN, LSTM NN, DT, timeseries DT
+			#can start with just one, actually yeah just start with one BUT the option for all with notimplemented error for
+			#incompleted methods, just to have a working method first! we are very close.
+
+			#here is where different meta models will be created, can consider saving models at a different time,
+			#im sure errors will arrise by this point, so try first to get up to and through meta model creation and performance
+			#output before considering further, in execution should not take that long
+
 from typing import Literal
 import numpy as np
 

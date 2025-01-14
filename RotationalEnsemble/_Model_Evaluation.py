@@ -196,18 +196,52 @@ def evaluate_models(
 							#turn all data into a tuple to add to the flatten performance list.
 							local_performance = (f_index, s_index, m_index, accuracy, precision, recall, conf_matx)
 							indp_performances.append(local_performance)
+			
+			#Here we have collected all information and have 3 lists of performances recorded
 
-			#NOTE HERE we have collected a flat list of all model performances 
-			# by location in modelset and performances as a tuple in the following format
-			#(feature-space, sample-space, model-space, 
-			# 										   model accuracy, model precision, model recall, confusion matrix)
+			display_evaluation(seen_performances, prfm_gnrl, prfm_stat, disp_mthd)
+			display_evaluation(unsn_performances, prfm_gnrl, prfm_stat, disp_mthd)
+			display_evaluation(indp_performances, prfm_gnrl, prfm_stat, disp_mthd)
 
-			#here is where different meta models will be created, can consider saving models at a different time,
-			#im sure errors will arrise by this point, so try first to get up to and through meta model creation and performance
-			#output before considering further, in execution should not take that long
+#This function will be a subfunction used in 'evaulate_models' in this file.
+#This will be used specifically to output performances as requested.
+def display_evaluation(
+		prfm_tupls	:	list	=	[]
+		,prfm_gnrl	:	Literal['by_each','by_mspace','by_sspace','by_fspace','by_set','all']	=	'all'
+		,prfm_stat	:	Literal['avg','std_dev','high_low','all']	=	'all'
+		,disp_mthd	:	Literal['as_graph','as_value','as_both']	=	'as_both'
+):
+	'''
+	This function is used within evaluate-models as an easier method of displaying performances.
+		Params:
+	- prfm-tupls:
+	-	_performance tuples, a list of tuples of model's basic and performance info.
+	-	_format: (feature-space index, sample-space index, model-space index
+	-				_lmld accuracy, lmld precision, lmld recall, lmld confusion matrix)
+	- prfm-gnrl:
+	-	_Performance Generalization, choice for how to generalize collected performances.
+	-	by-each:    _Shows individual model performance. (only supports numerical outputs in disp-mthd)
+	-	by-mspace:  _Shows model performance by each model type.  (modelspace)
+	-	by-sspace:  _Shows model performance by each sample set.  (samplespace)
+	-	by-fspace:  _Shows model performance by each feature set. (featurespace)
+	-	by-set:     _Shows model performances by training set. (feature-sample pairs)
+	-	all:        _Shows all model performance generalization types.
+	- prfm-stat:
+	-	_Performance Statistics, show selected performance statistics.
+	-	avg:        _Show average performance of model generalization.
+	-	std-dev:    _Show standard deviation of model generalization.
+	-	high-low:   _Show best and worst performance of model generalization.
+	-	all:        _Show all statistics for each model generalization.
+	- disp-mthd:
+	-	_Display Method, method of displaying selected statistics of model generalizations
+	-	as-graph:   _Show visualizations of statistics only. 
+	-	as-value:   _Show numerical values of statistics only.
+	-	as-both:    _Show both numerical values and visualizations of statistics.
+		Definitions:
+	- lmld:
+	-	_local model on local dataset.
+	'''
 
-			#NOTE NOTE NOTE META MODEL IDEAS TO CONSIDER
-			#TRY ALL. bi-log-reg / log-reg, naive-bayes, lin-reg, pop-vote, average, NN, LSTM NN, DT, timeseries DT
-			#can start with just one, actually yeah just start with one BUT the option for all with notimplemented error for
-			#incompleted methods, just to have a working method first! we are very close.
-
+	if(len(prfm_tupls) == 0):
+		return
+	pass
