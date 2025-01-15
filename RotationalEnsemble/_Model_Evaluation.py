@@ -22,6 +22,9 @@
 '''
 
 from typing import Literal
+from collections import defaultdict
+from statistics import stdev
+import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import recall_score
@@ -199,9 +202,15 @@ def evaluate_models(
 			
 			#Here we have collected all information and have 3 lists of performances recorded
 
-			display_evaluation(seen_performances, prfm_gnrl, prfm_stat, disp_mthd)
-			display_evaluation(unsn_performances, prfm_gnrl, prfm_stat, disp_mthd)
-			display_evaluation(indp_performances, prfm_gnrl, prfm_stat, disp_mthd)
+			if(len(seen_performances)>0):
+				print(f"\tDisplaying all performances for all 'seen' traning samples: ({len(seen_performances)} cases)\n")
+				display_evaluation(seen_performances, prfm_gnrl, prfm_stat, disp_mthd)
+			if(len(unsn_performances)>0):
+				print(f"\n\tDisplaying all performance for all 'unseen' training samples: ({len(unsn_performances)} cases)\n")
+				display_evaluation(unsn_performances, prfm_gnrl, prfm_stat, disp_mthd)
+			if(len(indp_performances)>0):
+				print(f"\n\tDisplaying all performances for all independent samples: ({len(indp_performances)} cases)\n")
+				display_evaluation(indp_performances, prfm_gnrl, prfm_stat, disp_mthd)
 
 #This function will be a subfunction used in 'evaulate_models' in this file.
 #This will be used specifically to output performances as requested.
@@ -242,6 +251,110 @@ def display_evaluation(
 	-	_local model on local dataset.
 	'''
 
-	if(len(prfm_tupls) == 0):
-		return
-	pass
+	#this parameter will be used as the universal list of all generalizations..
+	#a splitting area will be appended to this variable for each generalization included.
+	#for each setting, there is only one generalization, so there is only more than one item in
+	#	original variable length here when 'all' is selected, it will then be length 5.
+
+	#	NOTE NOTE DEFINITION: EIC = 'each item containing' END#NOTE END#NOTE
+	#the 'splitting area' will just be a list of sublists, making this under all circumstances
+	# a list EIC splitting-lists EIC raw-performance-sublists
+	performance_generalizations = []
+
+	#first split up performances based on 'Generalization' parameter
+	
+	if(prfm_gnrl in ('by_each','all')):
+		#if evaluation is requested to be done on the most broad level, evaluated evenly across all models
+		#create dummy list to bypass splitting area in 'performance_generalizations' as there are no sublists
+		list_nester = []
+		list_nester.append(prfm_tupls)
+		#add to generalizations list
+		performance_generalizations.append(list_nester)
+
+	if(prfm_gnrl in ('by_fspace','all')):
+		#if evaluation is requested to be done based off of featurespaces of the modelset
+		
+		#create a grouping variable
+		fgroups = defaultdict(list)
+		
+		#append each performance collected based off of featurespace index
+		for individual_performance in prfm_tupls:
+			#like bucket system, use fspace index value AS indexing value for append location!
+			fgroups[individual_performance[0]].append(individual_performance)
+		
+		#NON-overwriting method of turning defaultdict into a list of lists
+		fspace_grouped = list(fgroups.values())
+		
+		#this variable being appended is now a list of performance sublists, AKA a splitting-list
+		performance_generalizations.append(fspace_grouped)
+
+	if(prfm_gnrl in ('by_sspace','all')):
+		#if evaluation is requested to be done based off of samplespaces of the modelset
+
+		#create a grouping variable
+		sgroups = defaultdict(list)
+
+		#append each performance collected based off of samplespace index
+		for individual_performance in prfm_tupls:
+			#like bucket system, use sspace index values AS indexing value for append location!
+			sgroups[individual_performance[1]].append(individual_performance)
+		
+		#NON-overwriting method of turning default dict into a list of lists
+		sspace_grouped = list(sgroups.values())
+
+		#this variable being appended is now a list of performance sublists, AKA a splitting-list
+		performance_generalizations.append(sspace_grouped)
+
+	if(prfm_gnrl in ('by_mspace','all')):
+		#if evaulation is requested to be done based off of modelspaces of the modelset
+
+		#create a grouping variable
+		mgroups = defaultdict(list)
+
+		#append each perfromance collected based off of modelspace index
+		for individual_performance in prfm_tupls:
+			#like bucket system, use mspace index values AS indexing value for append location!
+			mgroups[individual_performance[2]].append(individual_performance)
+
+			#NON-overwriting method of turning default dict into a list of lists
+			mspace_grouped = list(mgroups.values())
+
+			#this variable being appended is now a list of performance sublists, AKA a splitting-list
+			performance_generalizations.append(mspace_grouped)
+
+	if(prfm_gnrl in ('by_set','all')):
+		pass
+
+
+
+
+	#second collect all performance statistics desired, and flatten into tuple
+
+
+	#third display performances based on 'Display Method' parameter	
+
+	if(disp_mthd in ('as_value','as_both')):
+		pass
+
+	if(disp_mthd in ('as_graph','as_both')):
+		raise NotImplementedError(f'FATAL: The output of graphs has not yet been implemented.')
+
+
+	''' NOTE for sorting by some given index or value of the tuple (code here is assuming sorting off first value in tuple)
+Create a defaultdict to group tuples by the first item
+groups = defaultdict(list)
+
+# Group tuples based on the first item
+for tup in data:
+    groups[tup[0]].append(tup)
+
+# Extract the grouped tuples into separate lists
+grouped_lists = list(groups.values())'''
+
+	''' NOTE this is for collecting the standard deviation of given value in tuple
+	# Extract the second item from each tuple
+second_items = [item[1] for item in data]
+
+# Calculate the standard deviation
+std_dev = statistics.stdev(second_items)
+	'''
