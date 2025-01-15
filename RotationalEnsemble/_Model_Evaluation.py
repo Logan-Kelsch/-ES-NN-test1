@@ -202,6 +202,9 @@ def evaluate_models(
 			
 			#Here we have collected all information and have 3 lists of performances recorded
 
+			#output modelset dimensionality
+			print(f"Dimensions of Trained Models:\n\tFeature Space: {len(models)}\n\tSample Space: {len(models[0])}\n\tModel Space: {len(models[0][0])}\n")
+
 			if(len(seen_performances)>0):
 				print(f"\tDisplaying all performances for all 'seen' traning samples: ({len(seen_performances)} cases)\n")
 				display_evaluation(seen_performances, prfm_gnrl, prfm_stat, disp_mthd)
@@ -323,38 +326,83 @@ def display_evaluation(
 			performance_generalizations.append(mspace_grouped)
 
 	if(prfm_gnrl in ('by_set','all')):
+		#going to implement this later..
 		pass
 
+	#second collect all performance statistics requested, and flatten into tuple
+	#Consists of: Average, StdDev, High, Low
+
+	#This variable will be used to store statistics in same format as performance_generalizations.
+	performance_statistics = []
 
 
+	#need to check each generalization, create splitter list by iterating each item there
+	for generalization in performance_generalizations:
 
-	#second collect all performance statistics desired, and flatten into tuple
+		#an appending list to add each split to to append it accordingly to performance statistcs list
+		general_stats = []
 
+		for split in generalization:
+			#NOTE HERE we are looking at a list of performances already sectioned out HERE END#NOTE
+
+			#in mirrored format, the split is replaced with 2D array
+			#	list of [accuracy data, precision data, recall data, combined confusion matrix(implement later)]
+			# (tuple indices:)	   3			4			  5				      6
+			#	each acc,prec,rec will be a list of [avg, std, low, high]
+			local_accuracy  = [prfm[3] for prfm in split]
+			local_precision = [prfm[4] for prfm in split]
+			local_recall	= [prfm[5] for prfm in split]
+
+			#This is the item that will be appended for EACH split, building a splitting-list
+			split_stats = []
+			
+			#collect all desired statistics
+			accuracy_stats 	=[np.average(local_accuracy), np.std(local_accuracy), np.min(local_accuracy), np.max(local_accuracy)]
+			precision_stats =[np.average(local_precision),np.std(local_precision),np.min(local_precision),np.max(local_precision)]
+			recall_stats	=[np.average(local_recall),   np.std(local_recall),   np.min(local_recall),   np.max(local_recall)]
+			#not currently implementing the confusion matrix
+			#combined_confusion matrix = bada bing bada boom
+
+			#append to create list of split specific statistical points
+			split_stats.append(accuracy_stats)
+			split_stats.append(precision_stats)
+			split_stats.append(recall_stats)
+			#not currently implementing the confusion matrix
+			#split_stats.append(combined_confusion_matrix)
+
+			#each split data goes here, general_stats because a splitting-list
+			general_stats.append(split_stats)
+		#append each splitting list to the performance statistics, mirroring structure of performance generalizations
+		performance_statistics.append(general_stats)
 
 	#third display performances based on 'Display Method' parameter	
+	#iterating method will be replicated between both of these options.
+
+	#iterable list for ease of titling!
+	generalization_titles = ['Overall','By Feature Space','By Sample Space','By Model Space','TITLE ERROR SET CASE IS NOT IMPLEMENTED']
+
+	#iterable list of ease of titling!
+	statistics_titles = ['Accuracy','Precision','Recall','TITLE ERROR CONFUSION MATRIX CASE IS NOT IMPLEMENTED']
+
+	'''NOTE CURRENT	VALUE DISPLAY INDENTATION (USE OF \t) IS BUILT SPECIFICALLY FOR 4 SPACE TABS. END NOTE'''
 
 	if(disp_mthd in ('as_value','as_both')):
-		pass
+
+		#iterate through each generalization selected
+		for g_index, generalization in enumerate(performance_statistics):
+			print(f'\nStatistics {generalization_titles[g_index]}:\n')
+
+			#NOTE here we are looking at each generalization, where 'generalization is a splitting-list
+			#SO we are going to show the statistics of all splits! (meaning of all occupied spaces of given dimension)
+			for split_index, split in enumerate(generalization):
+
+				#NOTE here we are looking at each split statistics, where split is iterable stat categories (acc,prec,rec)
+				print(f'\tSplit {split_index}:')
+				print(f'\t\t\t\t\tAverage\tStd.Dv.\tLow\t\tHigh')
+				for stat_index, stat_cat in split:
+					#This print line will output the statistic type, idents extra for rec, then prints out all four statistics for each type (a,s,l,h)
+					print(f"\t\t{statistics_titles[stat_index]}{'\t' if stat_index==2 else ''}\t{stat_cat[0]}\t{stat_cat[1]}\t{stat_cat[2]}\t{stat_cat[3]}")
+
 
 	if(disp_mthd in ('as_graph','as_both')):
 		raise NotImplementedError(f'FATAL: The output of graphs has not yet been implemented.')
-
-
-	''' NOTE for sorting by some given index or value of the tuple (code here is assuming sorting off first value in tuple)
-Create a defaultdict to group tuples by the first item
-groups = defaultdict(list)
-
-# Group tuples based on the first item
-for tup in data:
-    groups[tup[0]].append(tup)
-
-# Extract the grouped tuples into separate lists
-grouped_lists = list(groups.values())'''
-
-	''' NOTE this is for collecting the standard deviation of given value in tuple
-	# Extract the second item from each tuple
-second_items = [item[1] for item in data]
-
-# Calculate the standard deviation
-std_dev = statistics.stdev(second_items)
-	'''
