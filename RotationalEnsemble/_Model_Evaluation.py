@@ -23,7 +23,6 @@
 
 from typing import Literal
 from collections import defaultdict
-from statistics import stdev
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import accuracy_score
@@ -357,9 +356,9 @@ def display_evaluation(
 			split_stats = []
 			
 			#collect all desired statistics
-			accuracy_stats 	=[np.average(local_accuracy), np.std(local_accuracy), np.min(local_accuracy), np.max(local_accuracy)]
-			precision_stats =[np.average(local_precision),np.std(local_precision),np.min(local_precision),np.max(local_precision)]
-			recall_stats	=[np.average(local_recall),   np.std(local_recall),   np.min(local_recall),   np.max(local_recall)]
+			accuracy_stats 	=[np.mean(local_accuracy), np.std(local_accuracy), np.min(local_accuracy), np.max(local_accuracy)]
+			precision_stats =[np.mean(local_precision),np.std(local_precision),np.min(local_precision),np.max(local_precision)]
+			recall_stats	=[np.mean(local_recall),   np.std(local_recall),   np.min(local_recall),   np.max(local_recall)]
 			#not currently implementing the confusion matrix
 			#combined_confusion matrix = bada bing bada boom
 
@@ -399,7 +398,7 @@ def display_evaluation(
 				#NOTE here we are looking at each split statistics, where split is iterable stat categories (acc,prec,rec)
 				print(f'\tSplit {split_index}:')
 				print(f'\t\t\t\t\tAverage\tStd.Dv.\tLow\t\tHigh')
-				for stat_index, stat_cat in split:
+				for stat_index, stat_cat in enumerate(split):
 					#This print line will output the statistic type, idents extra for rec, then prints out all four statistics for each type (a,s,l,h)
 					print(f"\t\t{statistics_titles[stat_index]}{'\t' if stat_index==2 else ''}\t{stat_cat[0]}\t{stat_cat[1]}\t{stat_cat[2]}\t{stat_cat[3]}")
 
