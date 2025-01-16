@@ -387,6 +387,8 @@ def display_evaluation(
 
 	if(disp_mthd in ('as_value','as_both')):
 
+		print(len(performance_statistics))
+
 		#iterate through each generalization selected
 		for g_index, generalization in enumerate(performance_statistics):
 			print(f'\nStatistics {generalization_titles[g_index]}:\n')
