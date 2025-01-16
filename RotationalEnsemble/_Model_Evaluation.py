@@ -318,11 +318,11 @@ def display_evaluation(
 			#like bucket system, use mspace index values AS indexing value for append location!
 			mgroups[individual_performance[2]].append(individual_performance)
 
-			#NON-overwriting method of turning default dict into a list of lists
-			mspace_grouped = list(mgroups.values())
+		#NON-overwriting method of turning default dict into a list of lists
+		mspace_grouped = list(mgroups.values())
 
-			#this variable being appended is now a list of performance sublists, AKA a splitting-list
-			performance_generalizations.append(mspace_grouped)
+		#this variable being appended is now a list of performance sublists, AKA a splitting-list
+		performance_generalizations.append(mspace_grouped)
 
 	if(prfm_gnrl in ('by_set','all')):
 		#going to implement this later..
@@ -391,7 +391,7 @@ def display_evaluation(
 
 		#iterate through each generalization selected
 		for g_index, generalization in enumerate(performance_statistics):
-			print(f'\nStatistics {generalization_titles[g_index]}:\n')
+			print(f'\nStatistics {generalization_titles[g_index] if len(performance_statistics)>1 else prfm_gnrl}:\n')
 
 			#NOTE here we are looking at each generalization, where 'generalization is a splitting-list
 			#SO we are going to show the statistics of all splits! (meaning of all occupied spaces of given dimension)
@@ -399,10 +399,14 @@ def display_evaluation(
 
 				#NOTE here we are looking at each split statistics, where split is iterable stat categories (acc,prec,rec)
 				print(f'\tSplit {split_index}:')
-				print(f'\t\t\t\t\tAverage\tStd.Dv.\tLow\t\tHigh')
+				print(f'\t\t\t\tAvg\tSt.Dv.\tLow\tHigh')
 				for stat_index, stat_cat in enumerate(split):
 					#This print line will output the statistic type, idents extra for rec, then prints out all four statistics for each type (a,s,l,h)
-					print(f"\t\t{statistics_titles[stat_index]}{'\t' if stat_index==2 else ''}\t{stat_cat[0]}\t{stat_cat[1]}\t{stat_cat[2]}\t{stat_cat[3]}")
+					print(f"\t\t{statistics_titles[stat_index]}{'\t' if stat_index==2 else ''}\t"
+							f"{round(stat_cat[0],2) if prfm_stat in ('avg','all') else ''}\t"
+							f"{round(stat_cat[1],2) if prfm_stat in ('std_dev','all') else ''}\t"
+							f"{round(stat_cat[2],2) if prfm_stat in ('high_low','all') else ''}\t"
+							f"{round(stat_cat[3],2) if prfm_stat in ('high_low','all') else ''}")
 
 
 	if(disp_mthd in ('as_graph','as_both')):
