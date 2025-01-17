@@ -33,6 +33,7 @@ def rotate_partitions(
 	,n_sample_parts	:	int		=	5
 	,smpl_part_type	:	Literal['Even','Sliding']		='Even'
 	,sample_shuffle	:	bool	=	False
+	,lstm_format	:	bool	=	False
 )	->	list:
 	'''
 	This function is used as an easy method of executing 
@@ -84,6 +85,7 @@ def rotate_partitions(
 		,full_excl=no_feat_overlap
 		,univ_incl=feats_for_all
 		,part_sbst=fraction_feats
+		,lstm_frmt=lstm_format
 		)
  
 	X_feat_rots, X_part_trans=data_rotation(
@@ -93,6 +95,7 @@ def rotate_partitions(
 		,filter_=rotation_filter
 		,fltr_type=filter_type
 		,fltr_param=filter_value
+		,lstm_frmt=lstm_format
 		)
  
 	X_partro, y_parts = split_by_samples(
@@ -116,6 +119,7 @@ def split_by_features(
 	,full_excl	:	bool		=	False
 	,univ_incl	:	list		=	[]
 	,part_sbst	:	float		=	0.5
+	,lstm_frmt	:	bool		=	False
 ):
 	'''
 		This function is used to split the data for future rotation.
@@ -203,7 +207,7 @@ def split_by_features(
 				feature_indices = list(set(feature_indices))
     
 				#create new partitions for each
-				X_partition.append(X[:, feature_indices])
+				X_partition.append(X[:,:, feature_indices] if lstm_frmt else X[:,feature_indices])
 				X_part_find.append(feature_indices)
 
 		#illegal case, neither option (of 2) entered
@@ -224,6 +228,7 @@ def data_rotation(
 	,filter_	:	bool							=	False
 	,fltr_type	:	Literal['Retention','Count']	=	'Retention'
 	,fltr_param	:	Union[float, int]				=	1.0
+	,lstm_frmt	:	bool							=	False
 ):
 	'''
 		This function takes in a set of data and applies a rotation along the
@@ -270,7 +275,7 @@ def data_rotation(
 				
 				#create and fit to this partition
 				pca = PCA()
-				pca.fit(partition)
+				pca.fit(partition[:,0,:] if lstm_frmt else partition)
 
 				#set default number of components for PCA (all components of partition)
 				n_components = partition.shape[1]
@@ -314,7 +319,7 @@ def data_rotation(
 				#make formulated sized PCA
 				pca = PCA(n_components=n_components)
 				#append this rotated space to the 
-				X_pca_parts.append(pca.fit_transform(partition))
+				X_pca_parts.append(pca.fit_transform(partition[:,0,:] if lstm_frmt else partition))
 				X_feat_trans.append(pca)
 
 		#in the case there is no rotation requested

@@ -48,6 +48,7 @@ def evaluate_models(
 		,disp_mthd	:	Literal['as_graph','as_value','as_both']	=	'as_both'
 		,test_whch	:	Literal['independent','train','unseen_train','all_unseen','all']	=	'all'
 		,pred_type	:	Literal['regression','classification']		=	'classification'
+		,lstm_frmt	:	bool	=	False
 ):
 	'''
 	This function will take a 3D array of trained models and evaluate them on a given dataset.
@@ -183,7 +184,7 @@ def evaluate_models(
 							#X_trans is the list of feature transforming functions (ex: pca)
 							#X_trans[f] is an actual transforming function
 							#X_test[:, findx] is the testing featureset of the current models featurespace
-							local_indp = X_trans[f_index].transform(X_test[:, X_findx[f_index]])
+							local_indp = X_trans[f_index].transform(X_test[:,0, X_findx[f_index]] if lstm_frmt else X_test[:, X_findx[f_index]])
 
 							#local_independent set is now ready for prediction on current model
 							#predict transformed X test set

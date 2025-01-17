@@ -1,5 +1,7 @@
 import random
 import traceback
+import numpy as np
+from sklearn.utils.class_weight import compute_class_weight
 
 class model_params:
 	def __init__(self):
@@ -89,3 +91,21 @@ def pick_n_from_list(
         
     #GIVE ME BACK MY DANG NUMBERS THAT ARE UNIQUE AND N LENGTH OF RANGE [START,END]
     return picks
+
+#this function will generate class weights if the model is classification
+def get_class_weights(y):
+    classes = np.unique(y)
+    weights = compute_class_weight('balanced', classes=classes, y=y)
+    class_weights = {int(cls): weight for cls, weight in zip(classes,weights)}
+    return class_weights
+
+#This function works as a model that only predicts the provided value for every instance.
+def dummy_predict(X_test, prediction=1):
+	#create the prediction array for return
+	y_pred = np.array([])
+
+	#go through each sample of the X_test set
+	for sample in X_test:
+		y_pred = np.append(y_pred, prediction)
+
+	return y_pred

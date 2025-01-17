@@ -15,6 +15,7 @@
 			#im sure errors will arrise by this point, so try first to get up to and through meta model creation and performance
 			#output before considering further, in execution should not take that long
 
+from _Utility import *
 from typing import Literal
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, precision_score, recall_score
@@ -37,6 +38,7 @@ def train_test_meta_model(
 	,shuffle		:	bool	=	False
 	,metam_type		:	Literal['popular_vote','logistic_regression','Neural_Net','knn'
 						'timeseries_forest','decision_tree','dummy'] = 'popular_vote'
+	,use_cls_wt		:	bool	=	True
 )   ->    list:
 	'''
 		This function takes in a 3D list of trained models and uses their predictions as
@@ -71,7 +73,7 @@ def train_test_meta_model(
 	#Splitting the training set into what the metamodel is trained on, and what it is validated on.
 	X_metatrain, X_metatest, y_metatrain, y_metatest = train_test_split(X_test, y_test, test_size=val_size, shuffle=shuffle)
 
-	metamodel = meta_train(metam_type, X_metatrain, y_metatrain)
+	metamodel = meta_train(metam_type, X_metatrain, y_metatrain, use_class_weight=use_cls_wt)
 
 	#collect predictions for self and for independent testing, based on whether model peeks at data
 	match(nolearn_model):
@@ -127,7 +129,7 @@ def train_test_meta_model(
 
 	return metamodel, X_test
 		
-def meta_train(metam_type, X_train, y_train):
+def meta_train(metam_type, X_train, y_train, use_class_weight):
 	'''
 	This function will be used to train and return a model.
 	This function returns 'None' for any nolearner models
@@ -138,18 +140,30 @@ def meta_train(metam_type, X_train, y_train):
 
 		#If the user requests model is popular vote, return None, nolearner model
 		case 'popular_vote'|'dummy':
-			return None
+			model = None
 		
 		case 'logistic_regression':
-			return LogisticRegression().fit(X_train, y_train)
+			model = LogisticRegression().fit(X_train, y_train)
 		
 		case 'knn':
-			return KNeighborsClassifier(n_neighbors=20).fit(X_train, y_train)
+			model = KNeighborsClassifier(n_neighbors=20).fit(X_train, y_train)
 		
 		case 'decision_tree':
-			return DecisionTreeClassifier(max_depth=2).fit(X_train, y_train)
+			model = DecisionTreeClassifier(max_depth=4).fit(X_train, y_train)
 
-	return
+	#Here I am going to have a few cases to add class weights if requested.
+	if(use_class_weight):
+		#If the model is a base classifier with the class weight parameter
+		if hasattr(model,'class_weight'):
+				#apply the class weight
+				model.class_weight = get_class_weights(y_train)
+		elif hasattr(model, 'base_estimator'):
+			#If it does, then check if that base classifier has class weights
+			if hasattr(model.base_estimator, 'class_weight'):
+				#apply the class weight to the models base classifier if so
+				model.base_estimator.class_weight = get_class_weights(y_train)
+
+	return model
 
 def meta_predict(metam_type, metamodel, X_test):
 	#first ensure that X_test is iterable
@@ -178,13 +192,8 @@ def meta_predict(metam_type, metamodel, X_test):
 		#if the user requests pointless predictions, of value 1
 		case 'dummy':
 
-			#create the prediction array for return
-			y_pred = np.array([])
-
-			#go through each sample of the X_test set
-			for sample in X_test:
-				y_pred = np.append(y_pred, 1)
-
+			#My dummy predictor in utility, also has custom prediction value
+			y_pred = dummy_predict(X_test)
 			return y_pred
 
 		#Logistic Regression Model is of the sklearn variety

@@ -4,6 +4,7 @@
 -   -   -   LSTM NN will have to come later
 '''
 from _Hyperparam_Optimizer import *
+from _Utility import *
 from typing import Union, Literal
 from sklearn.tree import DecisionTreeClassifier
 from aeon.classification.sklearn import RotationForestClassifier
@@ -54,6 +55,8 @@ def train_models(
 	,param_mode	:	Literal['default','tuner','custom']	=	'default'
 	,cst_mod_prm:	list	=	[]
 	,tnr_verbose:	bool	=	True
+	,use_cls_wt	:	bool	=	True
+	,lstm_frmt	:	bool	=	False
 )	->	list:
 	'''
 		This function trains a set of models (identical type?) on a list of dataset partitions.
@@ -324,6 +327,22 @@ def train_models(
 				   NOTE class weights passed to this point? 
 				   NOTE decision trees have sample weights &&
 				   NOTE Neural Networds have class weights'''
+				
+				#Throwing this in here unsure if it will bug out
+				#Apply class weight to each model on each partition for training
+				if(use_cls_wt):
+					#If the model is a base classifier with the class weight parameter
+					if hasattr(model,'class_weight'):
+						#apply the class weight
+						model.class_weight = get_class_weights(y_current_partition)
+					#Check also if the model contains a base classifier
+					elif hasattr(model, 'base_estimator'):
+						#If it does, then check if that base classifier has class weights
+						if hasattr(model.base_estimator, 'class_weight'):
+							#apply the class weight to the models base classifier if so
+							model.base_estimator.class_weight = get_class_weights(y_current_partition)
+						
+
 				#fit each model to its correlating training partition set
 				model.fit(X_current_partition, y_current_partition)
 

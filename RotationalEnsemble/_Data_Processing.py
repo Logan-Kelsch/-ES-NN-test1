@@ -6,6 +6,7 @@
 #import libraries
 import pandas as pd
 import numpy as np
+import sys
 import traceback
 from _Feature_Usage import *
 from sklearn.model_selection import train_test_split
@@ -54,13 +55,19 @@ def preprocess_data(
  	#Attempt to load in pandas file
 	try:
 		data=pd.read_csv(file_name)
+		#variable for later printout
+		print(f"Success.\nSize of dataset:\t{sys.getsizeof(data)}")
+		#trying to convert all of the float64 to float32 for memory
+		#float_cols = data.select_dtypes(include=['float64']).columns
+		data = data.astype('float32')
+		print(f"Size after reduction:\t{sys.getsizeof(data)}")
 	except Exception as e:
 		#error output and traceback
-		print(f'Could not load file ({file_name}). Please check the file name.')
+		print(f'\nCould not load file ({file_name}). Please check the file name.')
 		traceback.print_exc()
 		raise
 
-	print("Success.\nTrying to drop unused targets...",end="") if verbose else do_nothing()
+	print("Trying to drop unused targets...",end="") if verbose else do_nothing()
 	#set target here
 	if(mod_type == 'Regression'):
 		data = data.drop(columns=tn_classification())
@@ -92,6 +99,7 @@ def preprocess_data(
 	X = data.iloc[:, :-1].values
 	y = data.iloc[:, -1].values
 
+	print(type(X),type(X[0]),type(X[0][0]))
  
 	print("Success.\nTrying to collect all feature names and indices...",end='') if verbose else do_nothing()
 	#collect list of all feature subsets as dicts {feature_index:feature_name}
