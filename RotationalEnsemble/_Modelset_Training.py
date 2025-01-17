@@ -7,6 +7,7 @@ from _Hyperparam_Optimizer import *
 from typing import Union, Literal
 from sklearn.tree import DecisionTreeClassifier
 from aeon.classification.sklearn import RotationForestClassifier
+from aeon.classification.sklearn import ContinuousIntervalTree
 
 
 def show_available_model_types():
@@ -22,6 +23,11 @@ def show_available_model_types():
 		   -	-	AEON Rotation Forest\n\
 		-	-	{default_parameters('aeon_rf')}\n\
 	   \n\
+	   'continuous_interval_tree'\n\
+	   'cit'\n\
+	   -	-	Sci-Kit Learn ContinuousIntervalTreeVectorClassifier\n\
+	   -	-	{default_parameters('cit')}\n\
+	   \n\
 	   ")
 	return
 
@@ -32,10 +38,12 @@ def default_parameters(model_type:str='')->dict:
 	-	_String indicating what type of model is used.
 	'''
 	if(model_type in ('dt','decision_tree')):
-		return {'criterion':'gini','max_depth':8,'min_samples_split':2,'min_samples_leaf':1}
+		return {'criterion':'gini','max_depth':4,'min_samples_split':2,'min_samples_leaf':1}
 	elif(model_type in ('aeon_rf','rotation_forest')):
 		return {'base_estimator':DecisionTreeClassifier(max_depth=4),'n_estimators':4,\
 				  'min_group':1,'max_group':20,'remove_proportion':0.3,'n_jobs':-1}
+	elif(model_type in ('cit','continuous_interval_tree')):
+		return {'max_depth':4,'thresholds':20}
 	else:
 		return {None:None}
 
@@ -242,6 +250,63 @@ def train_models(
 								try:
 									model = hyperparameter_tuner(
 										model_with_start_params=RotationForestClassifier(**default_parameters(model_types[m]))
+										,tuner_verbose=tnr_verbose)
+								#generalize exception-e statement as tuner error if it fails
+								except Exception as e:
+									raise print(f'FATAL: Tuner error:\n{e}')
+
+					case 'cit'|'continuous_interval_tree':
+
+						#do match case for each parameter mode, default, tuner, custom
+						match(param_mode):
+		
+							#if the parameter mode is set to default for each model
+							case 'default':
+
+								#see if keyword parameters will fit to model type
+								try:
+									model = ContinuousIntervalTree(**default_parameters(model_types[m]))
+								#expecting typeErrors if any, printout and show here
+								except TypeError as e:
+									#expecting this specific error type, approach as follows
+									if 'unexpected keyword argument' in str(e):
+										raise TypeError(f'Default parameters: {default_parameters(model_types[m])}'
+														f'Are not fitting to **kwargs for model of type {model_types[m]}')
+									#all other typeErrors, still most likely case
+									else:
+										raise TypeError(f'FATAL: Unexpected TypeError:\n{e}')
+								#any other unexpected error, unlikely but I would want to exit the program
+								except Exception as e:
+									print(f'FATAL: Unexpected error:\n{e}')
+									raise
+							
+							#if the parameter mode is set to custom for each model
+							case 'custom':
+
+								#see if keyword parameters will fit to model type
+								try:
+									model = ContinuousIntervalTree(**cst_mod_prm[m])
+								#expecting typeErrors if any, printout and show here
+								except TypeError as e:
+									#expecting this specific error type, approach as follows
+									if 'unexpected keyword argument' in str(e):
+										raise TypeError(f'Custom parameters: {cst_mod_prm[m]}'
+														f'Are not fitting to **kwargs for model of type {model_types[m]}')
+									#all other typeErrors, still most likely case
+									else:
+										raise TypeError(f'FATAL: Unexpected TypeError:\n{e}')
+								#any other unexpected error, unlikely but I would want to exit the program
+								except Exception as e:
+									print(f'FATAL: Unexpected error:\n{e}')
+									raise
+							
+							#if the parameter mode is set to utilize the hyperparameter tuner
+							case 'tuner':
+
+								#using try-except, (12/24/24) unsure of WHICH way this may fail
+								try:
+									model = hyperparameter_tuner(
+										model_with_start_params=ContinuousIntervalTree(**default_parameters(model_types[m]))
 										,tuner_verbose=tnr_verbose)
 								#generalize exception-e statement as tuner error if it fails
 								except Exception as e:
