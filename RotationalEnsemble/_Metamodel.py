@@ -19,6 +19,10 @@ from typing import Literal
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, precision_score, recall_score
 from sklearn.metrics import confusion_matrix
+from sklearn.linear_model import LogisticRegression
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.tree import DecisionTreeClassifier
+from aeon.classification.interval_based import TimeSeriesForestClassifier
 import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
@@ -31,7 +35,8 @@ def train_test_meta_model(
 	,y_test
 	,val_size		:	float	=	0.2
 	,shuffle		:	bool	=	False
-	,metam_type		:	Literal['popular_vote','Log_regression','Neural_Net'] = 'Popular'
+	,metam_type		:	Literal['popular_vote','logistic_regression','Neural_Net','knn'
+						'timeseries_forest','decision_tree','dummy'] = 'popular_vote'
 )   ->    list:
 	'''
 		This function takes in a 3D list of trained models and uses their predictions as
@@ -39,7 +44,7 @@ def train_test_meta_model(
 	'''
 	
 	#boolean value for differentiating whether .fit is used (whether data is seen before predicting)
-	nolearn_model = True if metam_type in ('popular_vote','') else False
+	nolearn_model = True if metam_type in ('popular_vote','dummy') else False
 
 	#this variable will be a flattened list of all binary prediction values of each model
 	#This list will also be synonymous to a transpose of a featureset for training
@@ -66,19 +71,20 @@ def train_test_meta_model(
 	#Splitting the training set into what the metamodel is trained on, and what it is validated on.
 	X_metatrain, X_metatest, y_metatrain, y_metatest = train_test_split(X_test, y_test, test_size=val_size, shuffle=shuffle)
 
+	metamodel = meta_train(metam_type, X_metatrain, y_metatrain)
 
 	#collect predictions for self and for independent testing, based on whether model peeks at data
 	match(nolearn_model):
 		case True:#Sugguests no data was seen by meta-model (ex: pop-vote)
-			indp_pred = meta_predict(metam_type, X_test)
+			indp_pred = meta_predict(metam_type, metamodel, X_test)
 			self_pred = None
 
 			indp_true = y_test
 			self_true = None
 
 		case False:#Suggests data was seen by meta-model (ex: NN)
-			self_pred = meta_predict(metam_type, X_metatrain)
-			indp_pred = meta_predict(metam_type, X_metatest)
+			self_pred = meta_predict(metam_type, metamodel, X_metatrain)
+			indp_pred = meta_predict(metam_type, metamodel, X_metatest)
 
 			self_true = y_metatrain
 			indp_true = y_metatest
@@ -118,9 +124,34 @@ def train_test_meta_model(
 	plt.ylabel('True')
 	plt.title(f'Confusion Matrix for Meta-Model Independent Test')
 	plt.show()
-		
 
-def meta_predict(metam_type, X_test):
+	return metamodel, X_test
+		
+def meta_train(metam_type, X_train, y_train):
+	'''
+	This function will be used to train and return a model.
+	This function returns 'None' for any nolearner models
+	'''
+
+	#training is split here based off of type of meta model requested
+	match(metam_type):
+
+		#If the user requests model is popular vote, return None, nolearner model
+		case 'popular_vote'|'dummy':
+			return None
+		
+		case 'logistic_regression':
+			return LogisticRegression().fit(X_train, y_train)
+		
+		case 'knn':
+			return KNeighborsClassifier(n_neighbors=20).fit(X_train, y_train)
+		
+		case 'decision_tree':
+			return DecisionTreeClassifier(max_depth=2).fit(X_train, y_train)
+
+	return
+
+def meta_predict(metam_type, metamodel, X_test):
 	#first ensure that X_test is iterable
 	try:
 		iter(X_test)
@@ -144,8 +175,38 @@ def meta_predict(metam_type, X_test):
 
 			return y_pred
 
-		case 'Log_regression':
-			raise NotImplementedError(f'FATAL: {metam_type} has not been added to pred_proba_fusion.')
+		#if the user requests pointless predictions, of value 1
+		case 'dummy':
+
+			#create the prediction array for return
+			y_pred = np.array([])
+
+			#go through each sample of the X_test set
+			for sample in X_test:
+				y_pred = np.append(y_pred, 1)
+
+			return y_pred
+
+		#Logistic Regression Model is of the sklearn variety
+		case 'logistic_regression':
+			
+			#prediction function prewired in sklearn, ready to go
+			y_pred = metamodel.predict(X_test)
+			return y_pred
+		
+		#knn is of the sklearn variety - k nearest neighbor
+		case 'knn':
+
+			#prediction function prewired in sklearn, ready to go
+			y_pred = metamodel.predict(X_test)
+			return y_pred
+		
+		case 'decision_tree':
+
+			#prediction function prewired in sklearn, ready to go
+			y_pred = metamodel.predict(X_test)
+			return y_pred
+
 		case 'Neural_Net':
 			raise NotImplementedError(f'FATAL: {metam_type} has not been added to pred_proba_fusion.')
 
