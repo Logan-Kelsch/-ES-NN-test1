@@ -107,12 +107,13 @@ def augmod_dataset(data):
 	#TARGET ENGINEERING
 	target_r = te_vel_reg(data)
 	target_c = te_vel_class(data)
+	target_a = te_area_class(data)
 
 	#list of dataframes
 	df_list = [data, f_ToD, f_DoW, f_vel, f_acc, \
 			   f_stchK, f_barH, f_wickH, f_wickD,\
 				f_volData, f_maData, f_maDiff, f_hihi, f_lolo,\
-					f_hilo, f_stochHiLo, target_r, target_c]
+					f_hilo, f_stochHiLo, target_r, target_c, target_a]
 
 	#cut off error head and error tail of dataframes
 	df_trunk_1 = [df.iloc[:-60] for df in df_list]
@@ -660,6 +661,45 @@ def te_vel_class(X):
 	#print(feature_set)
 	return feature_set
 
+#New target section, price area
+#price area: 
+# integral/area of price displacement of future m minutes
+#This function will require cutting out first 60 samples of the dataset
+def te_area_class(X):
+	#original feature #3 is close of candles
+	close = X.iloc[:, 2].values
+	#list to collect all target data across dataset
+	new_data = []
+
+	l = len(X)
+	#For each sample of the provided dataset
+	for i in range(l):
+		#This row is the collection of targets for each sample
+		row = []
+		#binary class data
+		#for each target to be added
+		for trgt_disp in range(5, 61, 5):
+			area = 0
+
+			#add up displacement at each minute. (crnt-time,trgt-time]
+			for mins in range(trgt_disp):
+				#	  close at each future min,	current close
+				area += close[(i+ mins+ 1) %l] - close[i %l]
+
+			#append each target binary classification based on sign of area
+			row.append(0 if area < 0 else 1)
+		
+		#NOTE HERE all targets of the given sample i are in row HERE END#NOTE
+		new_data.append(row)
+
+	#target column name information, a for area, 2 for # classes
+	cols = [f'tc_2a_{i}m' for i in range(5, 61, 5)]
+
+	#convert all of this to a new DataFrame
+	target_set = pd.DataFrame(new_data, columns=cols)
+
+	return target_set
+
 '''-------------------------------------------------------------------------------
 	NOTE FEATURE/TARGET NAME FUNCTIONS
 	NOTE fn_ denotes 'feature(/set) names' for mass feature dropping
@@ -835,6 +875,15 @@ def tn_classification():
 	cols = [f'tc_2c_{i}m' for i in range(5, 61, 5)]+\
 		[f'tc_3c_5p_{i}m' for i in range(5, 61, 5)]+\
 		[f'tc_4c_5p_{i}m' for i in range(5, 61, 5)]
+	return cols
+
+def tn_area_classification():
+	cols = [f'tc_2a_{i}m' for i in range(5, 61, 5)]
+	return cols
+
+def tn_area_classification_exception(exc):
+	cols = [f'tc_2a_{i}m' for i in range(5,exc,5)]+\
+		[f'tc_2a_{i}m' for i in range(exc+5,61,5)]
 	return cols
 
 def tn_classification_exception(num_classes, class_split, minute):

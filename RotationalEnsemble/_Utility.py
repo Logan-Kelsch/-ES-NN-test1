@@ -3,6 +3,10 @@ import traceback
 import numpy as np
 from sklearn.utils.class_weight import compute_class_weight
 
+#function to simplify code visualization/readability (primary for verbose printouts)
+def do_nothing():
+	pass
+
 class model_params:
 	def __init__(self):
 		self.model_type = None

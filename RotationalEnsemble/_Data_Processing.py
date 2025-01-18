@@ -9,16 +9,13 @@ import numpy as np
 import sys
 import traceback
 from _Feature_Usage import *
+from _Utility import *
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import RobustScaler
 from sklearn.preprocessing import MinMaxScaler
 from typing import Literal
 import gc
-
-#function to simplify code visualization (primary for verbose printouts)
-def do_nothing():
-	pass
 
 '''
 	This function takes care of all data pre-processing with
@@ -31,7 +28,7 @@ def preprocess_data(
     ,shfl_splt:	bool	=		True
     ,t_start:	int		=		570
     ,t_end:		int		=		720
-    ,mod_type:	Literal['Classification','Regression']= 'Classification'
+    ,mod_type:	Literal['Classification','Regression','Area_Classification']= 'Classification'
     ,target_t:	int		=		15
     ,num_class:	int		=		2
     ,split_val:	int		=		5
@@ -69,13 +66,21 @@ def preprocess_data(
 
 	print("Trying to drop unused targets...",end="") if verbose else do_nothing()
 	#set target here
-	if(mod_type == 'Regression'):
+	if(mod_type == 'Regression'):		  ### REGRESSION #####################
 		data = data.drop(columns=tn_classification())
+		data = data.drop(columns=tn_area_classification())
 		data = data.drop(columns=tn_regression_excpetion(target_t))
-	else:   ### CLASSIFICATION #################
+	elif(mod_type == 'Classification'):   ### CLASSIFICATION #################
 		data = data.drop(columns=tn_regression())
+		data = data.drop(columns=tn_area_classification())
 		data = data.drop(columns=tn_classification_exception(\
 			num_class, split_val, target_t))
+	elif(mod_type == 'Area_Classification'):## AREA CLASSIFICATION ###########
+		data = data.drop(columns=tn_regression())
+		data = data.drop(columns=tn_classification())
+		data = data.drop(columns=tn_area_classification_exception(target_t))
+	else:
+		raise TypeError(f"\nFATAL: Model type of '{mod_type}' is not recognized.")
 	
 	print("Success.\nTrying to collect indices of wanted times...",end="") if verbose else do_nothing()
  	#grab list of all indices of samples in good times
