@@ -19,11 +19,7 @@ class NN:
 	def __init__(
 		self
 		,predict_mode	:	Literal['Classification','Regression','Multi-Class']=	'Classification'
-		,architecture	:	Literal['default_shallow','default_deep','custom']	=	'default_shallow'
-		,LSTM			:	bool												=	False
-		,time_steps		:	int													=	5
 		,class_count	:	int													=	4
-		,custom_architecture:Union[None, list]									=	None
 
 	):
 		self.pred_mode	=	predict_mode
@@ -61,15 +57,7 @@ class NN:
     		min_lr=1e-6
 		)
 		
-		#architecture specific information, this contains the actual model
-		#the actual model is a tf.keras.sequential( where here is a list of tf.keras.layers objects)
-		match(architecture):
-			case 'default_shallow':
-				pass
-			case 'default_deep':
-				pass
-			case 'custom':
-				self.model	=	tf.keras.Sequential()
+		
 	
 	#Here are a couple property functions, will probably miss a few and will need to reup this frequently
 
@@ -156,12 +144,88 @@ class NN:
 	#Here are other functions that need to be fully implemented.
 	#As im building the structure of this im just going to write empty functions that will need completed for future use
 
+	def build_fit(
+		self,
+		X_train
+		,y_trian
+		,LSTM			:	bool												=	False
+		,time_steps		:	int													=	5
+		,architecture	:	Literal['default_shallow','default_deep','custom']	=	'default_shallow'
+		,custom_architecture:Union[None, list]									=	None
+	):
+		#declare model structure as variable, possibly self.model already
+		#model.compile
+		#return the model?
+		#no no, make it interact like sklearn/tf models.
+		#This function will check or build the architecture
 
+		#Okay, this function should create and build self.model (of type tf.keras.Sequential)
+		#then it will call self.model.compile
+		#then it will call self.model.fit
+		#and it will then return history
+
+		'''
+		cmp = 'C'
+		if tf.config.list_physical_devices('GPU'):
+    	cmp = 'G'
+    	pass
+		with tf.device('/'+cmp+'PU:0'):
+    	print('Running on: '+cmp+'PU\n')
+    	model = build_LSTM_model()
+    	#loaded_model = load_model()
+    	used_model = model
+    	history = model_fit(X_train, y_train, used_model, epochs, 
+                        shuffle=True,
+                        verbose=1, 
+                        validation_data=(X_val, y_val), 
+                        batch_size=125,
+                        callbacks=[reduce_lr, early_stopping],
+                        params=params)
+		'''
+		'''
+		model.compile(optimizer=opt6,
+                  loss=params.loss_function
+                  ,metrics=params.performance_metrics)
+		'''
+		'''
+		#architecture specific information, this contains the actual model
+		#the actual model is a tf.keras.sequential( where here is a list of tf.keras.layers objects)
+		match(architecture):
+			case 'default_shallow':
+				pass
+			case 'default_deep':
+				pass
+			case 'custom':
+				self.model	=	tf.keras.Sequential()
+		'''
+		'''
+		def model_fit(X, y, model, epochs, shuffle, verbose, validation_data,\
+              batch_size, callbacks, params):
+    if(params.model_type == 'Regression'):
+        history = model.fit(X, y, 
+                epochs=epochs,
+                shuffle=shuffle, 
+                verbose=verbose,
+                validation_data=validation_data,
+                batch_size=batch_size, 
+                callbacks=callbacks)
+    else:   ### CLASSIFICATION  ################
+        history = model.fit(X, y, 
+                epochs=epochs,
+                shuffle=shuffle, 
+                verbose=verbose,
+                validation_data=validation_data,
+                batch_size=batch_size, 
+                callbacks=callbacks,
+                class_weight=params.class_weights)
+    return history
+		'''
 
 	def format_LSTM():
 		'''This function will take in a dataset and return an LSTM format version'''
 		pass
 	
-	def save():
+	def save_as(self, name:str):
 		'''This function will save a given model as a .keras / .xxxxx file'''
-		pass
+		#'model' here will have to be of type tf.keras.Sequential
+		self.model.save('name')
