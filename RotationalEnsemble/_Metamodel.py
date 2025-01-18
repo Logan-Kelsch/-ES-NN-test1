@@ -24,6 +24,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 from aeon.classification.interval_based import TimeSeriesForestClassifier
+
 import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
@@ -36,7 +37,7 @@ def train_test_meta_model(
 	,y_test
 	,val_size		:	float	=	0.2
 	,shuffle		:	bool	=	False
-	,metam_type		:	Literal['popular_vote','logistic_regression','Neural_Net','knn'
+	,metam_type		:	Literal['popular_vote','logistic_regression','NN','knn'
 						'timeseries_forest','decision_tree','dummy'] = 'popular_vote'
 	,use_cls_wt		:	bool	=	True
 )   ->    list:
@@ -150,6 +151,9 @@ def meta_train(metam_type, X_train, y_train, use_class_weight):
 		
 		case 'decision_tree':
 			model = DecisionTreeClassifier(max_depth=4).fit(X_train, y_train)
+
+		case 'NN':
+			pass
 
 	#Here I am going to have a few cases to add class weights if requested.
 	if(use_class_weight):
