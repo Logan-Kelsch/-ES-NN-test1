@@ -15,7 +15,9 @@
 			#im sure errors will arrise by this point, so try first to get up to and through meta model creation and performance
 			#output before considering further, in execution should not take that long
 
-from _Utility import *
+from importlib import reload
+import _Utility
+reload(_Utility)
 from _Neural_Net import *
 from typing import Literal
 from sklearn.model_selection import train_test_split
@@ -81,7 +83,7 @@ def train_test_meta_model(
 	#Splitting the training set into what the metamodel is trained on, and what it is validated on.
 	X_metatrain, X_metatest, y_metatrain, y_metatest = train_test_split(X_test, y_test, test_size=val_size, shuffle=shuffle)
 
-	metamodel = meta_train(metam_type, X_metatrain, y_metatrain, 
+	metamodel = meta_train(metam_type, X_metatrain, y_metatrain, X_metatest, y_metatest,
 						use_class_weight=use_cls_wt, 
 						metam_params= metam_params if use_mm_params else None,
 						prediction_type=prediciton_type)
@@ -140,7 +142,7 @@ def train_test_meta_model(
 
 	return metamodel, X_test
 		
-def meta_train(metam_type, X_train, y_train, use_class_weight, metam_params, prediction_type):
+def meta_train(metam_type, X_train, y_train, X_test, y_test, use_class_weight, metam_params = None, prediction_type = 'Classification'):
 	'''
 	This function will be used to train and return a model.
 	This function returns 'None' for any nolearner models
@@ -175,7 +177,7 @@ def meta_train(metam_type, X_train, y_train, use_class_weight, metam_params, pre
 			model = NN(prediction_type)
 
 			if(metam_params == None):
-				history = model.build_fit()
+				history = model.build_fit(X_train, y_train, X_test, y_test)
 			else:
 				history = model.build_fit(**metam_params)
 			
