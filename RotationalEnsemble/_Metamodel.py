@@ -18,7 +18,8 @@
 from importlib import reload
 import _Utility
 reload(_Utility)
-from _Neural_Net import *
+import _Neural_Net
+reload(_Neural_Net)
 from typing import Literal
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, precision_score, recall_score
@@ -174,12 +175,12 @@ def meta_train(metam_type, X_train, y_train, X_test, y_test, use_class_weight, m
 				model = DecisionTreeClassifier(**metam_params).fit(X_train, y_train)
 
 		case 'NN':
-			model = NN(prediction_type)
+			model = _Neural_Net.NN(prediction_type)
 
 			if(metam_params == None):
 				history = model.build_fit(X_train, y_train, X_test, y_test)
 			else:
-				history = model.build_fit(**metam_params)
+				history = model.build_fit(X_train, y_train, X_test, y_test, **metam_params)
 			
 
 	#Here I am going to have a few cases to add class weights if requested.
@@ -187,12 +188,12 @@ def meta_train(metam_type, X_train, y_train, X_test, y_test, use_class_weight, m
 		#If the model is a base classifier with the class weight parameter
 		if hasattr(model,'class_weight'):
 				#apply the class weight
-				model.class_weight = get_class_weights(y_train)
+				model.class_weight = _Utility.get_class_weights(y_train)
 		elif hasattr(model, 'base_estimator'):
 			#If it does, then check if that base classifier has class weights
 			if hasattr(model.base_estimator, 'class_weight'):
 				#apply the class weight to the models base classifier if so
-				model.base_estimator.class_weight = get_class_weights(y_train)
+				model.base_estimator.class_weight = _Utility.get_class_weights(y_train)
 
 	return model
 
@@ -224,7 +225,7 @@ def meta_predict(metam_type, metamodel, X_test):
 		case 'dummy':
 
 			#My dummy predictor in utility, also has custom prediction value
-			y_pred = dummy_predict(X_test)
+			y_pred = _Utility.dummy_predict(X_test)
 			return y_pred
 
 		#Logistic Regression Model is of the sklearn variety
@@ -247,8 +248,9 @@ def meta_predict(metam_type, metamodel, X_test):
 			y_pred = metamodel.predict(X_test)
 			return y_pred
 
-		case 'Neural_Net':
-			raise NotImplementedError(f'FATAL: {metam_type} has not been added to pred_proba_fusion.')
+		case 'NN':
+			y_pred = metamodel.predict(X_test)
+			return y_pred
 
 
 

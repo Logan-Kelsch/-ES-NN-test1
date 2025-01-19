@@ -228,7 +228,7 @@ class NN:
 					#adding a single hidden layer of neuron size -> 
 					# 							lowest power of 2 >= size of featurespace coming in
 					if(LSTM):
-						seq = [tf.keras.layers.Input(shape=(int(X_train.shape[1]),int(X_train.shape[2]))), tf.keras.layers.LSTM(int(2**np.ceil(np.log2(X_train.shape[2]))), return_sequences=False)]
+						seq = [tf.keras.layers.Input(shape=(time_steps,int(X_train.shape[1]))), tf.keras.layers.LSTM(int(2**np.ceil(np.log2(X_train.shape[1]))), return_sequences=False)]
 					else:
 						seq = [tf.keras.layers.Input(shape=(int(X_train.shape[1]),)), tf.keras.layers.Dense(int(2**np.ceil(np.log2(X_train.shape[1]))), activation='relu')]
 					#adding the output layer
@@ -245,7 +245,7 @@ class NN:
 					#adding a single hidden layer of neuron size -> 
 					# 							lowest power of 2 >= size of featurespace coming in
 					if(LSTM):
-						seq = [tf.keras.layers.Input(shape=(int(X_train.shape[1]),int(X_train.shape[2]))), tf.keras.layers.LSTM(int(2**np.ceil(np.log2(X_train.shape[2]))), return_sequences=False)]
+						seq = [tf.keras.layers.Input(shape=(time_steps,int(X_train.shape[1]))), tf.keras.layers.LSTM(int(2**np.ceil(np.log2(X_train.shape[1]))), return_sequences=False)]
 					else:
 						seq = [tf.keras.layers.Input(shape=(int(X_train.shape[1]),)), tf.keras.layers.Dense(int(2**np.ceil(np.log2(X_train.shape[1]))), activation='relu')]
 					
@@ -310,8 +310,8 @@ class NN:
 			#declaring the LSTM property of the class and reformatting the data
 			if(LSTM):
 				self._LSTM	=	LSTM
-				X_train, y_train= self.format_LSTM(X_train, y_train)
-				X_test, y_test	= self.format_LSTM(X_test, y_test)
+				X_train, y_train= self.format_LSTM(X_train, y_train, time_steps)
+				X_test, y_test	= self.format_LSTM(X_test, y_test, time_steps)
 
 			#here we will fit the model and collect the training history data
 			history = self.model.fit(X_train, y_train
@@ -324,13 +324,24 @@ class NN:
 				,class_weight=self.class_weight
 			)
 
-
+	def predict(self
+			,X
+			,y								=	None
+			,threshold			:	float	=	0.5
+			,use_class_weight	:	bool	=	False
+	):
+		if(use_class_weight):
+			#set class weights
+			pass
+		y_pred = self.model.predict(X)
+		y_pred = (y_pred > threshold)
+		return y_pred
 
 
 	def load_model(self, model):
 		self.model = model
 
-	def format_LSTM(X, y, time_steps):
+	def format_LSTM(self, X, y, time_steps):
 		'''This function takes in a given X and y and returns an LSTM formatted version of the data'''
 
 		X_lstm = []
