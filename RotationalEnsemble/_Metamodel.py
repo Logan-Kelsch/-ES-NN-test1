@@ -16,6 +16,7 @@
 			#output before considering further, in execution should not take that long
 
 from _Utility import *
+from _Neural_Net import *
 from typing import Literal
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, precision_score, recall_score
@@ -40,11 +41,17 @@ def train_test_meta_model(
 	,metam_type		:	Literal['popular_vote','logistic_regression','NN','knn'
 						'timeseries_forest','decision_tree','dummy'] = 'popular_vote'
 	,use_cls_wt		:	bool	=	True
+	,use_mm_params	:	bool	=	False
+	,metam_params	:	dict	=	None
+	,prediciton_type:	Literal['Classification','Regression']		=	'Classification'
 )   ->    list:
 	'''
 		This function takes in a 3D list of trained models and uses their predictions as
 		features to train a level-1 (meta-model) on, as a method of prediction fusion.
 	'''
+
+	#Notes for this function
+	#contains ==None comparison, may cause error with __eq__ override
 	
 	#boolean value for differentiating whether .fit is used (whether data is seen before predicting)
 	nolearn_model = True if metam_type in ('popular_vote','dummy') else False
@@ -74,7 +81,10 @@ def train_test_meta_model(
 	#Splitting the training set into what the metamodel is trained on, and what it is validated on.
 	X_metatrain, X_metatest, y_metatrain, y_metatest = train_test_split(X_test, y_test, test_size=val_size, shuffle=shuffle)
 
-	metamodel = meta_train(metam_type, X_metatrain, y_metatrain, use_class_weight=use_cls_wt)
+	metamodel = meta_train(metam_type, X_metatrain, y_metatrain, 
+						use_class_weight=use_cls_wt, 
+						metam_params= metam_params if use_mm_params else None,
+						prediction_type=prediciton_type)
 
 	#collect predictions for self and for independent testing, based on whether model peeks at data
 	match(nolearn_model):
@@ -130,7 +140,7 @@ def train_test_meta_model(
 
 	return metamodel, X_test
 		
-def meta_train(metam_type, X_train, y_train, use_class_weight):
+def meta_train(metam_type, X_train, y_train, use_class_weight, metam_params, prediction_type):
 	'''
 	This function will be used to train and return a model.
 	This function returns 'None' for any nolearner models
@@ -144,16 +154,31 @@ def meta_train(metam_type, X_train, y_train, use_class_weight):
 			model = None
 		
 		case 'logistic_regression':
-			model = LogisticRegression().fit(X_train, y_train)
+			if(metam_params == None):
+				model = LogisticRegression().fit(X_train, y_train)
+			else:
+				model = LogisticRegression(**metam_params).fit(X_train, y_train)
 		
 		case 'knn':
-			model = KNeighborsClassifier(n_neighbors=20).fit(X_train, y_train)
-		
+			if(metam_params == None):
+				model = KNeighborsClassifier(n_neighbors=20).fit(X_train, y_train)
+			else:
+				model = KNeighborsClassifier(**metam_params).fit(X_train, y_train)
+
 		case 'decision_tree':
-			model = DecisionTreeClassifier(max_depth=4).fit(X_train, y_train)
+			if(metam_params == None):
+				model = DecisionTreeClassifier(max_depth=4).fit(X_train, y_train)
+			else:
+				model = DecisionTreeClassifier(**metam_params).fit(X_train, y_train)
 
 		case 'NN':
-			pass
+			model = NN(prediction_type)
+
+			if(metam_params == None):
+				history = model.build_fit()
+			else:
+				history = model.build_fit(**metam_params)
+			
 
 	#Here I am going to have a few cases to add class weights if requested.
 	if(use_class_weight):
