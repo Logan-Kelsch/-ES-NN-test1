@@ -238,7 +238,7 @@ class NN:
 				case 'default_deep':
 					
 					#initial depth of model, neuron length of first hidden layer, and 2 * depth_init is non-input neuron volume of model
-					depth_init = np.ceil(np.log2(X_train.shape[2]))
+					depth_init = int(np.ceil(np.log2(X_train.shape[1])))
 
 					#The default deep model will be of an exponential-tree shape, 
 					#where hidden layer 1 is of size 1.5 * 2^ceiling(logbase2(# features)) - 3
