@@ -41,7 +41,7 @@ class Master():
 	):
 		
 		#Ensuring model depth is consistent with incoming data	----
-		assert model_depth == len(all_models), \
+		assert (model_depth == len(all_models) or len(all_models) == 0), \
 			f"FATAL:, model_depth must equal len(all_models). Got ({model_depth},{len(all_models)})"
 		self._model_depth	=	model_depth
 
@@ -91,7 +91,7 @@ class Master():
 			#declaring dimensions of level 0 as tuple (featurespace, samplespace, modelspace)
 			self._lvl0_dims		=	(len(self._level_0),len(self._level_0[0]),len(self._level_0[0][0]))
 
-	def master_predict(self, X):
+	def master_predict(self, X, threshold:float=0.5):
 		'''This function is in charge of making a master prediction from a given dataset'''
 
 		#quick assertion to stop execution if the masterclass is still NULL
@@ -102,6 +102,7 @@ class Master():
 		if(self._model_depth>2):
 			raise NotImplementedError(f"FATAL: in master_predict, model depth is read as >2, level2 is not implemented.")
 		else:
+			level_1_pred = level_1_pred > threshold
 			return level_1_pred
 
 	def predict_level0(self, X, model:Literal['binary','proba']='binary'):
@@ -158,7 +159,7 @@ class Master():
 			os.makedirs(name, exist_ok=overwrite)
 
 			#create paths for each folder
-			subfolder_paths = [os.path.join(name, 'level_'+i) for i in range(0, self._model_depth)]
+			subfolder_paths = [os.path.join(name, 'level_'+str(i)) for i in range(0, self._model_depth)]
 			#subfolder for the featureindex and featuretransformfunction information
 			subfolder_paths.append(os.path.join(name, 'lvl0_frmt'))
 
@@ -185,11 +186,11 @@ class Master():
 					#to be able to save with no issue. (sklearn aeon tf.keras) END#NOTE
 
 					#create a path variable
-					model_path = f'{name}/level_0/model_{f}_{s}_{m}'
+					model_path = str(f'{name}/level_0/model_{f}_{s}_{m}')
 
 					try:
 						#.save attribute case, currently only tf.keras sequential models / NN class
-						if(hasattr(model, 'save') & callable(model.save)):
+						if(hasattr(model, 'save')):
 							#save with attribute
 							model.save(model_path+'.keras')
 						#non .save attribute case, aeon and sklearn will go here
@@ -276,7 +277,7 @@ class Master():
 						#so NOTE HERE we are looking at individual models for loading
 
 						#according to the saving function we built this should load without fault
-						pulling_path = f'{name}/level_0/model_{f}_{s}_{m}'
+						pulling_path = str(f'{name}/level_0/model_{f}_{s}_{m}')
 
 						#going to iterate through the possible extensions to load in based on model type
 						for ext in extensions:
