@@ -6,6 +6,8 @@ NN/o_MISC_MODELS/aeon_V6.0data/betaset_tmp.csv
 RotationalEnsemble/betaset_tmp.csv
 RotationalEnsemble/d1_clean.csv
 RotationalEnsemble/pricearea_c.csv
+RotationalEnsemble/pricearea_test.csv
 RotationalEnsemble/tmp_model
+RotationalEnsemble/data
 .tf_/
 .torch_/

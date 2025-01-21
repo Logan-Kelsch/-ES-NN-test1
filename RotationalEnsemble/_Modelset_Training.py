@@ -5,6 +5,9 @@
 '''
 from _Hyperparam_Optimizer import *
 from _Utility import *
+import _Neural_Net
+from importlib import reload
+reload(_Neural_Net)
 from typing import Union, Literal
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
@@ -15,6 +18,11 @@ from aeon.classification.sklearn import ContinuousIntervalTree
 def show_available_model_types():
 	'''printout for user to see all available model types and the strings to insert for them.'''
 	print(f"\
+	   'neural_network'\n\
+	   'nn'\n\
+	   -	-	Tensorflow / Keras Sequential Model\n\
+	   -	-	{default_parameters('nn')}\n\
+	   \n\
 	   'decision_tree'\n\
 	   'dt'\n\
 		-	-	Sci-Kit Learn DecisionTreeClassifier\n\
@@ -22,7 +30,7 @@ def show_available_model_types():
 	   \n\
 	   'rotation_forest'\n\
 	   'aeon_rf'\n\
-		   -	-	AEON Rotation Forest\n\
+		-	-	AEON Rotation Forest\n\
 		-	-	{default_parameters('aeon_rf')}\n\
 	   \n\
 	   'continuous_interval_tree'\n\
@@ -53,6 +61,8 @@ def default_parameters(model_type:str='')->dict:
 		return {'max_depth':4,'thresholds':20}
 	elif(model_type in ('rf','random_forest')):
 		return {'n_estimators':4,'criterion':'gini','max_depth':4}
+	elif(model_type in ('nn','neural_network')):
+		return {'epochs':25,'batch_size':32,'shuffle_train':True,'LSTM':False,'optimizer_kwarg':{'learning_rate':0.001},'train_verbose':1,'rlr_factor':0.75,'rlr_patience':1000}
 	else:
 		return {None:None}
 
@@ -60,11 +70,14 @@ def train_models(
 	model_types	:	list	=	[]
 	,data_parts :   list    =   []
 	,trgt_parts	:	list	=	[]
+	,X_valid	:	any		=	None
+	,y_valid	:	any		=	None
 	,param_mode	:	Literal['default','tuner','custom']	=	'default'
 	,cst_mod_prm:	list	=	[]
 	,tnr_verbose:	bool	=	True
 	,use_cls_wt	:	bool	=	True
 	,lstm_frmt	:	bool	=	False
+	,pred_type	:	str		=	'Classification'
 )	->	list:
 	'''
 		This function trains a set of models (identical type?) on a list of dataset partitions.
@@ -380,6 +393,65 @@ def train_models(
 								except Exception as e:
 									raise print(f'FATAL: Tuner error:\n{e}')
 								
+					case 'nn'|'neural_network':
+
+						#do match case for each parameter mode, default, tuner, custom
+						match(param_mode):
+		
+							#if the parameter mode is set to default for each model
+							case 'default':
+
+								#see if keyword parameters will fit to model type
+								try:
+									model = _Neural_Net.NN(pred_type)
+									model.build(X_current_partition, y_current_partition, **default_parameters(model_types[m]))
+								#expecting typeErrors if any, printout and show here
+								except TypeError as e:
+									#expecting this specific error type, approach as follows
+									if 'unexpected keyword argument' in str(e):
+										raise TypeError(f'Default parameters: {default_parameters(model_types[m])}'
+														f'Are not fitting to **kwargs for model of type {model_types[m]}')
+									#all other typeErrors, still most likely case
+									else:
+										raise TypeError(f'FATAL: Unexpected TypeError:\n{e}')
+								#any other unexpected error, unlikely but I would want to exit the program
+								except Exception as e:
+									print(f'FATAL: Unexpected error:\n{e}')
+									raise
+							
+							#if the parameter mode is set to custom for each model
+							case 'custom':
+
+								#see if keyword parameters will fit to model type
+								try:
+									model = _Neural_Net.NN(pred_type)
+									model.build(X_current_partition, y_current_partition, **cst_mod_prm[m])
+								#expecting typeErrors if any, printout and show here
+								except TypeError as e:
+									#expecting this specific error type, approach as follows
+									if 'unexpected keyword argument' in str(e):
+										raise TypeError(f'Custom parameters: {cst_mod_prm[m]}'
+														f'Are not fitting to **kwargs for model of type {model_types[m]}')
+									#all other typeErrors, still most likely case
+									else:
+										raise TypeError(f'FATAL: Unexpected TypeError:\n{e}')
+								#any other unexpected error, unlikely but I would want to exit the program
+								except Exception as e:
+									print(f'FATAL: Unexpected error:\n{e}')
+									raise
+							
+							#if the parameter mode is set to utilize the hyperparameter tuner
+							case 'tuner':
+								''' THIS WILL NEED DEBUGGED WITH IMLPEMENTATION OF TUNER'''
+								#using try-except, (12/24/24) unsure of WHICH way this may fail
+								try: 
+									model = hyperparameter_tuner(
+										model_with_start_params=_Neural_Net.NN(pred_type).build(X_current_partition, y_current_partition, **default_parameters(model_types[m]))
+										,tuner_verbose=tnr_verbose)
+								#generalize exception-e statement as tuner error if it fails
+								except Exception as e:
+									raise print(f'FATAL: Tuner error:\n{e}')
+								
 			
 				'''NOTE-	-	-	-	-NOTE-	-	-	-NOTE-	-	-	-	-NOTE'''
 				#NOTE Conclude individual model creation and parameter setting END#NOTE#############################
@@ -408,9 +480,11 @@ def train_models(
 							#apply the class weight to the models base classifier if so
 							model.base_estimator.class_weight = get_class_weights(y_current_partition)
 						
-
-				#fit each model to its correlating training partition set
-				model.fit(X_current_partition, y_current_partition)
+				if(model_types[m] == 'nn'):
+					model.fit(X_current_partition, y_current_partition, X_valid, y_valid)
+				else:
+					#fit each model to its correlating training partition set
+					model.fit(X_current_partition, y_current_partition)
 
 				#then append the model to the models local to this sample+feature space
 				#these models are exact partition specific, each model here trained on same set

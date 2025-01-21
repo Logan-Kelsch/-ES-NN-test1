@@ -2,6 +2,7 @@ import random
 import traceback
 import numpy as np
 from sklearn.utils.class_weight import compute_class_weight
+import matplotlib.pyplot as plt
 
 #function to simplify code visualization/readability (primary for verbose printouts)
 def do_nothing():
@@ -113,3 +114,26 @@ def dummy_predict(X_test, prediction=1):
 		y_pred = np.append(y_pred, prediction)
 
 	return y_pred
+
+def plot_standard_line(
+		y
+		,X=None
+		,xlabel=None
+		,ylabel=None
+		,legend=None
+		,axhline=None
+		,axvline=None
+		,label:str='Line Plot'):
+	if(X == None):
+		X = range(len(y))
+	plt.figure(figsize=(12, 6))
+	plt.plot(X, y)
+	if(axhline != None):
+		if(len(axhline)>1):
+			for value in axhline:
+				plt.axhline(value)
+	if(axvline != None):
+		if(len(axvline>1)>1):
+			for value in axvline:
+				plt.axvline(value)
+	plt.show()

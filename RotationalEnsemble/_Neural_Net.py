@@ -186,12 +186,10 @@ class NN:
 	#Here are other functions that need to be fully implemented.
 	#As im building the structure of this im just going to write empty functions that will need completed for future use
 
-	def build_fit(
+	def build(
 		self,
 		X_train
 		,y_train
-		,X_test
-		,y_test
 		,epochs			:	int													=	25
 		,batch_size		:	int													=	32
 		,shuffle_train	:	bool												=	True
@@ -206,6 +204,7 @@ class NN:
 		,rlr_factor		:	float												=	0.75
 		,rlr_patience	:	int													=	1000
 		,external_cw	:	dict												=	None 
+		,custom_val_data:	tuple												=	None
 	):
 		'''This function builds the model in NN.model, calls .compile and .fit and returns the training history'''
 
@@ -213,6 +212,15 @@ class NN:
 		#then it will call self.model.compile
 		#then it will call self.model.fit
 		#and it will then return history
+
+		
+		#collect and save class weights
+		if(external_cw == None):
+			#no external class weights are entered
+			self._class_weight=get_class_weights(y_train)
+		else:
+			#external class weights are entered
+			self._class_weight=external_cw
 
 		#simple method of ensuring and printing which device will be used for computation
 		cmp = 'C'
@@ -301,33 +309,56 @@ class NN:
 				,metrics	=	self._performance_metrics
 			)
 
-			#collect and save class weights
-			if(external_cw == None):
-				#no external class weights are entered
-				self.class_weight=get_class_weights(y_train)
-			else:
-				#external class weights are entered
-				self.class_weight=external_cw
-
 			#collecting and saving batch and epoch information
 			self._batch_size = batch_size
 			self._epochs		= epochs
+			self._shuffle_train = shuffle_train
+			self._train_verbose = train_verbose
+			self._custom_val_data=custom_val_data
+			self._LSTM = LSTM
+			self._time_steps = time_steps
+
+
+	def fit(self, X_train, y_train, X_test, y_test, custom_val_data=None):
+
+		#quick delcaration to ensure proper validaiton data going in 
+		if(self._custom_val_data == None):
+			#no custom validation data was entered, input default
+			self._custom_val_data = (X_test, y_test)
+		else:
+			#This suggests that custom validation data was input
+			pass#thus the variable can be left alone
+		
+		#simple method of ensuring and printing which device will be used for computation
+		cmp = 'C'
+		if(tf.config.list_physical_devices('GPU')):
+			cmp = 'G'
+		with tf.device('/'+cmp+'PU:0'):
+			print('Running on: '+cmp+'PU\n')
+
+
+			#quick delcaration to ensure proper validaiton data going in 
+			if(custom_val_data == None):
+				#no custom validation data was entered, input default
+				self._custom_val_data = (X_test, y_test)
+			else:
+				#This suggests that custom validation data was input
+				pass#thus the variable can be left alone
 
 			#declaring the LSTM property of the class and reformatting the data
-			if(LSTM):
-				self._LSTM	=	LSTM
-				X_train, y_train= self.format_LSTM(X_train, y_train, time_steps)
-				X_test, y_test	= self.format_LSTM(X_test, y_test, time_steps)
+			if(self._LSTM):
+				X_train, y_train= self.format_LSTM(X_train, y_train, self._time_steps)
+				X_test, y_test	= self.format_LSTM(X_test, y_test, self._time_steps)
 
 			#here we will fit the model and collect the training history data
 			history = self.model.fit(X_train, y_train
 				,epochs=self._epochs
-				,shuffle=shuffle_train
-				,verbose=train_verbose
-				,validation_data=(X_test,y_test)
+				,shuffle=self._shuffle_train
+				,verbose=self._train_verbose
+				,validation_data=self._custom_val_data
 				,batch_size=self._batch_size
 				,callbacks=[self.reduce_lr, self._train_stop]
-				,class_weight=self.class_weight
+				,class_weight=self._class_weight
 			)
 
 	def predict(self

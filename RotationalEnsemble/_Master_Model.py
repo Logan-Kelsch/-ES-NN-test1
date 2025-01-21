@@ -10,9 +10,13 @@ for on the spot personal observation of multiple models, and would desire delega
 '''
 
 #import pyfiglet
+from importlib import reload
+import _Utility
+reload(_Utility)
 import tensorflow as tf
 import numpy as np
 from tensorflow.keras.models import load_model
+from sklearn.metrics import accuracy_score
 from typing import Literal
 import joblib
 import os
@@ -102,7 +106,7 @@ class Master():
 		if(self._model_depth>2):
 			raise NotImplementedError(f"FATAL: in master_predict, model depth is read as >2, level2 is not implemented.")
 		else:
-			level_1_pred = level_1_pred > threshold
+			level_1_pred = (level_1_pred > threshold)
 			return level_1_pred
 
 	def predict_level0(self, X, model:Literal['binary','proba']='binary'):
@@ -136,11 +140,22 @@ class Master():
 			pass#collect a list of predictions form here for level2prediction
 		#This else is reached when level 1 is the top level of the model
 		else:
-			y_pred = self._level_1.predict(lvl0_predset)
+			y_pred = self._level_1.predict(lvl0_predset, verbose=0)
 			return y_pred
 		
 	def predict_level2(self, lvl1_predset):
 		raise NotImplementedError(f"Fatal: Level 2 prediction was requested, but has not been implemented.")
+	
+	def master_predict_fullth(self, X, y, definition:Literal['high','low']='low'):
+		'''This function is used to show the accuracy for each threshold value'''
+		ths = []
+		d = 5 if definition=='low' else 1
+		for thp in range(1, 100, d):
+			#for each threshold percent, make prediction and append to list
+			local_pred = self.master_predict(X, threshold=(thp/100))
+			ths.append(accuracy_score(y, local_pred))
+		#output as a line graph
+		_Utility.plot_standard_line(ths, axhline=[ths[0],ths[-1],0.5])
 
 	def save_model(self, name:str='tmp_model', overwrite:bool=True):
 		'''This function saves the current model data into a folder of current directory.
