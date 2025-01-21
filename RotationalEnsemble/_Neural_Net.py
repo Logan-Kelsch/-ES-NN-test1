@@ -205,6 +205,7 @@ class NN:
 		,test_verbose	:	int													=	1
 		,rlr_factor		:	float												=	0.75
 		,rlr_patience	:	int													=	1000
+		,external_cw	:	dict												=	None 
 	):
 		'''This function builds the model in NN.model, calls .compile and .fit and returns the training history'''
 
@@ -301,7 +302,12 @@ class NN:
 			)
 
 			#collect and save class weights
-			self.class_weight=get_class_weights(y_train)
+			if(external_cw == None):
+				#no external class weights are entered
+				self.class_weight=get_class_weights(y_train)
+			else:
+				#external class weights are entered
+				self.class_weight=external_cw
 
 			#collecting and saving batch and epoch information
 			self._batch_size = batch_size

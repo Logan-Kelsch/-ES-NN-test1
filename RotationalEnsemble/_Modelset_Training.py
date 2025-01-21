@@ -7,6 +7,7 @@ from _Hyperparam_Optimizer import *
 from _Utility import *
 from typing import Union, Literal
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
 from aeon.classification.sklearn import RotationForestClassifier
 from aeon.classification.sklearn import ContinuousIntervalTree
 
@@ -29,6 +30,11 @@ def show_available_model_types():
 	   -	-	Sci-Kit Learn ContinuousIntervalTreeVectorClassifier\n\
 	   -	-	{default_parameters('cit')}\n\
 	   \n\
+	   'random_forest'\n\
+	   'rf'\n\
+	   -	-	Sci-Kit Learn RandomForestClassifier\n\
+	   -	-	{default_parameters('rf')}\n\
+	   \n\
 	   ")
 	return
 
@@ -45,6 +51,8 @@ def default_parameters(model_type:str='')->dict:
 				  'min_group':1,'max_group':20,'remove_proportion':0.3,'n_jobs':-1}
 	elif(model_type in ('cit','continuous_interval_tree')):
 		return {'max_depth':4,'thresholds':20}
+	elif(model_type in ('rf','random_forest')):
+		return {'n_estimators':4,'criterion':'gini','max_depth':4}
 	else:
 		return {None:None}
 
@@ -314,6 +322,64 @@ def train_models(
 								#generalize exception-e statement as tuner error if it fails
 								except Exception as e:
 									raise print(f'FATAL: Tuner error:\n{e}')
+								
+					case 'rf'|'random_forest':
+
+						#do match case for each parameter mode, default, tuner, custom
+						match(param_mode):
+		
+							#if the parameter mode is set to default for each model
+							case 'default':
+
+								#see if keyword parameters will fit to model type
+								try:
+									model = RandomForestClassifier(**default_parameters(model_types[m]))
+								#expecting typeErrors if any, printout and show here
+								except TypeError as e:
+									#expecting this specific error type, approach as follows
+									if 'unexpected keyword argument' in str(e):
+										raise TypeError(f'Default parameters: {default_parameters(model_types[m])}'
+														f'Are not fitting to **kwargs for model of type {model_types[m]}')
+									#all other typeErrors, still most likely case
+									else:
+										raise TypeError(f'FATAL: Unexpected TypeError:\n{e}')
+								#any other unexpected error, unlikely but I would want to exit the program
+								except Exception as e:
+									print(f'FATAL: Unexpected error:\n{e}')
+									raise
+							
+							#if the parameter mode is set to custom for each model
+							case 'custom':
+
+								#see if keyword parameters will fit to model type
+								try:
+									model = RandomForestClassifier(**cst_mod_prm[m])
+								#expecting typeErrors if any, printout and show here
+								except TypeError as e:
+									#expecting this specific error type, approach as follows
+									if 'unexpected keyword argument' in str(e):
+										raise TypeError(f'Custom parameters: {cst_mod_prm[m]}'
+														f'Are not fitting to **kwargs for model of type {model_types[m]}')
+									#all other typeErrors, still most likely case
+									else:
+										raise TypeError(f'FATAL: Unexpected TypeError:\n{e}')
+								#any other unexpected error, unlikely but I would want to exit the program
+								except Exception as e:
+									print(f'FATAL: Unexpected error:\n{e}')
+									raise
+							
+							#if the parameter mode is set to utilize the hyperparameter tuner
+							case 'tuner':
+
+								#using try-except, (12/24/24) unsure of WHICH way this may fail
+								try:
+									model = hyperparameter_tuner(
+										model_with_start_params=RandomForestClassifier(**default_parameters(model_types[m]))
+										,tuner_verbose=tnr_verbose)
+								#generalize exception-e statement as tuner error if it fails
+								except Exception as e:
+									raise print(f'FATAL: Tuner error:\n{e}')
+								
 			
 				'''NOTE-	-	-	-	-NOTE-	-	-	-NOTE-	-	-	-	-NOTE'''
 				#NOTE Conclude individual model creation and parameter setting END#NOTE#############################
