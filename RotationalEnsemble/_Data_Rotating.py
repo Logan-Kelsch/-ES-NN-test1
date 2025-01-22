@@ -401,7 +401,7 @@ def split_by_samples(
 	#length of each partition made along sample space, floor function to leverage safe 
 	# non loop function for last partition formation in next for loop
 	ss_part_length = int(np.floor((ds_length / num_parts)))
-	ol_part_length = (1-ss_part_length)*overlap + ss_part_length
+	ol_part_length = int((1-ss_part_length)*overlap + ss_part_length)
 
 	#for each feature space partition
 	for fs_part in X_partitions:
@@ -442,7 +442,7 @@ def split_by_samples(
 			#that 'I can do this. Even if no one else sees it for me, I must see it for myself.'\
 
 			for part in range(num_parts):
-				indices = pick_n_from_list(ol_part_length, range(ds_length))
+				indices = pick_n_from_list(ol_part_length, list(range(ds_length)))
 				sample_parts.append(fs_part[indices, :])
 				if(part_y):
 					y_partitions.append(y_train[indices])

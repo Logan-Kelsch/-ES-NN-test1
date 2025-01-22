@@ -482,6 +482,8 @@ def train_models(
 							#apply the class weight to the models base classifier if so
 							model.base_estimator.class_weight = get_class_weights(y_current_partition)
 						
+				print(f"Training model #{(m+1)*(sample_space+1)*(feature_space+1)}")
+
 				if(model_types[m] == 'nn'):
 					X_valid_fixed	=	trans_parts[feature_space].transform(X_valid[:, findx_parts[feature_space]])
 					model.fit(X_current_partition, y_current_partition, X_valid_fixed, y_valid)

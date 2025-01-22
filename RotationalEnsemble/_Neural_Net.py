@@ -12,7 +12,9 @@
 from _Utility import *
 import tensorflow as tf
 import numpy as np
+import joblib
 from keras.callbacks import EarlyStopping
+from tensorflow.keras.models import load_model
 from typing import Literal, Union
 
 
@@ -408,4 +410,13 @@ class NN:
 	def save_as(self, name:str):
 		'''This function will save a given model as a .keras / .xxxxx file'''
 		#'model' here will have to be of type tf.keras.Sequential
-		self.model.save(name)
+		print(type(self.model))
+		#self.model.save(name+'.keras')
+		del self.model
+		self.model = None
+		joblib.dump(self, name+'.joblib')
+
+	def load_ext(self, name:str):
+		'''This function is to load in the model from file'''
+
+		self.model = load_model(name+'.keras')

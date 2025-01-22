@@ -12,6 +12,8 @@ for on the spot personal observation of multiple models, and would desire delega
 #import pyfiglet
 from importlib import reload
 import _Utility
+import _Neural_Net
+reload(_Neural_Net)
 reload(_Utility)
 import tensorflow as tf
 import numpy as np
@@ -213,9 +215,9 @@ class Master():
 
 					try:
 						#.save attribute case, currently only tf.keras sequential models / NN class
-						if(hasattr(model, 'save')):
+						if(hasattr(model, 'save_as')):
 							#save with attribute
-							model.save(model_path+'.keras')
+							model.save_as(model_path)
 						#non .save attribute case, aeon and sklearn will go here
 						else:
 							#save using joblib
@@ -228,7 +230,7 @@ class Master():
 		#and also under the assumption that it will be a tf.keras model
 		try:
 			#attempting to save the level1 model as single model and assuming its a tf.keras model
-			self._level_1.save(f'{name}/level_1/model_0.keras')
+			self._level_1.save_as(f'{name}/level_1/model_0')
 		except Exception as e:
 			print(f'Level-1 model saving to -> {f'{name}/level_1/model_0.keras'} could not save properly:\n{e}')
 
@@ -311,14 +313,20 @@ class Master():
 								
 								#now we have to check what extension was accepted
 								if(ext == '.joblib'):
+									#this if statement is depricated with loading method
+									#as of 1.21.25
 
 									#model is joblib file, load in with built in func
-									model_mspace.append(joblib.load(full_path))
 
-								elif(ext == '.keras'):
+									model = joblib.load(full_path)
+									
+									if(hasattr(model, 'load_ext')):
+										#this if case is for keras to load in its model from file
+										model.load_ext(full_path)
 
-									#model is keras file, load in with built in func
-									model_mspace.append(load_model(full_path))
+									model_mspace.append(model)
+
+
 
 								else:
 
