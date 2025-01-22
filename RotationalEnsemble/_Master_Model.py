@@ -12,9 +12,8 @@ for on the spot personal observation of multiple models, and would desire delega
 #import pyfiglet
 from importlib import reload
 import _Utility
+#import dill
 import _Neural_Net
-reload(_Neural_Net)
-reload(_Utility)
 import tensorflow as tf
 import numpy as np
 from tensorflow.keras.models import load_model
@@ -218,12 +217,13 @@ class Master():
 						if(hasattr(model, 'save_as')):
 							#save with attribute
 							model.save_as(model_path)
-						#non .save attribute case, aeon and sklearn will go here
-						else:
-							#save using joblib
-							joblib.dump(model, model_path+'.joblib')
+							print(f'PATH: {model_path}')
+							print('keras saving complete')
+						jl_path = model_path+'.joblib'
+						#joblib.dump(model.dump(), jl_path)
+						print('joblib saving complete')
 					except Exception as e:
-						print(f'Level-0 model saving to -> {model_path} could not save properly:\n{e}')
+						print(f'Level-0 model saving to -> {jl_path} could not save properly:\n{e}')
 
 		#level 1 model saving
 		#because I do not think this will be hard to implement, I will code this as only saving a single model

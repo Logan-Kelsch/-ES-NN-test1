@@ -410,11 +410,12 @@ class NN:
 	def save_as(self, name:str):
 		'''This function will save a given model as a .keras / .xxxxx file'''
 		#'model' here will have to be of type tf.keras.Sequential
-		print(type(self.model))
-		#self.model.save(name+'.keras')
-		del self.model
+		self.model.save(name+'.keras')
 		self.model = None
-		joblib.dump(self, name+'.joblib')
+		self.optimizer = None
+
+	def dump(self):
+		return self
 
 	def load_ext(self, name:str):
 		'''This function is to load in the model from file'''
