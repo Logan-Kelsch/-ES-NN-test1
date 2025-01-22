@@ -72,14 +72,20 @@ def train_test_meta_model(
 				#Explanation:
 				#Use rotation function[relevant to model].to transform(test-set using only[:, features[that are model specific]])
 				local_set = X_trans[f_index].transform(X_test[:, X_findx[f_index]])
-				binary_predictions.append(model.predict(local_set))
+				local_pred= model.predict(local_set)
+				#print(local_pred)
+				binary_predictions.append(local_pred)
 				#proba_predictions.append(model.proba_predict())
 
 	#create a reforomatted 'featureset' of the predictions to be used in any .fit application
-	X_test = np.array(binary_predictions).T
+	if(len(binary_predictions) < len(binary_predictions[0])):
+		X_test = np.array(binary_predictions).T
+		X_test = np.squeeze(X_test)
 	#of course reformat the targets just for harmony, not sure if this is actually needed
 	if(type(y_test)==list):
 		y_test = np.array(y_test)
+
+	print(X_test.shape)
 
 	#Splitting the training set into what the metamodel is trained on, and what it is validated on.
 	X_metatrain, X_metatest, y_metatrain, y_metatest = train_test_split(X_test, y_test, test_size=val_size, shuffle=shuffle)
@@ -176,11 +182,11 @@ def meta_train(metam_type, X_train, y_train, X_test, y_test, use_class_weight, m
 
 		case 'NN':
 			model = _Neural_Net.NN(prediction_type)
-
-			if(metam_params == None):
-				history = model.build_fit(X_train, y_train, X_test, y_test)
+			if(metam_params):
+				model.build(X_train, y_train, **metam_params)
 			else:
-				history = model.build_fit(X_train, y_train, X_test, y_test, **metam_params)
+				model.build()#??? should be fine
+			history = model.fit(X_train, y_train, X_test, y_test)
 			
 
 	#Here I am going to have a few cases to add class weights if requested.

@@ -336,6 +336,10 @@ class NN:
 		with tf.device('/'+cmp+'PU:0'):
 			print('Running on: '+cmp+'PU\n')
 
+			#declaring the LSTM property of the class and reformatting the data
+			if(self._LSTM):
+				X_train, y_train= self.format_LSTM(X_train, y_train, self._time_steps)
+				X_test, y_test	= self.format_LSTM(X_test, y_test, self._time_steps)
 
 			#quick delcaration to ensure proper validaiton data going in 
 			if(custom_val_data == None):
@@ -344,11 +348,6 @@ class NN:
 			else:
 				#This suggests that custom validation data was input
 				pass#thus the variable can be left alone
-
-			#declaring the LSTM property of the class and reformatting the data
-			if(self._LSTM):
-				X_train, y_train= self.format_LSTM(X_train, y_train, self._time_steps)
-				X_test, y_test	= self.format_LSTM(X_test, y_test, self._time_steps)
 
 			#here we will fit the model and collect the training history data
 			history = self.model.fit(X_train, y_train
@@ -370,16 +369,25 @@ class NN:
 		if(use_class_weight):
 			#set class weights
 			pass
+
+		#if(self._LSTM):
+		#	X, y = self.format_LSTM(X, y, self._time_steps)
 		y_pred = self.model.predict(X)
 		y_pred = (y_pred > threshold)
+
+		#if(self._LSTM):
+		#	return y_pred, y
 		return y_pred
 
 
 	def load_model(self, model):
 		self.model = model
 
-	def format_LSTM(self, X, y, time_steps):
+	def format_LSTM(self, X, y, time_steps=None):
 		'''This function takes in a given X and y and returns an LSTM formatted version of the data'''
+
+		if(time_steps == None):
+			time_steps = self._time_steps
 
 		X_lstm = []
 	

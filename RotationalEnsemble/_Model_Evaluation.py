@@ -188,13 +188,28 @@ def evaluate_models(
 
 							#local_independent set is now ready for prediction on current model
 							#predict transformed X test set
+							if(hasattr(model, 'LSTM')):
+								if(model._LSTM):
+									is_LSTM = True
+									local_indp, y_test_LSTM = model.format_LSTM(local_indp, y_test, model._time_steps)
+								else:
+									is_LSTM = False
+							else:
+								is_LSTM = False
 							local_y_pred = model.predict(local_indp)
 
-							#collect all datapoints with parallel targets y_test
-							accuracy = accuracy_score(	y_test, local_y_pred)
-							precision= precision_score(	y_test, local_y_pred)
-							recall   = recall_score(	y_test, local_y_pred)
-							conf_matx= confusion_matrix(y_test, local_y_pred)
+							if(is_LSTM):
+								#collect all datapoints with parallel targets y_test
+								accuracy = accuracy_score(	y_test_LSTM, local_y_pred)
+								precision= precision_score(	y_test_LSTM, local_y_pred)
+								recall   = recall_score(	y_test_LSTM, local_y_pred)
+								conf_matx= confusion_matrix(y_test_LSTM, local_y_pred)
+							else:
+								#collect all datapoints with parallel targets y_test
+								accuracy = accuracy_score(	y_test, local_y_pred)
+								precision= precision_score(	y_test, local_y_pred)
+								recall   = recall_score(	y_test, local_y_pred)
+								conf_matx= confusion_matrix(y_test, local_y_pred)
 
 							#turn all data into a tuple to add to the flatten performance list.
 							local_performance = (f_index, s_index, m_index, accuracy, precision, recall, conf_matx)

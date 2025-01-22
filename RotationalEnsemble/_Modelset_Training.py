@@ -69,6 +69,8 @@ def default_parameters(model_type:str='')->dict:
 def train_models(
 	model_types	:	list	=	[]
 	,data_parts :   list    =   []
+	,findx_parts:	list	=	[]
+	,trans_parts:	list	=	[]
 	,trgt_parts	:	list	=	[]
 	,X_valid	:	any		=	None
 	,y_valid	:	any		=	None
@@ -481,7 +483,8 @@ def train_models(
 							model.base_estimator.class_weight = get_class_weights(y_current_partition)
 						
 				if(model_types[m] == 'nn'):
-					model.fit(X_current_partition, y_current_partition, X_valid, y_valid)
+					X_valid_fixed	=	trans_parts[feature_space].transform(X_valid[:, findx_parts[feature_space]])
+					model.fit(X_current_partition, y_current_partition, X_valid_fixed, y_valid)
 				else:
 					#fit each model to its correlating training partition set
 					model.fit(X_current_partition, y_current_partition)

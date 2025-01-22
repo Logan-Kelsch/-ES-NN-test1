@@ -31,7 +31,8 @@ def rotate_partitions(
 	,filter_value	:	Union[float, int] = 0.5
 	#sample partition section of parameters
 	,n_sample_parts	:	int		=	5
-	,smpl_part_type	:	Literal['Even','Sliding']		='Even'
+	,smpl_part_type	:	Literal['Even','Sliding','Random']	='Even'
+	,sample_overlap	:	float	=	0.0
 	,sample_shuffle	:	bool	=	False
 	,lstm_format	:	bool	=	False
 )	->	list:
@@ -104,6 +105,7 @@ def rotate_partitions(
 		,y_train=y
 		,num_parts=n_sample_parts
 		,splt_type=smpl_part_type
+		,overlap=sample_overlap
 		,shuffle=sample_shuffle
 	)
  
@@ -357,7 +359,8 @@ def split_by_samples(
 	y_train	
 	,X_partitions:	list	=	[]
 	,num_parts	:	int		=	5
-	,splt_type	:	Literal['Even','Sliding']='Even'
+	,splt_type	:	Literal['Even','Random']='Even'
+	,overlap	:	float	=	0
 	,shuffle	:	bool	=	False
 )	->	list:
 	'''
@@ -398,6 +401,7 @@ def split_by_samples(
 	#length of each partition made along sample space, floor function to leverage safe 
 	# non loop function for last partition formation in next for loop
 	ss_part_length = int(np.floor((ds_length / num_parts)))
+	ol_part_length = (1-ss_part_length)*overlap + ss_part_length
 
 	#for each feature space partition
 	for fs_part in X_partitions:
@@ -432,6 +436,19 @@ def split_by_samples(
 		if(splt_type == 'Sliding'):
 			#not currently implemented
 			raise NotImplementedError(f"FATAL: Split type in split_by_sample of '{splt_type}' is not yet implemented.")
+		
+		if(splt_type == 'Random'):
+			#And even though you face disappointments, you have to know within yourself, 
+			#that 'I can do this. Even if no one else sees it for me, I must see it for myself.'\
+
+			for part in range(num_parts):
+				indices = pick_n_from_list(ol_part_length, range(ds_length))
+				sample_parts.append(fs_part[indices, :])
+				if(part_y):
+					y_partitions.append(y_train[indices])
+
+
+
 		
 		#toggle off partition, reaching here means a SINGLE set of samplespace partitions has occured
 		part_y = False
