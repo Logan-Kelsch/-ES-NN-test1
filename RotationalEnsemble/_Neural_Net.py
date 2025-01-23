@@ -221,7 +221,7 @@ class NN:
 		#collect and save class weights
 		if(external_cw == None):
 			#no external class weights are entered
-			self._class_weight=get_class_weights(y_train)
+			self._class_weight=_Utility.get_class_weights(y_train)
 		else:
 			#external class weights are entered
 			self._class_weight=external_cw
@@ -363,7 +363,7 @@ class NN:
 				,callbacks=[self.reduce_lr, self._train_stop]
 				,class_weight=self._class_weight
 			)
-			_Utility.graph_loss(self._epochs, history)
+			_Utility.graph_loss(range(self._epochs), history)
 
 	def predict(self
 			,X
