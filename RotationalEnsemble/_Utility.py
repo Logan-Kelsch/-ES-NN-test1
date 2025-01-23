@@ -137,3 +137,14 @@ def plot_standard_line(
 			for value in axvline:
 				plt.axvline(value)
 	plt.show()
+
+#function to print out loss function, should be universal
+def graph_loss(epochs, history):
+    plt.figure(figsize=(12, 6))
+    plt.plot(epochs[1:], history.history['loss'][1:], 'black', label='Training Loss')
+    plt.plot(epochs[1:], history.history['val_loss'][1:], 'red', label='Validation Loss')
+    plt.title('Training and Validation Loss')
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.legend(['Train', 'Validation'], loc='upper right')
+    plt.show()

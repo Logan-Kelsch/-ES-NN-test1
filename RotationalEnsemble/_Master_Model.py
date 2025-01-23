@@ -155,11 +155,17 @@ class Master():
 	def predict_level2(self, lvl1_predset):
 		raise NotImplementedError(f"Fatal: Level 2 prediction was requested, but has not been implemented.")
 	
-	def master_predict_fullth(self, X, y, definition:Literal['high','low']='low'):
+	def master_predict_fullth(self, X, y, definition:Literal['high','low','min']='low'):
 		'''This function is used to show the accuracy for each threshold value'''
 		ths = []
-		d = 5 if definition=='low' else 1
-		for thp in range(1, 100, d):
+		match(definition):
+			case 'high':
+				d=1
+			case 'low':
+				d=5
+			case 'min':
+				d=25
+		for thp in range(0, 101, d):
 			#for each threshold percent, make prediction and append to list
 			local_pred = self.master_predict(X, threshold=(thp/100))
 			ths.append(accuracy_score(y, local_pred))
@@ -221,9 +227,9 @@ class Master():
 							print('keras saving complete')
 						jl_path = model_path+'.joblib'
 						#joblib.dump(model.dump(), jl_path)
-						print('joblib saving complete')
+						#print('joblib saving complete')
 					except Exception as e:
-						print(f'Level-0 model saving to -> {jl_path} could not save properly:\n{e}')
+						print(f'Level-0 model saving to -> {model_path} could not save properly:\n{e}')
 
 		#level 1 model saving
 		#because I do not think this will be hard to implement, I will code this as only saving a single model
@@ -251,7 +257,7 @@ class Master():
 		'''
 		#all models and formatters are saved, end function. 					---------------
 
-	def load_model(self, name:str='tmp_model', overwrite:bool=True):
+	def load_model(self, name:str='tmp_model', is_NN:bool=False, overwrite:bool=True):
 		'''This function will load in a master model from a provided directory.
 		## Params
 		- name:
@@ -324,10 +330,20 @@ class Master():
 										#this if case is for keras to load in its model from file
 										model.load_ext(full_path)
 
-									model_mspace.append(model)
+								elif(ext == '.keras'): 
+									#THis case suggests that a keras model was saved
+									#This will be brought in with the following method
+									  #which will be standard as of 1/22/25, currently
+									  #without consideration of saving/loading LSTM info
+									  #or any other model retention, will be best off saving
+									  #info file for loading in proper full NN class infos
 
-
-
+									#NOTE HERE we know full_path is .keras model
+									#also currently without regression compatability
+									model = _Neural_Net.NN('Classification')
+									#here loads in the keras model in to model.model attr
+									model.load_ext(full_path)
+								
 								else:
 
 									#left this here for if different models are 
@@ -335,6 +351,8 @@ class Master():
 									#loading attributes where the model is
 									#also not picklable
 									raise NameError('FATAL: IMPOSSIBLE CASE')
+								
+								model_mspace.append(model)
 								
 					#begin cascade loading into 3D grid
 					model_sspace.append(model_mspace)

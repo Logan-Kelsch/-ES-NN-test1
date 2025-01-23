@@ -9,7 +9,9 @@
 	NOTE delete this once this is considered and fulfilled
 '''
 
-from _Utility import *
+import _Utility
+from importlib import reload
+reload(_Utility)
 import tensorflow as tf
 import numpy as np
 import joblib
@@ -361,6 +363,7 @@ class NN:
 				,callbacks=[self.reduce_lr, self._train_stop]
 				,class_weight=self._class_weight
 			)
+			_Utility.graph_loss(self._epochs, history)
 
 	def predict(self
 			,X
@@ -411,8 +414,8 @@ class NN:
 		'''This function will save a given model as a .keras / .xxxxx file'''
 		#'model' here will have to be of type tf.keras.Sequential
 		self.model.save(name+'.keras')
-		self.model = None
-		self.optimizer = None
+		#self.model = None
+		#self.optimizer = None
 
 	def dump(self):
 		return self
@@ -420,4 +423,4 @@ class NN:
 	def load_ext(self, name:str):
 		'''This function is to load in the model from file'''
 
-		self.model = load_model(name+'.keras')
+		self.model = load_model(name)

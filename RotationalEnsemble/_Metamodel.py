@@ -17,6 +17,7 @@
 
 from importlib import reload
 import _Utility
+reload(_Utility)
 import _Neural_Net
 from typing import Literal
 from sklearn.model_selection import train_test_split
