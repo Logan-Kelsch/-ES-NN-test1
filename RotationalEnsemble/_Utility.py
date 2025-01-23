@@ -140,7 +140,7 @@ def plot_standard_line(
 
 #function to print out loss function, should be universal
 def graph_loss(epochs, history):
-    plt.figure(figsize=(12, 6))
+    plt.figure(figsize=(6, 3))
     plt.plot(epochs[1:], history.history['loss'][1:], 'black', label='Training Loss')
     plt.plot(epochs[1:], history.history['val_loss'][1:], 'red', label='Validation Loss')
     plt.title('Training and Validation Loss')

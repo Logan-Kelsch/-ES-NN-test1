@@ -294,7 +294,7 @@ class NN:
 			)
 
 			#define an early stopping method for absolutely no improvement of the model in 2 * exceptionless-time
-			self._train_stop = EarlyStopping(monitor=self._monitor_parameter, patience=2*rlr_patience, mode=self._monitor_condition, restore_best_weights=True)
+			self._train_stop = EarlyStopping(monitor=self._monitor_parameter, patience=5*rlr_patience, mode=self._monitor_condition, restore_best_weights=True)
 			
 			#here we are constructing the optimizer based off of specification
 			#pulled the optimizers from tf/keras, adding anything should be relatively easy here

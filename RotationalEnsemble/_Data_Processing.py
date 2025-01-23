@@ -68,11 +68,11 @@ def preprocess_data(
 	#set target here
 	if(mod_type == 'Regression'):		  ### REGRESSION #####################
 		data = data.drop(columns=tn_classification())
-		data = data.drop(columns=tn_area_classification())
+		#data = data.drop(columns=tn_area_classification())
 		data = data.drop(columns=tn_regression_excpetion(target_t))
 	elif(mod_type == 'Classification'):   ### CLASSIFICATION #################
 		data = data.drop(columns=tn_regression())
-		data = data.drop(columns=tn_area_classification())
+		#data = data.drop(columns=tn_area_classification())
 		data = data.drop(columns=tn_classification_exception(\
 			num_class, split_val, target_t))
 	elif(mod_type == 'Area_Classification'):## AREA CLASSIFICATION ###########
@@ -178,7 +178,7 @@ def preprocess_data(
 
 	print("Success.\nTrying to clean up...",end='') if verbose else do_nothing()
 	#X and y are no longer used
-	del X, y
+	#del X, y
 	
 	
 	print("Success.") if verbose else do_nothing()
@@ -197,6 +197,6 @@ def preprocess_data(
 
 	print("Success.\nTerminating.") if verbose else do_nothing()
 	#return all data splits THEN the feature list: X's, y's, features
-	return 	X_train, X_val, X_ind,\
+	return 	X, X_train, X_val, X_ind, np.squeeze(y),\
      		np.squeeze(y_train), np.squeeze(y_val), np.squeeze(y_ind), \
          	feat_dict
