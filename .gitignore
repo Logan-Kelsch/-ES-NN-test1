@@ -10,5 +10,7 @@ RotationalEnsemble/pricearea_test.csv
 RotationalEnsemble/tmp_model
 RotationalEnsemble/data
 RotationalEnsemble/nq_full.csv
+RotationalEnsemble/spx_ndx_full.csv
+RotationalEnsemble/spx_ndx_trim.csv
 .tf_/
 .torch_/

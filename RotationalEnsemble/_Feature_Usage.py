@@ -80,6 +80,7 @@ import pandas as pd
 import numpy as np
 
 times = [5,15,30,60,120,240]
+idx	  = ['spx','NULL','NULL','NULL','NULL','ndx']
 
 ######### '''NOTE NOTE''''''NOTE NOTE''' #########
 ###* * MOST IMPORTANT FUNCTION IN THIS FILE * *###
@@ -89,9 +90,6 @@ times = [5,15,30,60,120,240]
 #all requested features sets as well as target sets
 #the output will be a pandas dataframe, fully concatenated
 def augmod_dataset(data):
-
-	i = [0,5]#these are the initial column indices for each given index implemented
-	#so far only ES is implemented, with another on its way
 
 	'''NOTE NOTE broke these processes down into a few different areas of multiprocessing based off of
 	   NOTE NOTE linear calculation dependancy of various feature categories 
@@ -139,11 +137,17 @@ def augmod_dataset(data):
 		print('ending fourth round of starmap dataset creation.')
 	'''
 
+	i = [0,5]#these are the initial column indices for each given index implemented
+	#so far only ES is implemented, with another on its way
 	
 	
-	#FEATURE ENGINEERING
+	#FEATURE ENGINEERING		--------------
+
+	#first collect basic data within dataset
 	f_ToD = fe_ToD(data)#single
 	f_DoW = fe_DoW(data)#single
+
+	#collect spx specific data
 	f_vel = fe_vel(data, i[0])#set
 	f_acc = fe_acc(data, i[0])#set
 	f_stchK = fe_stoch_k(data, i[0])#set
@@ -152,11 +156,30 @@ def augmod_dataset(data):
 	f_wickD = fe_diff_hl_wick(data, i[0])#single
 	f_volData = fe_vol_sz_diff(data, i[0])#set
 	f_maData = fe_ma_disp(data, i[0])#set
-	f_maDiff = fe_ma_diff(f_maData)#set
+	f_maDiff = fe_ma_diff(f_maData, i[0])#set
 	f_hihi = fe_hihi_diff(data, i[0])#set
 	f_lolo = fe_lolo_diff(data, i[0])#set
-	f_hilo = fe_hilo_diff(f_hihi,f_lolo)#set
+	f_hilo = fe_hilo_diff(f_hihi,f_lolo, i[0])#set
 	f_stochHiLo = fe_hilo_stoch(data, f_hihi, f_lolo, i[0])#set
+
+	#collect ndx specific data
+	f_vel2 = fe_vel(data, i[1])#set
+	f_acc2 = fe_acc(data, i[1])#set
+	f_stchK2 = fe_stoch_k(data, i[1])#set
+	f_barH2 = fe_height_bar(data, i[1])#single
+	f_wickH2 = fe_height_wick(data, i[1])#single
+	f_wickD2 = fe_diff_hl_wick(data, i[1])#single
+	f_volData2 = fe_vol_sz_diff(data, i[1])#set
+	f_maData2 = fe_ma_disp(data, i[1])#set
+	f_maDiff2 = fe_ma_diff(f_maData2, i[1])#set
+	f_hihi2 = fe_hihi_diff(data, i[1])#set
+	f_lolo2 = fe_lolo_diff(data, i[1])#set
+	f_hilo2 = fe_hilo_diff(f_hihi2,f_lolo2, i[1])#set
+	f_stochHiLo2 = fe_hilo_stoch(data, f_hihi2, f_lolo2, i[1])#set
+
+	#collect index comparison data
+
+
 
 	#TARGET ENGINEERING
 	target_r = te_vel_reg(data, i[0])
@@ -165,9 +188,14 @@ def augmod_dataset(data):
 
 	#list of dataframes
 	df_list = [data, f_ToD, f_DoW, f_vel, f_acc, \
-			   f_stchK, f_barH, f_wickH, f_wickD,\
-				f_volData, f_maData, f_maDiff, f_hihi, f_lolo,\
-					f_hilo, f_stochHiLo, target_r, target_c, target_a]
+			   		f_stchK, f_barH, f_wickH, f_wickD,\
+						f_volData, f_maData, f_maDiff, f_hihi, f_lolo,\
+							f_hilo, f_stochHiLo, \
+					f_vel2, f_acc2, \
+			   			f_stchK2, f_barH2, f_wickH2, f_wickD2,\
+							f_volData2, f_maData2, f_maDiff2, f_hihi2, f_lolo2,\
+								f_hilo2, f_stochHiLo2, \
+				target_r, target_c, target_a]
 
 	#cut off error head and error tail of dataframes
 	df_trunk_1 = [df.iloc[:-60] for df in df_list]
@@ -211,8 +239,8 @@ def fe_lolo_diff(X, index):
 
 		new_data.append(row)
 
-	cols = [f'lolo{i}' for i in times]+\
-		[f'disp_lolo{i}' for i in times]
+	cols = [f'lolo{i}_{idx[index]}' for i in times]+\
+		[f'disp_lolo{i}_{idx[index]}' for i in times]
 
 	feature_set = pd.DataFrame(new_data, columns=cols)
 
@@ -246,8 +274,8 @@ def fe_hihi_diff(X, index):
 
 		new_data.append(row)
 
-	cols = [f'hihi{i}' for i in times]+\
-		[f'disp_hihi{i}' for i in times]
+	cols = [f'hihi{i}_{idx[index]}' for i in times]+\
+		[f'disp_hihi{i}_{idx[index]}' for i in times]
 
 	feature_set = pd.DataFrame(new_data, columns=cols)
 
@@ -280,8 +308,8 @@ def fe_vol_sz_diff(X, index):
 		new_data.append(row)
 
 	#custom feature name
-	cols = [f'vol_m{i}' for i in range(2,61)]+\
-		[f'vol_avgDiff{i}' for i in range(2,61)]
+	cols = [f'vol_m{i}_{idx[index]}' for i in range(2,61)]+\
+		[f'vol_avgDiff{i}_{idx[index]}' for i in range(2,61)]
 
 	#CONTINUE HERE THERE ARE ONLY 59 FEATURES
 	feature_set = pd.DataFrame(new_data, columns=cols)
@@ -321,10 +349,10 @@ def fe_ma_disp(X, index):
 		
 		new_data.append(row)
 
-	cols = [f'ma{i}' for i in range(2,60)]+\
-		   [f'ma{i}' for i in range(60,241,20)]+\
-		   [f'disp_ma{i}' for i in range(2,60)]+\
-		   [f'disp_ma{i}' for i in range(60,241,20)]
+	cols = [f'ma{i}_{idx[index]}' for i in range(2,60)]+\
+		   [f'ma{i}_{idx[index]}' for i in range(60,241,20)]+\
+		   [f'disp_ma{i}_{idx[index]}' for i in range(2,60)]+\
+		   [f'disp_ma{i}_{idx[index]}' for i in range(60,241,20)]
 	
 	feature_set = pd.DataFrame(new_data, columns=cols)
 
@@ -396,7 +424,7 @@ def fe_diff_hl_wick(X, index):
 
 		new_data.append(u_wick - l_wick)
 
-	feature = pd.DataFrame(new_data, columns=['diff_wick'])
+	feature = pd.DataFrame(new_data, columns=[f'diff_wick_{idx[index]}'])
 
 	return feature
 
@@ -415,7 +443,7 @@ def fe_height_bar(X, index):
 		h = abs(close[sample] - close[(sample - 1) %l])
 		new_data.append(h)
 
-	feature = pd.DataFrame(new_data, columns=['barH'])
+	feature = pd.DataFrame(new_data, columns=[f'barH_{idx[index]}'])
 
 	return feature
 
@@ -434,7 +462,7 @@ def fe_height_wick(X, index):
 		h = high[sample] - low[sample]
 		new_data.append(h)
 
-	feature = pd.DataFrame(new_data, columns=['wickH'])
+	feature = pd.DataFrame(new_data, columns=[f'wickH_{idx[index]}'])
 
 	return feature
 
@@ -453,7 +481,7 @@ def fe_vel(X, index):
 			row.append(close[sample %l] - close[(sample-displace) %l])
 		new_data.append(row)
 	
-	feature_set = pd.DataFrame(new_data, columns=[f'vel{i}' for i in range(1,61)])
+	feature_set = pd.DataFrame(new_data, columns=[f'vel{i}_{idx[index]}' for i in range(1,61)])
 
 	return feature_set
 
@@ -478,7 +506,7 @@ def fe_acc(X, index):
 			row.append(vel2-vel1)
 		new_data.append(row)
 	# Convert to a new DataFrame
-	feature_set = pd.DataFrame(new_data, columns=[f'acc{i+1}' for i in range(60)])
+	feature_set = pd.DataFrame(new_data, columns=[f'acc{i+1}_{idx[index]}' for i in range(60)])
 
 	#print(feature_set)
 	return feature_set
@@ -512,7 +540,7 @@ def fe_stoch_k(X, index):
 				row.append(round(k,2))
 		new_data.append(row)
 	
-	features_set = pd.DataFrame(new_data, columns=[f'stchK{i}' for i in range(5, 125, 5)])
+	features_set = pd.DataFrame(new_data, columns=[f'stchK{i}_{idx[index]}' for i in range(5, 125, 5)])
 	
 	return features_set
 			
@@ -528,7 +556,7 @@ def fe_stoch_d(f_stochK):
 
 #function return the set of ma differences from a set
 #this function requires cutting first 120 samples
-def fe_ma_diff(maData):
+def fe_ma_diff(maData, index):
 
 	#all used moving averages
 	ma5 = maData.iloc[:, 3].values
@@ -560,7 +588,7 @@ def fe_ma_diff(maData):
 	#prepping the feature names according to ma's used
 	for i in range(len(lengths)):
 		for j in range(i+1,len(lengths)):
-			cols.append(f'diff_ma_{lengths[i]}_{lengths[j]}')
+			cols.append(f'diff_ma_{lengths[i]}_{lengths[j]}_{idx[index]}')
 
 	feature_set = pd.DataFrame(new_data, columns=cols)
 
@@ -568,7 +596,7 @@ def fe_ma_diff(maData):
 
 #function return the differences between hihi and lolo of time sets
 #this function requires cutting first 240 samples
-def fe_hilo_diff(hihi_data, lolo_data):
+def fe_hilo_diff(hihi_data, lolo_data, index):
 
 	lengths = [5,15,30,60,120,240]
 	
@@ -593,7 +621,7 @@ def fe_hilo_diff(hihi_data, lolo_data):
 	#prepping the feature names according to ma's used
 	for i in range(len(lengths)):
 		for j in range(len(lengths)):
-			cols.append(f'diff_hilo_{lengths[i]}_{lengths[j]}')
+			cols.append(f'diff_hilo_{lengths[i]}_{lengths[j]}_{idx[index]}')
 
 	feature_set = pd.DataFrame(new_data, columns=cols)
 
@@ -632,7 +660,7 @@ def fe_hilo_stoch(X, hihi_data, lolo_data, index):
 	#prepping the feature names according to ma's used
 	for i in range(len(times)):
 		for j in range(len(times)):
-			cols.append(f'hilo_stoch_{times[i]}_{times[j]}')
+			cols.append(f'hilo_stoch_{times[i]}_{times[j]}_{idx[index]}')
 
 	feature_set = pd.DataFrame(new_data, columns=cols)
 
@@ -760,60 +788,60 @@ def te_area_class(X, index):
 	NOTE tn_ denotes 'target (/set) names' for mass target  dropping
 '''#------------------------------------------------------------------------------
 
-def fn_vel():
-	return [f'vel{i}' for i in range(1,61)]
-def fn_acc():
-	return [f'acc{i+1}' for i in range(60)]
-def fn_stoch_k():
-	return [f'stchK{i}' for i in range(5, 125, 5)]
-def fn_vol_m():
+def fn_vel(index):
+	return [f'vel{i}_{idx[index]}' for i in range(1,61)]
+def fn_acc(index):
+	return [f'acc{i+1}_{idx[index]}' for i in range(60)]
+def fn_stoch_k(index):
+	return [f'stchK{i}_{idx[index]}' for i in range(5, 125, 5)]
+def fn_vol_m(index):
 	'''NOTE subset 1 of fe_vol_sz_diff feature set END NOTE'''
-	return [f'vol_m{i}' for i in range(2,61)]
-def fn_vol_avgDiff():
+	return [f'vol_m{i}_{idx[index]}' for i in range(2,61)]
+def fn_vol_avgDiff(index):
 	'''NOTE subset 2 of fe_vol_sz_diff feature set END NOTE'''
-	return [f'vol_avgDiff{i}' for i in range(2,61)]
-def fn_ma_s60():
+	return [f'vol_avgDiff{i}_{idx[index]}' for i in range(2,61)]
+def fn_ma_s60(index):
 	'''NOTE the sub 60m subset of ma feature set'''
-	return [f'ma{i}' for i in range(2,60)]
-def fn_ma_s240():
+	return [f'ma{i}_{idx[index]}' for i in range(2,60)]
+def fn_ma_s240(index):
 	'''NOTE the sub 240m subset of ma feature set'''
-	return [f'ma{i}' for i in range(60,241,20)]
-def fn_disp_ma60():
+	return [f'ma{i}_{idx[index]}' for i in range(60,241,20)]
+def fn_disp_ma60(index):
 	'''NOTE the sub 60m subset of ma feature set'''
-	return [f'disp_ma{i}' for i in range(2,60)]
-def fn_disp_ma240():
+	return [f'disp_ma{i}_{idx[index]}' for i in range(2,60)]
+def fn_disp_ma240(index):
 	'''NOTE the sub 240m subset of ma feature set'''
-	return [f'disp_ma{i}' for i in range(60,241,20)]
-def fn_ma_diff():
+	return [f'disp_ma{i}_{idx[index]}' for i in range(60,241,20)]
+def fn_ma_diff(index):
 	cols = []
 	lengths = [5,15,30,60,120,240]
 	for i in range(len(lengths)):
 		for j in range(i+1,len(lengths)):
-			cols.append(f'diff_ma_{lengths[i]}_{lengths[j]}')
+			cols.append(f'diff_ma_{lengths[i]}_{lengths[j]}_{idx[index]}')
 	return cols
 
 '''NOTE TIMES-------------REFERENCE NOTE'''
 #NOTE times = [5,15,30,60,120,240]''' NOTE#
 '''NOTE TIMES-------------REFERENCE NOTE'''
 
-def fn_hihi():
+def fn_hihi(index):
 	'''NOTE first subset of fe_hihi_diff END NOTE'''
-	return [f'hihi{i}' for i in times]
-def fn_disp_hihi():
+	return [f'hihi{i}_{idx[index]}' for i in times]
+def fn_disp_hihi(index):
 	'''NOTE second subset of fe_hihi_diff END NOTE'''
-	return [f'disp_hihi{i}' for i in times]
-def fn_lolo():
+	return [f'disp_hihi{i}_{idx[index]}' for i in times]
+def fn_lolo(index):
 	'''NOTE first subset of fe_lolo_diff END NOTE'''
-	return [f'lolo{i}' for i in times]
-def fn_disp_lolo():
+	return [f'lolo{i}_{idx[index]}' for i in times]
+def fn_disp_lolo(index):
 	'''NOTE second subset of fe_lolo_diff END NOTE'''
-	return [f'disp_lolo{i}' for i in times]
-def fn_hilo_stoch():
+	return [f'disp_lolo{i}_{idx[index]}' for i in times]
+def fn_hilo_stoch(index):
 	cols = []
 	#prepping the feature names according to ma's used
 	for i in range(len(times)):
 		for j in range(len(times)):
-			cols.append(f'hilo_stoch_{times[i]}_{times[j]}')
+			cols.append(f'hilo_stoch_{times[i]}_{times[j]}_{idx[index]}')
 	return cols
 #fe_height_bar
 #fe_height_wick
@@ -831,34 +859,63 @@ def fn_all_subsets(real_prices: bool = False):
 			   f_stchK, f_barH, f_wickH, f_wickD,\
 				f_volData, f_maData, f_maDiff, f_hihi, f_lolo,\
 					f_hilo, f_stochHiLo,
+
+	This function creates a list of lists for each subsection of feature types.
+	I'm typing this as I am implementing the second index data, this is getting pretty complex.
+	Will probably have to look for a more organized method of sorting. Godspeed
 	'''
 	#feature name subsets
 	fnsub = []
 	# will append each individual feature/f_set here
 	if(real_prices):
 		fnsub.append(['high','low','close','time','volume',\
-					  'ToD','DoW','barH','wickH','diff_wick'])#removable real prices
+					  'high.1','low.1','close.1','volume.1'\
+					  'ToD','DoW','barH','wickH','diff_wick'\
+					        ,'barH.1','wickH.1','diff_wick.1'])#removable real prices
 	else:
-		fnsub.append(['time','volume','ToD','DoW','barH','wickH','diff_wick'])
-	fnsub.append(fn_vel())
-	fnsub.append(fn_acc())
-	fnsub.append(fn_stoch_k())
-	fnsub.append(fn_vol_m())
-	fnsub.append(fn_vol_avgDiff())
+		fnsub.append(['time','volume','ToD','DoW','barH','wickH','diff_wick','barH.1','wickH.1','diff_wick.1'])
+
+	#		NOTE NOTE NOTE HERE IS THE IMPLEMENTATION OF ALL INDEX #1 (SPX) DATA. END NOTE END NOTE END NOTE		#
+	fnsub.append(fn_vel(0))
+	fnsub.append(fn_acc(0))
+	fnsub.append(fn_stoch_k(0))
+	fnsub.append(fn_vol_m(0))
+	fnsub.append(fn_vol_avgDiff(0))
 	if(real_prices):
-		fnsub.append(fn_ma_s60())#removable
-		fnsub.append(fn_ma_s240())#removable
-	fnsub.append(fn_disp_ma60())
-	fnsub.append(fn_disp_ma240())
-	fnsub.append(fn_ma_diff())
+		fnsub.append(fn_ma_s60(0))#removable
+		fnsub.append(fn_ma_s240(0))#removable
+	fnsub.append(fn_disp_ma60(0))
+	fnsub.append(fn_disp_ma240(0))
+	fnsub.append(fn_ma_diff(0))
 	if(real_prices):	
-		fnsub.append(fn_hihi())#removable
-	fnsub.append(fn_disp_hihi())
+		fnsub.append(fn_hihi(0))#removable
+	fnsub.append(fn_disp_hihi(0))
 	if(real_prices):	
-		fnsub.append(fn_lolo())#removable
-	fnsub.append(fn_disp_lolo())
-	fnsub.append(fn_hilo_diff())
-	fnsub.append(fn_hilo_stoch())
+		fnsub.append(fn_lolo(0))#removable
+	fnsub.append(fn_disp_lolo(0))
+	fnsub.append(fn_hilo_diff(0))
+	fnsub.append(fn_hilo_stoch(0))
+
+	#		NOTE NOTE NOTE HERE IS THE IMPLEMENTATION OF ALL INDEX #2 (NDX) DATA. END NOTE END NOTE END NOTE 		#
+	fnsub.append(fn_vel(1))
+	fnsub.append(fn_acc(1))
+	fnsub.append(fn_stoch_k(1))
+	fnsub.append(fn_vol_m(1))
+	fnsub.append(fn_vol_avgDiff(1))
+	if(real_prices):
+		fnsub.append(fn_ma_s60(1))#removable
+		fnsub.append(fn_ma_s240(1))#removable
+	fnsub.append(fn_disp_ma60(1))
+	fnsub.append(fn_disp_ma240(1))
+	fnsub.append(fn_ma_diff(1))
+	if(real_prices):	
+		fnsub.append(fn_hihi(1))#removable
+	fnsub.append(fn_disp_hihi(1))
+	if(real_prices):	
+		fnsub.append(fn_lolo(1))#removable
+	fnsub.append(fn_disp_lolo(1))
+	fnsub.append(fn_hilo_diff(1))
+	fnsub.append(fn_hilo_stoch(1))
 	
 	return fnsub
 
@@ -887,33 +944,33 @@ def return_name_collection():
 
 	return full_set
 
-def fn_hilo_diff():
+def fn_hilo_diff(index):
 	lengths = [5,15,30,60,120,240]
 	cols = []
 	#prepping the feature names according to ma's used
 	for i in range(len(lengths)):
 		for j in range(len(lengths)):
-			cols.append(f'diff_hilo_{lengths[i]}_{lengths[j]}')
+			cols.append(f'diff_hilo_{lengths[i]}_{lengths[j]}_{idx[index]}')
 	return cols
 
 def fn_orig_price():
-	return ['high','low','close']
+	return ['high','low','close','high.1','low.1','close.1']
 
 def fn_orig_vol():
-	return ['volume']
+	return ['volume','volume.1']
 
 def fn_orig_time():
 	return ['time']
 
-def fn_hilo_prices():
-	fn_hihi = [f'hihi{i}' for i in times]
-	fn_lolo = [f'lolo{i}' for i in times]
+def fn_hilo_prices(index):
+	fn_hihi = [f'hihi{i}_{idx[index]}' for i in times]
+	fn_lolo = [f'lolo{i}_{idx[index]}' for i in times]
 	cols = fn_hihi+fn_lolo
 	return cols
 
-def fn_ma_prices():
-	cols = [f'ma{i}' for i in range(2,60)]+\
-		   [f'ma{i}' for i in range(60,241,20)]
+def fn_ma_prices(index):
+	cols = [f'ma{i}_{idx[index]}' for i in range(2,60)]+\
+		   [f'ma{i}_{idx[index]}' for i in range(60,241,20)]
 	return cols
 
 def tn_regression():
