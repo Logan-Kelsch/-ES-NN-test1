@@ -80,7 +80,7 @@ import pandas as pd
 import numpy as np
 
 times = [5,15,30,60,120,240]
-idx	  = ['spx','NULL','NULL','NULL','NULL','ndx']
+idx	  = ['spx','ndx','NULL','NULL','NULL','ndx']
 
 ######### '''NOTE NOTE''''''NOTE NOTE''' #########
 ###* * MOST IMPORTANT FUNCTION IN THIS FILE * *###
@@ -869,11 +869,11 @@ def fn_all_subsets(real_prices: bool = False):
 	# will append each individual feature/f_set here
 	if(real_prices):
 		fnsub.append(['high','low','close','time','volume',\
-					  'high.1','low.1','close.1','volume.1'\
-					  'ToD','DoW','barH','wickH','diff_wick'\
-					        ,'barH.1','wickH.1','diff_wick.1'])#removable real prices
+					  'high.1','low.1','close.1','volume.1',\
+					  'ToD','DoW','barH_spx','wickH_spx','diff_wick_spx',\
+					        'barH_ndx','wickH_ndx','diff_wick_ndx'])#removable real prices
 	else:
-		fnsub.append(['time','volume','ToD','DoW','barH','wickH','diff_wick','barH.1','wickH.1','diff_wick.1'])
+		fnsub.append(['time','volume','ToD','DoW','barH_spx','wickH_spx','diff_wick_spx','barH_ndx','wickH_ndx','diff_wick_ndx'])
 
 	#		NOTE NOTE NOTE HERE IS THE IMPLEMENTATION OF ALL INDEX #1 (SPX) DATA. END NOTE END NOTE END NOTE		#
 	fnsub.append(fn_vel(0))

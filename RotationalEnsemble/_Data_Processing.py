@@ -50,17 +50,27 @@ def preprocess_data(
 	assert 0 <= indp_size < 1, "Independent set size must be of domain [0,1)."
 	assert 0 <  test_size < 1, "Test set size must be of domain (0, 1)."
 	
-	print("Trying to load CSV file into DataFrame...",end='') if verbose else do_nothing()
+	print("Trying to load CSV file into DataFrame...") if verbose else do_nothing()
  	#Attempt to load in pandas file
 	try:
-		data=pd.read_csv(file_name)
+		chunks = []
+		iter = 1
+		for chunk in pd.read_csv(file_name, chunksize=25000):
+			isoc = sys.getsizeof(chunk) #initial size of chunk
+			if(optm_data):
+				chunk = numerical_df_optimizer(chunk)
+				print(f'loaded chunk {iter} of size: {isoc} -> {sys.getsizeof(chunk)}')
+			else:
+				print(f'loaded chunk {iter} of size: {isoc}')
+			chunks.append(chunk)
+			iter+=1
+		print('concat chunks')
+		data = pd.concat(chunks)
+		print('concatted chunks')
 		#variable for later printout
 		print(f"Success.\nSize of dataset:\t{sys.getsizeof(data)}")
 		#trying to convert all of the float64 to float32 for memory
 		#float_cols = data.select_dtypes(include=['float64']).columns
-		if(optm_data):
-			data = numerical_df_optimizer(data)
-			print(f"Size after reduction:\t{sys.getsizeof(data)}")
 	except Exception as e:
 		#error output and traceback
 		print(f'\nCould not load file ({file_name}). Please check the file name.')
@@ -85,10 +95,12 @@ def preprocess_data(
 	else:
 		raise TypeError(f"\nFATAL: Model type of '{mod_type}' is not recognized.")
 	
+	print(f'index location of "ToD" feature: {data.columns.get_loc('ToD'), np.max(data[data.columns[data.columns.get_loc('ToD')]])}')
+	
 	print("Success.\nTrying to collect indices of wanted times...",end="") if verbose else do_nothing()
  	#grab list of all indices of samples in good times
-	index_keep = np.where((data.values[:-time_steps, 5] >= t_start) \
-     					& (data.values[:-time_steps, 5] <= t_end))[0]
+	index_keep = np.where((data.values[:-time_steps, data.columns.get_loc('ToD')] >= t_start) \
+     					& (data.values[:-time_steps, data.columns.get_loc('ToD')] <= t_end))[0]
   
 	#drop real price features if requested by 'keep_price' fucntion variable
 	if(keep_price==False):
