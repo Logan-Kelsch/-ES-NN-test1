@@ -33,7 +33,8 @@ def preprocess_data(
     ,num_class:	int		=		2
     ,split_val:	int		=		5
     ,verbose:	int		=		1	
-	,scaler:	Literal['Standard','Robust','MinMaxScaler','None']= 'Standard'
+	,scaler:	Literal['Standard','Robust','MinMaxScaler','None','Custom']= 'Standard'
+	,cstm_scale:any		=		None
 	,frmt_lstm:	bool	=		False
 	,time_steps:int		=		5
 	,keep_price:bool	=		True
@@ -123,12 +124,15 @@ def preprocess_data(
 
 	if(scaler!='None'):
 		print("Trying to standardize all featurespace from training featurespace...",end='') if verbose else do_nothing()
-		#Standarize features
-		scaler = StandardScaler() if scaler=='Standard' else\
-				RobustScaler() if scaler=='Robust' else \
-				MinMaxScaler(feature_range=(0,1))
 		fit_cutter = int(len(X)*(1-indp_size-test_size))
-		scaler.fit(X[:fit_cutter])
+		if(scaler == 'Custom'):
+			scaler = cstm_scale
+		else:
+			#Standarize features
+			scaler = StandardScaler() if scaler=='Standard' else\
+					RobustScaler() if scaler=='Robust' else \
+					MinMaxScaler(feature_range=(0,1))
+			scaler.fit(X[:fit_cutter])
 		X = scaler.transform(X)	#NOTE X IS OVER-WRITTEN HERE #END NOTE
 
 	print("Success.\nTrying to format data into 3D LSTM (Time Series) data..." if frmt_lstm else "Success.\n",end="") if verbose else do_nothing()
@@ -201,7 +205,7 @@ def preprocess_data(
 	#return all data splits THEN the feature list: X's, y's, features
 	return 	X, X_train, X_val, X_ind, np.squeeze(y),\
      		np.squeeze(y_train), np.squeeze(y_val), np.squeeze(y_ind), \
-         	feat_dict
+         	feat_dict, scaler
 
 def numerical_df_optimizer(df):
 	'''this function takes a given dataframe and tries to save as much RAM as possible'''

@@ -74,6 +74,8 @@
 '''
 
 from _Utility import po #percent of, shorthand function
+from multiprocessing import Pool
+from _Utility import function_executor
 import pandas as pd
 import numpy as np
 
@@ -90,6 +92,54 @@ def augmod_dataset(data):
 
 	i = [0,5]#these are the initial column indices for each given index implemented
 	#so far only ES is implemented, with another on its way
+
+	'''NOTE NOTE broke these processes down into a few different areas of multiprocessing based off of
+	   NOTE NOTE linear calculation dependancy of various feature categories 
+	'''
+	'''
+	funcs_1 = [fe_ToD, fe_DoW, fe_vel, fe_acc, fe_stoch_k, fe_height_bar, fe_height_wick, fe_diff_hl_wick, \
+		  fe_vol_sz_diff, fe_ma_disp]
+	args_1  = [(data,), (data,), (data, i[0]), (data, i[0]), (data, i[0]), (data, i[0]), (data, i[0]), (data, i[0]), (data, i[0]), (data, i[0])]
+
+	starmap_inputs = [(funcs_1[i], args_1[i]) for i in range(len(funcs_1))]
+
+	with Pool() as pool:
+		print('beginning first round of starmap dataset creation.')
+		f_ToD, f_DoW, f_vel, f_acc, f_stchK, f_barH, f_wickH, f_wickD, f_volData, f_maData = pool.starmap(function_executor, starmap_inputs)
+		print('ending first round of starmap dataset creation.')
+
+	funcs_2 = [fe_ma_diff, fe_hihi_diff, fe_lolo_diff]
+	args_2  = [(f_maData,), (data, i[0]), (data, i[0])]
+
+	starmap_inputs = [(funcs_2[i], args_2[i]) for i in range(len(funcs_2))]
+
+	with Pool() as pool:
+		print('beginning second round of starmap dataset creation.')
+		f_maDiff, f_hihi, f_lolo = pool.starmap(function_executor, starmap_inputs)
+		print('ending second round of starmap dataset creation.')
+
+	funcs_3 = [fe_hilo_diff, fe_hilo_stoch]
+	args_3  = [(f_hihi,f_lolo), (data, f_hihi, f_lolo, i[0])]
+
+	starmap_inputs = [(funcs_3[i], args_3[i]) for i in range(len(funcs_3))]
+
+	with Pool() as pool:
+		print('beginning third round of starmap dataset creation.')
+		f_hilo, f_stochHiLo = pool.starmap(function_executor, starmap_inputs)
+		print('ending third round of starmap dataset creation.')
+
+	funcs_4 = [te_vel_reg, te_vel_class, te_area_class]
+	args_4  = [(data, i[0]), (data, i[0]), (data, i[0])]
+
+	starmap_inputs = [(funcs_4[i], args_4[i]) for i in range(len(funcs_4))]
+
+	with Pool() as pool:
+		print('beginning fourth round of starmap dataset creation.')
+		target_r, target_c, target_a = pool.starmap(function_executor, starmap_inputs)
+		print('ending fourth round of starmap dataset creation.')
+	'''
+
+	
 	
 	#FEATURE ENGINEERING
 	f_ToD = fe_ToD(data)#single

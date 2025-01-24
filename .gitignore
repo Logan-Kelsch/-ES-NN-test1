@@ -9,5 +9,6 @@ RotationalEnsemble/pricearea_c.csv
 RotationalEnsemble/pricearea_test.csv
 RotationalEnsemble/tmp_model
 RotationalEnsemble/data
+RotationalEnsemble/nq_full.csv
 .tf_/
 .torch_/

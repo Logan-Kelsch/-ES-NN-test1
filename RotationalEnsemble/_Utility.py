@@ -154,3 +154,7 @@ def po(val1, val2, as_decimal=False, round_to=8):
 	'''po is shorthand for 'percent of', for quicky repetitive typing in other files'''
 	m = 1 if as_decimal else 100
 	return round((m * val1 / val2) , round_to)
+
+def function_executor(func, args):
+	'''This function takes in a function and a tuple of arguments, no use of keywords here though.'''
+	return func(*args)
