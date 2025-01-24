@@ -73,6 +73,7 @@
 		 TO ALLOW FOR USAGE OF NAMES OF FEATURES/TARGET COLUMNS
 '''
 
+from _Utility import po #percent of, shorthand function
 import pandas as pd
 import numpy as np
 
@@ -86,28 +87,31 @@ times = [5,15,30,60,120,240]
 #all requested features sets as well as target sets
 #the output will be a pandas dataframe, fully concatenated
 def augmod_dataset(data):
+
+	i = [0,5]#these are the initial column indices for each given index implemented
+	#so far only ES is implemented, with another on its way
 	
 	#FEATURE ENGINEERING
 	f_ToD = fe_ToD(data)#single
 	f_DoW = fe_DoW(data)#single
-	f_vel = fe_vel(data)#set
-	f_acc = fe_acc(data)#set
-	f_stchK = fe_stoch_k(data)#set
-	f_barH = fe_height_bar(data)#single
-	f_wickH = fe_height_wick(data)#single
-	f_wickD = fe_diff_hl_wick(data)#single
-	f_volData = fe_vol_sz_diff(data)#set
-	f_maData = fe_ma_disp(data)#set
+	f_vel = fe_vel(data, i[0])#set
+	f_acc = fe_acc(data, i[0])#set
+	f_stchK = fe_stoch_k(data, i[0])#set
+	f_barH = fe_height_bar(data, i[0])#single
+	f_wickH = fe_height_wick(data, i[0])#single
+	f_wickD = fe_diff_hl_wick(data, i[0])#single
+	f_volData = fe_vol_sz_diff(data, i[0])#set
+	f_maData = fe_ma_disp(data, i[0])#set
 	f_maDiff = fe_ma_diff(f_maData)#set
-	f_hihi = fe_hihi_diff(data)#set
-	f_lolo = fe_lolo_diff(data)#set
+	f_hihi = fe_hihi_diff(data, i[0])#set
+	f_lolo = fe_lolo_diff(data, i[0])#set
 	f_hilo = fe_hilo_diff(f_hihi,f_lolo)#set
-	f_stochHiLo = fe_hilo_stoch(data, f_hihi, f_lolo)#set
+	f_stochHiLo = fe_hilo_stoch(data, f_hihi, f_lolo, i[0])#set
 
 	#TARGET ENGINEERING
-	target_r = te_vel_reg(data)
-	target_c = te_vel_class(data)
-	target_a = te_area_class(data)
+	target_r = te_vel_reg(data, i[0])
+	target_c = te_vel_class(data, i[0])
+	target_a = te_area_class(data, i[0])
 
 	#list of dataframes
 	df_list = [data, f_ToD, f_DoW, f_vel, f_acc, \
@@ -132,10 +136,10 @@ def augmod_dataset(data):
 #returns lowest close of different ranges
 #and the close difference to each
 #this function requires cutting first 240 samples
-def fe_lolo_diff(X):
+def fe_lolo_diff(X, index):
 	#orig feature #3
 	# # # deals with all close of minute values
-	close = X.iloc[:, 2].values
+	close = X.iloc[:, 2+index].values
 	new_data = []
 
 	l = len(X)
@@ -167,10 +171,10 @@ def fe_lolo_diff(X):
 #returns highest close of different ranges
 #and the close difference to each
 #this function requires cutting first 240 samples
-def fe_hihi_diff(X):
+def fe_hihi_diff(X, index):
 	#orig feature #3
 	# # # deals with all close of minute values
-	close = X.iloc[:, 2].values
+	close = X.iloc[:, 2+index].values
 	new_data = []
 
 	l = len(X)
@@ -201,10 +205,10 @@ def fe_hihi_diff(X):
 
 #returns vol*time area and avg vol difference
 #thsi function requires cutting first 60 samples 
-def fe_vol_sz_diff(X):
+def fe_vol_sz_diff(X, index):
 	#orig feature #4
 	# # # deals with volume of each minute
-	volume = X.iloc[:, 3].values
+	volume = X.iloc[:, 3+index].values
 	new_data = []
 
 	l = len(X)
@@ -236,10 +240,10 @@ def fe_vol_sz_diff(X):
 
 #returns moving averages and close-ma difference
 #this function requires cutting of first 240 samples
-def fe_ma_disp(X):
+def fe_ma_disp(X, index):
 	#orig feature #3
 	# # # deals with all close of minute values
-	close = X.iloc[:, 2].values
+	close = X.iloc[:, 2+index].values
 	new_data = []
 
 	l = len(X)
@@ -326,12 +330,12 @@ def fe_DoW(X):
 
 #difference of upper/lower wick size
 #this function requires cutting first 1 sample
-def fe_diff_hl_wick(X):
+def fe_diff_hl_wick(X, index):
 	new_data = []
 	#get high, low, close values
-	low = X.iloc[:, 1].values
-	high = X.iloc[:, 0].values
-	close = X.iloc[:, 2].values
+	low = X.iloc[:, 1+index].values
+	high = X.iloc[:, 0+index].values
+	close = X.iloc[:, 2+index].values
 
 	l = len(X)
 	for sample in range(l):
@@ -349,10 +353,10 @@ def fe_diff_hl_wick(X):
 
 #high of candle (bar)
 #this function requires cutting first 1 sample
-def fe_height_bar(X):
+def fe_height_bar(X, index):
 	#orig feature #3
 	# # # deals with all close of minute values
-	close = X.iloc[:, 2].values
+	close = X.iloc[:, 2+index].values
 	new_data = []
 
 	l = len(X)
@@ -367,11 +371,11 @@ def fe_height_bar(X):
 
 #height of wicks and bar
 #this function requires cutting first 1 sample
-def fe_height_wick(X):
+def fe_height_wick(X, index):
 	#orig feature #1, #2
 	# # # deals with open and close
-	high = X.iloc[:, 0].values
-	low = X.iloc[:, 0].values
+	high = X.iloc[:, 0+index].values
+	low = X.iloc[:, 1+index].values
 	new_data = []
 
 	l = len(X)
@@ -386,10 +390,10 @@ def fe_height_wick(X):
 
 #velocities
 #this function requires cutting first 60 samples (df.iloc[60:])
-def fe_vel(X):
+def fe_vel(X, index):
 	#orig feature #3
 	# # # deals with all close of minute values
-	close = X.iloc[:, 2].values
+	close = X.iloc[:, 2+index].values
 	new_data = []
 
 	l = len(X)
@@ -406,10 +410,10 @@ def fe_vel(X):
 
 #accelerations
 #this function requires cutting first 61 samples (df.iloc[61:])
-def fe_acc(X):
+def fe_acc(X, index):
 	#orig feature #3
 	# # # deals with all close of minute values
-	close = X.iloc[:, 2].values
+	close = X.iloc[:, 2+index].values
 	new_data = []
 
 	l = len(X)
@@ -432,13 +436,13 @@ def fe_acc(X):
 #Stochastic K ONLY
 #this function requires cutting first 120 samples (df.iloc[120:])
 #used zero-out method for Null values instead of looping.
-def fe_stoch_k(X):
+def fe_stoch_k(X, index):
 
 	new_data = []
 	#get high, low, close values
-	low = X.iloc[:, 1].values
-	high = X.iloc[:, 0].values
-	close = X.iloc[:, 2].values
+	low = X.iloc[:, 1+index].values
+	high = X.iloc[:, 0+index].values
+	close = X.iloc[:, 2+index].values
 	i = 0
 
 	l = len(X)
@@ -547,10 +551,10 @@ def fe_hilo_diff(hihi_data, lolo_data):
 
 #function returns location percent (like stochastic) between hihi lolo for each
 #this function requires cutting first -- samples
-def fe_hilo_stoch(X, hihi_data, lolo_data):
+def fe_hilo_stoch(X, hihi_data, lolo_data, index):
 	#orig feature #3
 	# # # deals with all close of minute values
-	close = X.iloc[:, 2].values
+	close = X.iloc[:, 2+index].values
 
 	#   j       -nested in-   i       
 	#low ranges -nested in- high ranges
@@ -591,10 +595,10 @@ def fe_hilo_stoch(X, hihi_data, lolo_data):
 
 #simple price difference for 1-60 minutes 
 #this function requires cutting first 60 samples (df.iloc[60:])
-def te_vel_reg(X):
+def te_vel_reg(X, index):
 	#orig feature #3
 	# # # deals with all close of minute values
-	close = X.iloc[:, 2].values
+	close = X.iloc[:, 2+index].values
 	new_data = []
 
 	l = len(X)
@@ -611,10 +615,10 @@ def te_vel_reg(X):
 
 #simple classification set for 1-60 minutes
 #this function requires cutting first 60 samples
-def te_vel_class(X):
+def te_vel_class(X, index):
 	#orig feature #3
 	# # # deals with all close of minute values
-	close = X.iloc[:, 2].values
+	close = X.iloc[:, 2+index].values
 	new_data = []
 
 	l = len(X)
@@ -665,9 +669,9 @@ def te_vel_class(X):
 #price area: 
 # integral/area of price displacement of future m minutes
 #This function will require cutting out first 60 samples of the dataset
-def te_area_class(X):
+def te_area_class(X, index):
 	#original feature #3 is close of candles
-	close = X.iloc[:, 2].values
+	close = X.iloc[:, 2+index].values
 	#list to collect all target data across dataset
 	new_data = []
 

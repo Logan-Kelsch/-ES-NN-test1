@@ -148,3 +148,9 @@ def graph_loss(epochs, history):
     plt.ylabel('Loss')
     plt.legend(['Train', 'Validation'], loc='upper right')
     plt.show()
+
+#function takes the percent difference that val1 is of val2 as full values (55.5%, not .555)
+def po(val1, val2, as_decimal=False, round_to=8):
+	'''po is shorthand for 'percent of', for quicky repetitive typing in other files'''
+	m = 1 if as_decimal else 100
+	return round((m * val1 / val2) , round_to)

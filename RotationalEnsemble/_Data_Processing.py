@@ -37,6 +37,7 @@ def preprocess_data(
 	,frmt_lstm:	bool	=		False
 	,time_steps:int		=		5
 	,keep_price:bool	=		True
+	,optm_data:	bool	=		True
 ):
 	'''
 	Here is a cool area to put function info.
@@ -56,8 +57,9 @@ def preprocess_data(
 		print(f"Success.\nSize of dataset:\t{sys.getsizeof(data)}")
 		#trying to convert all of the float64 to float32 for memory
 		#float_cols = data.select_dtypes(include=['float64']).columns
-		data = data.astype('float32')
-		print(f"Size after reduction:\t{sys.getsizeof(data)}")
+		if(optm_data):
+			data = numerical_df_optimizer(data)
+			print(f"Size after reduction:\t{sys.getsizeof(data)}")
 	except Exception as e:
 		#error output and traceback
 		print(f'\nCould not load file ({file_name}). Please check the file name.')
@@ -200,3 +202,20 @@ def preprocess_data(
 	return 	X, X_train, X_val, X_ind, np.squeeze(y),\
      		np.squeeze(y_train), np.squeeze(y_val), np.squeeze(y_ind), \
          	feat_dict
+
+def numerical_df_optimizer(df):
+	'''this function takes a given dataframe and tries to save as much RAM as possible'''
+	#now going to try to convert any floats to ints
+	for col in df.select_dtypes(include=["float"]).columns:
+		#check if something like 0.0, 1.0 are sitting around
+		if(df[col] == df[col].astype(int)).all():
+			df[col] = df[col].astype(int)
+	for col in df.select_dtypes(include=["float","int"]).columns:
+		#downcast integer
+		if(pd.api.types.is_integer_dtype(df[col])):
+			df[col] = pd.to_numeric(df[col], downcast="integer")
+		#downcast floats
+		elif(pd.api.types.is_float_dtype(df[col])):
+			df[col] = pd.to_numeric(df[col], downcast="float")
+
+	return df
