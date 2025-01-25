@@ -54,3 +54,8 @@
 -   -   -   If this were to be done.. think twice about what type of meta-model would be required for understanding the 3D grid of predictions.
 -   double rotational method with k different base estimators (NN? LSTM? Conv? What to even do here, this is 3D predictions):
 -   3dim: a set of n rotated-feature-sets partitioned into m different sample sets, all CONTAINING a set of k model-type's predictions.
+
+Add featureset type divisions to section whay models are learning on
+check for correlation of each or any feature
+to attempt to purify the pred1 accuracy of current models.
+Implement regression
