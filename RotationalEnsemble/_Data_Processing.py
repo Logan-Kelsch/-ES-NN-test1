@@ -39,6 +39,7 @@ def preprocess_data(
 	,time_steps:int		=		5
 	,keep_price:bool	=		True
 	,optm_data:	bool	=		True
+	,indices	:int	=		-1
 ):
 	'''
 	Here is a cool area to put function info.
@@ -123,7 +124,7 @@ def preprocess_data(
  
 	print("Success.\nTrying to collect all feature names and indices...",end='') if verbose else do_nothing()
 	#collect list of all feature subsets as dicts {feature_index:feature_name}
-	feat_dict = fnsubset_to_indexdictlist(data.columns, fn_all_subsets(real_prices=keep_price))
+	feat_dict = fnsubset_to_indexdictlist(data.columns, fn_all_subsets(real_prices=keep_price, indices=indices))
  
 	print("Success.\nTrying to clean up...",end='') if verbose else do_nothing()
 	#'data' will no longer be used
