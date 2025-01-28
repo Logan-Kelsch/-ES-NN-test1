@@ -12,5 +12,8 @@ RotationalEnsemble/data
 RotationalEnsemble/nq_full.csv
 RotationalEnsemble/spx_ndx_full.csv
 RotationalEnsemble/spx_ndx_trim.csv
+RotationalEnsemble/spx_test.csv
+RotationalEnsemble/spx_full.csv
+RotationalEnsemble/DoubleRotational.html
 .tf_/
 .torch_/

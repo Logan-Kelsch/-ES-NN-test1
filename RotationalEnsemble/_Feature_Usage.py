@@ -89,7 +89,7 @@ idx	  = ['spx','ndx','NULL','NULL','NULL','ndx']
 #this function will take in a dataset and generate 
 #all requested features sets as well as target sets
 #the output will be a pandas dataframe, fully concatenated
-def augmod_dataset(data):
+def augmod_dataset(data, index_names:list = ['spx','ndx']):
 
 	'''NOTE NOTE broke these processes down into a few different areas of multiprocessing based off of
 	   NOTE NOTE linear calculation dependancy of various feature categories 
@@ -162,20 +162,21 @@ def augmod_dataset(data):
 	f_hilo = fe_hilo_diff(f_hihi,f_lolo, i[0])#set
 	f_stochHiLo = fe_hilo_stoch(data, f_hihi, f_lolo, i[0])#set
 
-	#collect ndx specific data
-	f_vel2 = fe_vel(data, i[1])#set
-	f_acc2 = fe_acc(data, i[1])#set
-	f_stchK2 = fe_stoch_k(data, i[1])#set
-	f_barH2 = fe_height_bar(data, i[1])#single
-	f_wickH2 = fe_height_wick(data, i[1])#single
-	f_wickD2 = fe_diff_hl_wick(data, i[1])#single
-	f_volData2 = fe_vol_sz_diff(data, i[1])#set
-	f_maData2 = fe_ma_disp(data, i[1])#set
-	f_maDiff2 = fe_ma_diff(f_maData2, i[1])#set
-	f_hihi2 = fe_hihi_diff(data, i[1])#set
-	f_lolo2 = fe_lolo_diff(data, i[1])#set
-	f_hilo2 = fe_hilo_diff(f_hihi2,f_lolo2, i[1])#set
-	f_stochHiLo2 = fe_hilo_stoch(data, f_hihi2, f_lolo2, i[1])#set
+	if(len(index_names)>1):
+		#collect ndx specific data
+		f_vel2 = fe_vel(data, i[1])#set
+		f_acc2 = fe_acc(data, i[1])#set
+		f_stchK2 = fe_stoch_k(data, i[1])#set
+		f_barH2 = fe_height_bar(data, i[1])#single
+		f_wickH2 = fe_height_wick(data, i[1])#single
+		f_wickD2 = fe_diff_hl_wick(data, i[1])#single
+		f_volData2 = fe_vol_sz_diff(data, i[1])#set
+		f_maData2 = fe_ma_disp(data, i[1])#set
+		f_maDiff2 = fe_ma_diff(f_maData2, i[1])#set
+		f_hihi2 = fe_hihi_diff(data, i[1])#set
+		f_lolo2 = fe_lolo_diff(data, i[1])#set
+		f_hilo2 = fe_hilo_diff(f_hihi2,f_lolo2, i[1])#set
+		f_stochHiLo2 = fe_hilo_stoch(data, f_hihi2, f_lolo2, i[1])#set
 
 	#collect index comparison data
 
@@ -187,15 +188,22 @@ def augmod_dataset(data):
 	target_a = te_area_class(data, i[0])
 
 	#list of dataframes
-	df_list = [data, f_ToD, f_DoW, f_vel, f_acc, \
-			   		f_stchK, f_barH, f_wickH, f_wickD,\
-						f_volData, f_maData, f_maDiff, f_hihi, f_lolo,\
-							f_hilo, f_stochHiLo, \
-					f_vel2, f_acc2, \
-			   			f_stchK2, f_barH2, f_wickH2, f_wickD2,\
-							f_volData2, f_maData2, f_maDiff2, f_hihi2, f_lolo2,\
-								f_hilo2, f_stochHiLo2, \
-				target_r, target_c, target_a]
+	if(len(index_names)==1):
+		df_list = [data, f_ToD, f_DoW, f_vel, f_acc, \
+						f_stchK, f_barH, f_wickH, f_wickD,\
+							f_volData, f_maData, f_maDiff, f_hihi, f_lolo,\
+								f_hilo, f_stochHiLo, \
+					target_r, target_c, target_a]
+	if(len(index_names)==2):
+		df_list = [data, f_ToD, f_DoW, f_vel, f_acc, \
+						f_stchK, f_barH, f_wickH, f_wickD,\
+							f_volData, f_maData, f_maDiff, f_hihi, f_lolo,\
+								f_hilo, f_stochHiLo, \
+						f_vel2, f_acc2, \
+							f_stchK2, f_barH2, f_wickH2, f_wickD2,\
+								f_volData2, f_maData2, f_maDiff2, f_hihi2, f_lolo2,\
+									f_hilo2, f_stochHiLo2, \
+					target_r, target_c, target_a]
 
 	#cut off error head and error tail of dataframes
 	df_trunk_1 = [df.iloc[:-60] for df in df_list]
