@@ -158,3 +158,7 @@ def po(val1, val2, as_decimal=False, round_to=8):
 def function_executor(func, args):
 	'''This function takes in a function and a tuple of arguments, no use of keywords here though.'''
 	return func(*args)
+
+def swap(val1, val2):
+	'''simple swapping function, nothing special'''
+	return val2, val1
