@@ -43,6 +43,7 @@ class Master():
 			,model_depth	:	int		=	2
 			,all_models		:	list	=	[]
 			,lvl0_formatters:	list	=	[]
+			,lvl2_formatters:	list	=	[]
 	):
 		
 		#Ensuring model depth is consistent with incoming data	----
@@ -51,20 +52,20 @@ class Master():
 		self._model_depth	=	model_depth
 
 		#model level declaration / seperation					----
-		if(len(all_models) == 2):
+		if(len(all_models) >= 2):
 			self._level_0		=	all_models[0]
 			self._level_1		=	all_models[1]
+			#check for if there is a level 2 model, give None if not true
+			if(len(all_models) == 3):
+				self._level_2	=	all_models[2]
+			else:
+				self._level_2	=	None
 		else:
 			#the only reason there would not be added models is the intention of loading a model
 			#which is where 'None' will be tested.
 			self._level_0		=	None
 			self._level_1		=	None
-
-		#optional level2 for future use, likely will not fully implement.
-		if(model_depth>2):
-			self._level_2	=	all_models[2]
-		else:
-			self._level_2	=	None
+			self._level_2		=	None
 
 		#testing what to do with formatting data, based on whether the user 
 		# initiated Master with intention of loading from a directory
@@ -96,6 +97,17 @@ class Master():
 			#declaring dimensions of level 0 as tuple (featurespace, samplespace, modelspace)
 			self._lvl0_dims		=	(len(self._level_0),len(self._level_0[0]),len(self._level_0[0][0]))
 
+		#testing what to do with level2 formatting data based on whether
+		# the user will be loading in a model or not
+		if(self._level_2 == None):
+			#this case is reached when the model is either to be loaded in, or when it does not contain a level2 model
+			self._lvl2_findx	=	None
+		else:
+			#this case is reached when a level 2 model has been loaded in.
+			#a formatter is required, therefore it will pull from the argument
+			self._lvl2_findx	=	lvl2_formatters[0]
+			'''NOTE NOTE NOTE so far only findx is implemented for lvl2 formatters, add new indices if developed further here'''
+
 	def master_predict(self, X, threshold:float=0.5):
 		'''This function is in charge of making a master prediction from a given dataset'''
 
@@ -103,11 +115,18 @@ class Master():
 		assert self._level_0 != None, f"FATAL: Master prediction blocked -> level-0 models do not currently exist."
 
 		level_0_pred	=	self.predict_level0(X)
-		print(level_0_pred.shape)
+		print(level_0_pred.shape)#showing shape of predictions set leaving level-0
+
 		level_1_pred	=	self.predict_level1(level_0_pred)
+
 		if(self._model_depth>2):
-			raise NotImplementedError(f"FATAL: in master_predict, model depth is read as >2, level2 is not implemented.")
+
+			#predict using level 2 model if level 2 exists
+			level_2_pred=	self.predict_level2(level_1_pred, threshold, X)
+			return level_2_pred
+		
 		else:
+			#this is reached when there is no level 2
 			level_1_pred = (level_1_pred > threshold)
 			return level_1_pred
 
@@ -144,16 +163,32 @@ class Master():
 		## Returns
 		This function returns a new prediction set if there is a level 2 model, OR a single prediction'''
 		if(self._model_depth > 2):
-			raise NotImplementedError(f'Usage of level-2 predictions requested, homie we talked about this its not implemented yet')
-			pass#collect a list of predictions form here for level2prediction
+			#currently only implementing a vertical stacking lvl2, meaning does nothing here!! (for now)
+			pass
 
 		#This else is reached when level 1 is the top level of the model
-		else:
-			y_pred = self._level_1.predict(lvl0_predset)
-			return y_pred
+		y_pred = self._level_1.predict(lvl0_predset)
+		return y_pred
 		
-	def predict_level2(self, lvl1_predset):
-		raise NotImplementedError(f"Fatal: Level 2 prediction was requested, but has not been implemented.")
+	def predict_level2(self, lvl1_pred, threshold, X):
+		'''this function takes the prediction from the level-2 model. Currently I am only implementing
+		a vertical stacking model, specifically SVM with the focus of precision!!! 
+		NOTE Consider need for modification if expansion later on in this area of code.'''
+
+		#here, the lvl1 predictions run parallel to X coming in,
+		# therefore direct preparation of X can be utilized here, followed immediately by prediction filtering.
+
+		#this function here is redeclaring X as only the features that will be utilized in the actual lvl2 pred
+		X = X.iloc[:, self._lvl2_findx]
+
+		#format the level 1 predicitons according to threshold values
+		lvl1_pred = (lvl1_pred > threshold)
+
+		#this function is looking at where the level-1 model predicts 1
+		#and then predicts using the level-2 model on those instances
+		#possible error area as of 1/30/25 6:46pm unsure if np.arange follows within np.where
+		y_pred = np.where(lvl1_pred == 0, self._level_2.predict(X[np.arange(len(lvl1_pred))]), lvl1_pred)
+		return y_pred
 	
 	def master_predict_fullth(self, X, y, definition:Literal['high','low','min']='low'):
 		'''This function is used to show the accuracy for each threshold value'''
@@ -240,13 +275,31 @@ class Master():
 		except Exception as e:
 			print(f'Level-1 model saving to -> {f'{name}/level_1/model_0.keras'} could not save properly:\n{e}')
 
+		#level 2 model saving
+		#because I do not think this will be hard to implement, I will code this as only saving a single model
+		#and also under the assumption that it will be a joblib model
+		try:
+			#attempting to save the level2 model as single model and assuming its a picklable model
+			joblib.dump(self._level_2, f'{name}/level_2/model_0.joblib')
+		except Exception as e:
+			print(f'Level-2 model saving to -> {f'{name}/level_2/model_0.joblib'} could not save properly:\n{e}')
+
 		#all models have been saved, now the lvl0 formatting information needs to be saved.
 		try:
 			#attempting to save the 2 item lvl0 formatting information to a single .joblib with joblib
-			formatter_path = f'{name}/lvl0_frmt/lvl0_formatter.joblib'
+			formatter_path = f'{name}/level_0/lvl0_formatter.joblib'
 			joblib.dump([self._lvl0_findx, self._lvl0_trans, self._lvl0_dims], formatter_path)
 		except Exception as e:
 			print(f'Failed to save level-0 formatters to -> {formatter_path}:\n{e}')
+
+		#level0 formatters are saved, now the lvl2 formatting information needs to be saved
+		try:
+			#attempting to save the indices variable for features (MUST HAVE orig_time included) used in model
+			formatter_path = f'{name}/level_2/lvl2_formatter.joblib'
+			joblib.dump(self._lvl2_findx, formatter_path)
+		except Exception as e:
+			print(f'Failed ot save level-2 formatters to -> {formatter_path}:\n{e}')
+
 
 		'''
 		NOTE currently have not implemented a level-1 model length >1, nor level-1 formatting information
@@ -276,13 +329,25 @@ class Master():
 		#beginning with loading in formatting data
 		try:
 			#pulling out data from files
-			pulling_path = f'{name}/lvl0_frmt/lvl0_formatter.joblib'
+			pulling_path = f'{name}/level_0/lvl0_formatter.joblib'
 			pulled_data = joblib.load(pulling_path)
 			
 			#loading the data into class details
 			self._lvl0_findx = pulled_data[0]
 			self._lvl0_trans = pulled_data[1]
 			self._lvl0_dims  = pulled_data[2]
+		except Exception as e:
+			print(f'Could not load level 0 formatters:\n{e}')
+
+		#now try loading in level 2 formatting data
+		try:
+			#pulling out data from files
+			pulling_path = f'{name}/level_2/lvl0_formatter.joblib'
+			if(os.path.exists(pulling_path)):
+				pulled_data = joblib.load(pulling_path)
+		
+				#loading the data into class details
+				self._lvl2_findx	=	pulled_data
 		except Exception as e:
 			print(f'Could not load level 0 formatters:\n{e}')
 
@@ -402,6 +467,43 @@ class Master():
 		except Exception as e:
 			print(f'Could not load in level-1 model:\n{e}')
 
+		#now try to load in level-2 model
+		try:
+
+			#list of extensions for easy checking and code readability
+			extensions = ['.joblib','.keras']
+
+			pulling_path = f'{name}/level_2/model_0'
+
+			#going to iterate through the possible extensions to load in based on model type
+			for ext in extensions:
+				full_path = pulling_path+ext
+
+				#if the current iterated path exists
+				if(os.path.exists(full_path)):
+								
+					#now we have to check what extension was accepted
+					if(ext == '.joblib'):
+
+						#model is joblib file, load in with built in func
+						self._level_2 = joblib.load(full_path)
+
+					elif(ext == '.keras'):
+
+						#model is keras file, load in with built in func
+						self._level_2 = load_model(full_path)
+						
+					else:
+						#left this here for if different models are 
+						#implemented with different built in model
+						#loading attributes where the model is
+						#also not picklable
+						raise NameError('FATAL: IMPOSSIBLE CASE')
+
+			#model is now loaded into self._level_2
+		except Exception as e:
+			print(f'Could not load in level-2 model:\n{e}')
+
 	#model depth attribute	----
 
 	@property
@@ -440,11 +542,21 @@ class Master():
 	
 	@property
 	def level_2(self):
-		return None
+		return type(self._level_2)
 	
 	@level_2.setter
 	def level_2(self, new:any):
 		self._level_2 = new
+
+	#level 2 formatting attributes	----
+	
+	@property
+	def lvl2_findx(self):
+		return self._lvl2_findx
+	
+	@lvl2_findx.setter
+	def lvl2_findx(self, new):
+		self._lvl2_findx = new
 	
 	#here are the level 0 formatting attributes
 
