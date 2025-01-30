@@ -101,7 +101,8 @@ def preprocess_data(
 	print("Success.\nTrying to collect indices of wanted times...",end="") if verbose else do_nothing()
  	#grab list of all indices of samples in good times
 	index_keep = np.where((data.values[:-time_steps, data.columns.get_loc('ToD')] >= t_start) \
-     					& (data.values[:-time_steps, data.columns.get_loc('ToD')] <= t_end))[0]
+     					& (data.values[:-time_steps, data.columns.get_loc('ToD')] <= t_end)	  \
+						& (data.values[:-time_steps, data.columns.get_loc('DoW')] > 0))[0]
   
 	#drop real price features if requested by 'keep_price' fucntion variable
 	if(keep_price==False):
