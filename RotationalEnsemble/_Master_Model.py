@@ -428,7 +428,6 @@ class Master():
 
 		#now try to load in level-1 model
 		try:
-
 			#list of extensions for easy checking and code readability
 			extensions = ['.joblib','.keras']
 
