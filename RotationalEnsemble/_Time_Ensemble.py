@@ -19,8 +19,7 @@ def chronos_predict(
     -	in preprocessdata, implement targetset and also index 0+comparative only
     ### This target set should be indices parallel to master-names and loaded models
     ### Once all models are loaded in, all will predict and a set identical to lvl0predset format will be returned
-    ### With this prediction set we can train another metamodel I think, or use these models as a form of master model
-    ### Regardless we should look for svm (all) to popvote ->output, OR popvote to svm (one) ->output.
-    after this the last thing to implement is raw thinkorswim export into prediction.
+    ### Make all master models depth 3, try pop vote then decide if its worth making deeper model (+target)
+    after this the last thing to implement is final function (raw thinkorswim export into prediction.)
     - looks like: load_raw_to_fullset, chronos_predict, prediction_visualization then risk management development.
     '''
