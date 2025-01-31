@@ -187,7 +187,13 @@ class Master():
 		#this function is looking at where the level-1 model predicts 1
 		#and then predicts using the level-2 model on those instances
 		#possible error area as of 1/30/25 6:46pm unsure if np.arange follows within np.where
-		y_pred = np.where(lvl1_pred == 0, self._level_2.predict(X[np.arange(len(lvl1_pred))]), lvl1_pred)
+		#						update at  7:28pm, this version works in ipynb will use this.
+		y_pred = lvl1_pred
+		#alter each prediction
+		for p in range(len(lvl1_pred)):
+			if(y_pred[p] == 1):
+				y_pred[p] = self._level_2.predict(X[p].reshape(1, -1))
+
 		return y_pred
 	
 	def master_predict_fullth(self, X, y, definition:Literal['high','low','min']='low'):

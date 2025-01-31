@@ -96,7 +96,8 @@ def preprocess_data(
 	else:
 		raise TypeError(f"\nFATAL: Model type of '{mod_type}' is not recognized.")
 	
-	print(f'index location of "ToD" feature: {data.columns.get_loc('ToD'), np.max(data[data.columns[data.columns.get_loc('ToD')]])}')
+	#printout for location of ToD column confirmation if wanted
+	#print(f'index location of "ToD" feature: {data.columns.get_loc('ToD'), np.max(data[data.columns[data.columns.get_loc('ToD')]])}')
 	
 	print("Success.\nTrying to collect indices of wanted times...",end="") if verbose else do_nothing()
  	#grab list of all indices of samples in good times
