@@ -179,7 +179,7 @@ class Master():
 		# therefore direct preparation of X can be utilized here, followed immediately by prediction filtering.
 
 		#this function here is redeclaring X as only the features that will be utilized in the actual lvl2 pred
-		X = X.iloc[:, self._lvl2_findx]
+		X = X[:, self._lvl2_findx]
 
 		#format the level 1 predicitons according to threshold values
 		lvl1_pred = (lvl1_pred > threshold)
@@ -231,8 +231,6 @@ class Master():
 
 			#create paths for each folder
 			subfolder_paths = [os.path.join(name, 'level_'+str(i)) for i in range(0, self._model_depth)]
-			#subfolder for the featureindex and featuretransformfunction information
-			subfolder_paths.append(os.path.join(name, 'lvl0_frmt'))
 
 			#create subfolders
 			for subfolder in subfolder_paths:
@@ -277,7 +275,7 @@ class Master():
 		#and also under the assumption that it will be a tf.keras model
 		try:
 			#attempting to save the level1 model as single model and assuming its a tf.keras model
-			self._level_1.save_as(f'{name}/level_1/model_0')
+			self._level_1.save(f'{name}/level_1/model_0.keras')
 		except Exception as e:
 			print(f'Level-1 model saving to -> {f'{name}/level_1/model_0.keras'} could not save properly:\n{e}')
 
@@ -348,7 +346,7 @@ class Master():
 		#now try loading in level 2 formatting data
 		try:
 			#pulling out data from files
-			pulling_path = f'{name}/level_2/lvl0_formatter.joblib'
+			pulling_path = f'{name}/level_2/lvl2_formatter.joblib'
 			if(os.path.exists(pulling_path)):
 				pulled_data = joblib.load(pulling_path)
 		
