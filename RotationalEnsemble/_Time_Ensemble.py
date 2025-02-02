@@ -5,6 +5,10 @@ and then collecting the popular vote for given samples.
 The main difference between the master models is that they should be predicting different times in the future
 '''
 
+import _Master_Model
+from typing import Literal
+import numpy as np
+
 class chronos(
 		master_names    :   list    =   []
 		,loading_kwargs	:	dict	=	{}
@@ -36,5 +40,59 @@ class chronos(
     fit():
         raise NotImplementedError()
         
-def chronos_predict():
-    raise NotImplementedError()
+def chronos_predict(
+    X
+    ,master_names : list = []
+    ,loading_kwargs : dict = {}
+    ,fusion_method : Literal['pv'] = 'pv'
+):
+    '''This function will take in a set to be trained
+        and make a prediction with chosen fusion method.
+            Params:
+        - X:
+        -   Test set, each master will do all needed transformations.
+        - loading-kwags:
+        -   Not sure if this is needed, for NN/master params.
+        - fusion-method:
+        -   Method of fusing model predictions, currently only implemented PV
+        -   Due to no clear target, consider making a more universal target.
+    '''
+    
+    #variables are for prediction collection and model loading
+    master_predictions = []
+    #currently redundant data collection, may be useful NOTE in a class
+    #master_models = []
+    
+    #load in all master models into list of masters
+    for model_name in master_names:
+        local_master = _Master_Model.master = {model_depth=3}
+        local_master.load_model(model_name)
+        #currently redundant line
+        #master_models.append(local_master)
+        print(f'Chronos Predicting')
+        master_predictions.append(local_master.predict(X))
+        
+    #create the transpose of this, as everything is backwards
+    master_predictions = np.array(master_predictions).T
+    
+    #this commit is all coded on my phone, this code should not be working
+    #and should be completed on my computer, but the idea
+    #should get across fully.
+    
+    #combine predictions based on method
+    match(fusion_method):
+    
+        #if the user requests use of popular vote
+        case 'pv':
+            final_predictions = np.array([])
+            for sample in master_predictions:
+                #take popular vote @ this sample
+                #and append to 'final_predictions'
+                pass
+            
+        case _:
+            raise NotImplementedError(f'FATAL: Fusion type "{fusion_method}" is not implemented')
+    
+    
+    
+    return final_predictions
