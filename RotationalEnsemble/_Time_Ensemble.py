@@ -5,7 +5,7 @@ and then collecting the popular vote for given samples.
 The main difference between the master models is that they should be predicting different times in the future
 '''
 
-def chronos_predict(
+class chronos(
 		master_names    :   list    =   []
 		,loading_kwargs	:	dict	=	{}
 ):
@@ -22,4 +22,19 @@ def chronos_predict(
     ### Make all master models depth 3, try pop vote then decide if its worth making deeper model (+target)
     after this the last thing to implement is final function (raw thinkorswim export into prediction.)
     - looks like: load_raw_to_fullset, chronos_predict, prediction_visualization then risk management development.
+    
+    this class shoyld only be implemented if we will make a 
+    saveable chronos model. but popular vote makes the most
+    sense at the moment, so use chronos_predict first
     '''
+    __init__():
+        raise NotImplementedError()
+    
+    predict():
+        raise NotImplementedError()
+    
+    fit():
+        raise NotImplementedError()
+        
+def chronos_predict():
+    raise NotImplementedError()
