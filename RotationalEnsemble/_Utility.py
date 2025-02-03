@@ -2,6 +2,8 @@ import random
 import traceback
 import numpy as np
 from sklearn.utils.class_weight import compute_class_weight
+from sklearn.metrics import confusion_matrix, accuracy_score, precision_score
+import seaborn as sns
 import matplotlib.pyplot as plt
 
 #function to simplify code visualization/readability (primary for verbose printouts)
@@ -162,3 +164,51 @@ def function_executor(func, args):
 def swap(val1, val2):
 	'''simple swapping function, nothing special'''
 	return val2, val1
+
+def get_cm_values(y_true, y_pred):
+	'''This function takes in the true and prediction values of a given model and set, and returns values from 0-3 based on its type.
+	FORMAT:
+	-	0	1
+	-	2	3	
+	'''
+	cm_vals = []
+	for i in range(len(y_pred)):
+		if(y_true[i] == 0):
+			if(y_pred[i] == 0):
+				cm_vals.append(0)
+			if(y_pred[i] == 1):
+				cm_vals.append(1)
+		if(y_true[i] == 1):
+			if(y_pred[i] == 0):
+				cm_vals.append(2)
+			if(y_pred[i] == 1):
+				cm_vals.append(3)
+	return cm_vals
+
+def show_confusion_matrix(
+		y_true,
+		y_pred
+		,figsize	=	(8,6)
+		,cmap		=	'Greens'
+		,xticklabels=	range(2)
+		,yticklabels=	range(2)
+		,xlabel		=	'Predicted'
+		,ylabel		=	'True'
+		,title		=	'Confusion Matrix'
+):
+	#Create the confusion matrix
+	cm = confusion_matrix(y_true, y_pred)
+	# Plot the confusion matrix using seaborn
+	plt.figure(figsize=figsize)
+	sns.heatmap(cm, annot=True, fmt='d', cmap=cmap, \
+				xticklabels=xticklabels, yticklabels=yticklabels)
+	plt.xlabel(xlabel)
+	plt.ylabel(ylabel)
+	plt.title(title)
+	plt.show()
+
+def get_precision(y_true, y_pred):
+	return f'{round(precision_score(y_true, y_pred)*100, 2)}%'
+
+def get_accuracy(y_true, y_pred):
+	return f'{round(accuracy_score(y_true, y_pred)*100, 2)}%'

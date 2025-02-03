@@ -121,8 +121,6 @@ def preprocess_data(
 	#split data into features and targets
 	X = data.iloc[:, :-1].values
 	y = data.iloc[:, -1].values
-
-	print(type(X),type(X[0]),type(X[0][0]))
  
 	print("Success.\nTrying to collect all feature names and indices...",end='') if verbose else do_nothing()
 	#collect list of all feature subsets as dicts {feature_index:feature_name}

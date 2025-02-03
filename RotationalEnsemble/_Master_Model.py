@@ -84,6 +84,8 @@ class Master():
 			
 			#declaration after assertion
 			self._lvl0_findx	=	lvl0_formatters[0]
+			if(lvl2_formatters != []):
+				self._lvl2_findx	=	lvl2_formatters[0]
 			
 			#														----
 			#ensuring feature space rotation models count is consistent with modelset featuresplit size
@@ -275,6 +277,7 @@ class Master():
 		#and also under the assumption that it will be a tf.keras model
 		try:
 			#attempting to save the level1 model as single model and assuming its a tf.keras model
+			print(type(self._level_1))
 			self._level_1.save(f'{name}/level_1/model_0.keras')
 		except Exception as e:
 			print(f'Level-1 model saving to -> {f'{name}/level_1/model_0.keras'} could not save properly:\n{e}')
