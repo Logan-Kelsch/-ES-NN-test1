@@ -47,8 +47,6 @@ def chronos_predict(
 	X
 	,master_names : list = []
 	,loading_kwargs : dict = {}
-	,fusion_method : Literal['pv','mv'] = 'pv'
-	,vote_var		:	int	=	0
 ):
 	'''This function will take in a set to be trained
 		and make a prediction with chosen fusion method.
@@ -84,7 +82,15 @@ def chronos_predict(
 	#this commit is all coded on my phone, this code should not be working
 	#and should be completed on my computer, but the idea
 	#should get across fully.
+	return master_predictions
 	
+	
+
+def chronos_fusion(
+	master_predictions	:	any	=	None
+	,fusion_method:Literal['pv','mv']='pv'
+	,vote_var	:	int	=	0
+):
 	#combine predictions based on method
 	match(fusion_method):
 	
@@ -99,7 +105,7 @@ def chronos_predict(
 			final_predictions = np.array([])
 			for sample in master_predictions:
 				pred_counts = np.bincount(sample.flatten())
-				final_predictions = np.append(final_predictions, pred_counts[0] <= (len(master_names)-vote_var))
+				final_predictions = np.append(final_predictions, pred_counts[0] <= (len(master_predictions[0])-vote_var))
 			
 		#for any other request outside of this switch case, it has not yet been implemented.
 		case _:

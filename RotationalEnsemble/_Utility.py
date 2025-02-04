@@ -5,6 +5,9 @@ from sklearn.utils.class_weight import compute_class_weight
 from sklearn.metrics import confusion_matrix, accuracy_score, precision_score
 import seaborn as sns
 import matplotlib.pyplot as plt
+import mplfinance as mpf
+import pandas as pd
+import copy
 
 #function to simplify code visualization/readability (primary for verbose printouts)
 def do_nothing():
@@ -212,3 +215,75 @@ def get_precision(y_true, y_pred):
 
 def get_accuracy(y_true, y_pred):
 	return f'{round(accuracy_score(y_true, y_pred)*100, 2)}%'
+
+def graph_range(function, kw, kw_range, show_graph:bool=True, **kwargs):
+	values = []
+	for i in kw_range:
+		local_kwargs = kwargs.copy()
+		local_kwargs[kw] = i
+		values.append(function(**local_kwargs))
+	
+	if(show_graph):
+		plt.figure(figsize=(8,4))
+		plt.plot(values, kw_range, 'black')
+		plt.show
+
+	return values
+
+def show_predictions_chart(X_raw, predictions, t_start=645,t_end=800):
+	'''This function must have X_raw come in with first features as high,low,close,volume,time,ToD,DoW'''
+
+	#create batches based off of day loops
+	batches = make_batches_with_ToD(X_raw, t_start, t_end)
+
+	#iterable variable to keep batch looping parallel to prediction plotting
+	sample_iter = 0
+
+	for batch in batches:
+		h = batch[:,0]
+		l = batch[:,1]
+		c = batch[:,2]
+		o = np.roll(c, shift=1)
+
+		#small for loop to force direction of candle based on prediction of model
+		for sample in range(len(c)):
+			#if predicts 1
+			if(predictions[sample_iter+sample]==1):
+					if(c[sample]<o[sample]):#force green
+						c[sample],o[sample] = o[sample],c[sample]
+			else:#if predicts 0
+				if(c[sample]>o[sample]):#force red
+					c[sample],o[sample] = o[sample],c[sample]
+
+
+		data = {
+			'Date':range(0,len(batch[:])*1000000000,1000000000),
+			'Open':o,
+			'High':h,
+			'Low':l,
+			'Close':c
+		}
+		df = pd.DataFrame(data)
+		df['Date'] = pd.to_datetime(df['Date'])
+		df.set_index('Date',inplace=True)
+
+		mpf.plot(df[1:], type='candle',style='yahoo',figratio=(20,8))
+		
+		#move sample prediction iterator up based off of size of this batch
+		sample_iter+=len(batch[:])
+
+def make_batches_with_ToD(X_raw, batch_begin, batch_end):
+	batches = []
+	current_batch = []
+
+	for row in X_raw:
+		if row[5] == batch_begin and current_batch:
+			batches.append(np.array(current_batch))
+			current_batch = []
+
+		current_batch.append(row)
+	
+	if current_batch:
+		batches.append(np.array(current_batch))
+
+	return batches
