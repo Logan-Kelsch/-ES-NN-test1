@@ -47,7 +47,8 @@ def chronos_predict(
 	X
 	,master_names : list = []
 	,loading_kwargs : dict = {}
-	,fusion_method : Literal['pv'] = 'pv'
+	,fusion_method : Literal['pv','mv'] = 'pv'
+	,vote_var		:	int	=	0
 ):
 	'''This function will take in a set to be trained
 		and make a prediction with chosen fusion method.
@@ -59,6 +60,7 @@ def chronos_predict(
 		- fusion-method:
 		-   Method of fusing model predictions, currently only implemented PV
 		-   Due to no clear target, consider making a more universal target.
+		-	mv: Minimum Vote, a given number of votes must be satsified for voting 'True'
 	'''
 	
 	#variables are for prediction collection and model loading
@@ -92,6 +94,12 @@ def chronos_predict(
 			for sample in master_predictions:
 				pred_counts = np.bincount(sample.flatten())
 				final_predictions = np.append(final_predictions, np.argmax(pred_counts))
+
+		case 'mv':
+			final_predictions = np.array([])
+			for sample in master_predictions:
+				pred_counts = np.bincount(sample.flatten())
+				final_predictions = np.append(final_predictions, pred_counts[0] <= (len(master_names)-vote_var))
 			
 		#for any other request outside of this switch case, it has not yet been implemented.
 		case _:

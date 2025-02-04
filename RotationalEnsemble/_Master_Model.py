@@ -121,7 +121,7 @@ class Master():
 
 		level_1_pred	=	self.predict_level1(level_0_pred)
 
-		if(self._model_depth>2):
+		if((self._model_depth>2) & (self._level_2 is not None)):
 
 			#predict using level 2 model if level 2 exists
 			level_2_pred=	self.predict_level2(level_1_pred, threshold, X)
@@ -275,9 +275,9 @@ class Master():
 		#level 1 model saving
 		#because I do not think this will be hard to implement, I will code this as only saving a single model
 		#and also under the assumption that it will be a tf.keras model
+		print('helloooo')
 		try:
 			#attempting to save the level1 model as single model and assuming its a tf.keras model
-			print(type(self._level_1))
 			self._level_1.save(f'{name}/level_1/model_0.keras')
 		except Exception as e:
 			print(f'Level-1 model saving to -> {f'{name}/level_1/model_0.keras'} could not save properly:\n{e}')
