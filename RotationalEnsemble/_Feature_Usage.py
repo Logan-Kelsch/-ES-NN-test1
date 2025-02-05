@@ -77,6 +77,7 @@ from _Utility import po #percent of, shorthand function
 from multiprocessing import Pool
 from _Utility import function_executor
 import pandas as pd
+from typing import Literal
 import numpy as np
 
 times = [5,15,30,60,120,240]
@@ -89,7 +90,11 @@ idx	  = ['spx','ndx','NULL','NULL','NULL','ndx']
 #this function will take in a dataset and generate 
 #all requested features sets as well as target sets
 #the output will be a pandas dataframe, fully concatenated
-def augmod_dataset(data, index_names:list = ['spx','ndx']):
+def augmod_dataset(
+	data
+	,index_names	:	list	=	['spx','ndx']
+	,format_mode	:	Literal['live','backtest'] = 'backtest'
+):
 
 	'''NOTE NOTE broke these processes down into a few different areas of multiprocessing based off of
 	   NOTE NOTE linear calculation dependancy of various feature categories 
@@ -181,19 +186,22 @@ def augmod_dataset(data, index_names:list = ['spx','ndx']):
 	#collect index comparison data
 
 
-
+	if(format_mode == 'backtest'):
 	#TARGET ENGINEERING
-	target_r = te_vel_reg(data, i[0])
-	target_c = te_vel_class(data, i[0])
-	target_a = te_area_class(data, i[0])
+		target_r = te_vel_reg(data, i[0])
+		target_c = te_vel_class(data, i[0])
+		target_a = te_area_class(data, i[0])
 
 	#list of dataframes
 	if(len(index_names)==1):
 		df_list = [data, f_ToD, f_DoW, f_vel, f_acc, \
 						f_stchK, f_barH, f_wickH, f_wickD,\
 							f_volData, f_maData, f_maDiff, f_hihi, f_lolo,\
-								f_hilo, f_stochHiLo, \
-					target_r, target_c, target_a]
+								f_hilo, f_stochHiLo]
+		if(format_mode == 'backtest'):
+			df_list.append(target_r)
+			df_list.append(target_c)
+			df_list.append(target_a)
 	if(len(index_names)==2):
 		df_list = [data, f_ToD, f_DoW, f_vel, f_acc, \
 						f_stchK, f_barH, f_wickH, f_wickD,\
@@ -202,15 +210,27 @@ def augmod_dataset(data, index_names:list = ['spx','ndx']):
 						f_vel2, f_acc2, \
 							f_stchK2, f_barH2, f_wickH2, f_wickD2,\
 								f_volData2, f_maData2, f_maDiff2, f_hihi2, f_lolo2,\
-									f_hilo2, f_stochHiLo2, \
-					target_r, target_c, target_a]
+									f_hilo2, f_stochHiLo2]
+		if(format_mode == 'backtest'):
+			df_list.append(target_r)
+			df_list.append(target_c)
+			df_list.append(target_a)
 
 	#cut off error head and error tail of dataframes
-	df_trunk_1 = [df.iloc[:-60] for df in df_list]
-	df_trunk_2 = [df.iloc[240:] for df in df_trunk_1]
+
+	#cutting off the tail is only for target inclusion
+	if(format_mode == 'backtest'):
+		df_trunk_tail = [df.iloc[:-60] for df in df_list]
+		#otherwise, we do not need to trim as targets are not included
+
+	#this head trim is necessary, removing oldest samples for smooth+true feature inclusion
+	if(format_mode == 'backtest'):
+		df_trunk_head = [df.iloc[240:] for df in df_trunk_tail]
+	else:
+		df_trunk_head = [df.iloc[240:] for df in df_list]
 
 	#concat all dataframes into one parallel set
-	full_augmod = pd.concat(df_trunk_2, axis=1)
+	full_augmod = pd.concat(df_trunk_head, axis=1)
 
 	return full_augmod
 
