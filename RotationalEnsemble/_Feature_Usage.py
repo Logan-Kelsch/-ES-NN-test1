@@ -881,7 +881,7 @@ def fn_hilo_stoch(index):
 #fe_hihi_diff
 #fe_hilo_diff
 
-def fn_all_subsets(real_prices: bool = False, indices:int=-1):
+def fn_all_subsets(real_prices: bool = False, indices:int=-1, keep_time:bool=True):
 	'''
 	This function creates a list of lists for each subsection of feature types.
 	I'm typing this as I am implementing the second index data, this is getting pretty complex.
@@ -902,27 +902,56 @@ def fn_all_subsets(real_prices: bool = False, indices:int=-1):
 	# will append each individual feature/f_set here
 	if(real_prices):
 		if(indices == 0):
-			fnsub.append(['high','low','close','time','volume','ToD','DoW','barH_spx','wickH_spx','diff_wick_spx'])
+			if(keep_time):
+				fnsub.append(['high','low','close','time','volume','ToD','DoW','barH_spx','wickH_spx','diff_wick_spx'])
+			else:
+				fnsub.append(['high','low','close','volume','ToD','DoW','barH_spx','wickH_spx','diff_wick_spx'])
 		elif(indices == 1):
-			fnsub.append(['high.1','low.1','close.1','volume.1','barH_ndx','wickH_ndx','diff_wick_ndx'])
+			if(keep_time):
+				fnsub.append(['high.1','low.1','close.1','time','volume.1','barH_ndx','wickH_ndx','diff_wick_ndx'])
+			else:
+				fnsub.append(['high.1','low.1','close.1','volume.1','barH_ndx','wickH_ndx','diff_wick_ndx'])
 		elif(indices == -1):
-			fnsub.append(['high','low','close','time','volume',\
+			if(keep_time):
+				fnsub.append(['high','low','close','time','volume',\
+						'high.1','low.1','close.1','volume.1',\
+						'ToD','DoW','barH_spx','wickH_spx','diff_wick_spx',\
+								'barH_ndx','wickH_ndx','diff_wick_ndx'])#removable real prices
+			else:
+				fnsub.append(['high','low','close','volume',\
 						'high.1','low.1','close.1','volume.1',\
 						'ToD','DoW','barH_spx','wickH_spx','diff_wick_spx',\
 								'barH_ndx','wickH_ndx','diff_wick_ndx'])#removable real prices
 		elif(indices == -2):
-			fnsub.append(['high','low','close','time','volume','ToD','DoW','barH_spx','wickH_spx','diff_wick_spx'])
-			fnsub.append(['high.1','low.1','close.1','volume.1','barH_ndx','wickH_ndx','diff_wick_ndx'])
+			if(keep_time):
+				fnsub.append(['high','low','close','time','volume','ToD','DoW','barH_spx','wickH_spx','diff_wick_spx'])
+				fnsub.append(['high.1','low.1','close.1','volume.1','barH_ndx','wickH_ndx','diff_wick_ndx'])
+			else:
+				fnsub.append(['high','low','close','volume','ToD','DoW','barH_spx','wickH_spx','diff_wick_spx'])
+				fnsub.append(['high.1','low.1','close.1','volume.1','barH_ndx','wickH_ndx','diff_wick_ndx'])
 	else:
 		if(indices == 0):
-			fnsub.append(['time','volume','ToD','DoW','barH_spx','wickH_spx','diff_wick_spx'])
+			if(keep_time):
+				fnsub.append(['time','volume','ToD','DoW','barH_spx','wickH_spx','diff_wick_spx'])
+			else:
+				fnsub.append(['volume','ToD','DoW','barH_spx','wickH_spx','diff_wick_spx'])
 		if(indices == 1):
-			fnsub.append(['time','volume.1','ToD','DoW','barH_ndx','wickH_ndx','diff_wick_ndx'])
+			if(keep_time):
+				fnsub.append(['time','volume.1','ToD','DoW','barH_ndx','wickH_ndx','diff_wick_ndx'])
+			else:
+				fnsub.append(['volume.1','ToD','DoW','barH_ndx','wickH_ndx','diff_wick_ndx'])
 		if(indices ==-1):
-			fnsub.append(['time','volume','ToD','DoW','barH_spx','wickH_spx','diff_wick_spx','barH_ndx','wickH_ndx','diff_wick_ndx'])
+			if(keep_time):
+				fnsub.append(['time','volume','ToD','DoW','barH_spx','wickH_spx','diff_wick_spx','barH_ndx','wickH_ndx','diff_wick_ndx'])
+			else:
+				fnsub.append(['volume','ToD','DoW','barH_spx','wickH_spx','diff_wick_spx','barH_ndx','wickH_ndx','diff_wick_ndx'])
 		if(indices ==-2):
-			fnsub.append(['time','volume','ToD','DoW','barH_spx','wickH_spx','diff_wick_spx'])
-			fnsub.append(['time','volume.1','ToD','DoW','barH_ndx','wickH_ndx','diff_wick_ndx'])
+			if(keep_time):
+				fnsub.append(['time','volume','ToD','DoW','barH_spx','wickH_spx','diff_wick_spx'])
+				fnsub.append(['volume.1','ToD','DoW','barH_ndx','wickH_ndx','diff_wick_ndx'])
+			else:
+				fnsub.append(['volume','ToD','DoW','barH_spx','wickH_spx','diff_wick_spx'])
+				fnsub.append(['volume.1','ToD','DoW','barH_ndx','wickH_ndx','diff_wick_ndx'])
 		
 	if(indices == 0 or indices ==-2):
 		#		NOTE NOTE NOTE HERE IS THE IMPLEMENTATION OF ALL INDEX #1 (SPX) DATA. END NOTE END NOTE END NOTE		#

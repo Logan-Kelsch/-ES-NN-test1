@@ -38,6 +38,7 @@ def preprocess_data(
 	,frmt_lstm:	bool	=		False
 	,time_steps:int		=		5
 	,keep_price:bool	=		True
+	,keep_time:bool		=		True
 	,optm_data:	bool	=		True
 	,indices	:int	=		-1
 ):
@@ -108,7 +109,11 @@ def preprocess_data(
 	#drop real price features if requested by 'keep_price' fucntion variable
 	if(keep_price==False):
 		print("Success.\nTrying to drop price features...",end="") if verbose else do_nothing()
-		data = data.drop(columns=return_name_collection())
+		print("\nNOTE DROPPING real prices from dataset has been removed."
+			"Now prices are removed from feature subsection selection for models."
+			"This allows for real data collection from loading in dataset, for backtesting and visualzation and training in one.")
+		#data = data.drop(columns=return_name_collection())
+	
 	
 	print("Success...") if verbose else do_nothing()
 	#printout number of features and the target
@@ -124,7 +129,7 @@ def preprocess_data(
  
 	print("Success.\nTrying to collect all feature names and indices...",end='') if verbose else do_nothing()
 	#collect list of all feature subsets as dicts {feature_index:feature_name}
-	feat_dict = fnsubset_to_indexdictlist(data.columns, fn_all_subsets(real_prices=keep_price, indices=indices))
+	feat_dict = fnsubset_to_indexdictlist(data.columns, fn_all_subsets(real_prices=keep_price, indices=indices, keep_time=keep_time))
  
 	print("Success.\nTrying to clean up...",end='') if verbose else do_nothing()
 	#'data' will no longer be used
