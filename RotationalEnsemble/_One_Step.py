@@ -15,6 +15,7 @@ import os
 import joblib
 import pandas as pd
 import _Feature_Usage
+import numpy as np
 import _Time_Ensemble
 import _ToS_CSV_Cleaner
 import _CSV_Augmod
@@ -81,7 +82,12 @@ def e2e_predict(
 		raise FileNotFoundError(f'FATAL: Scaler was not found at "{scaler_path}". Please relocate saved scaler for loading predictions dataset.')
 	
 	#load in features
-	X_raw = pd.read_csv(expanded_csv_name)
+	X = pd.read_csv(expanded_csv_name)
+	index_keep = np.where((X.values[:, X.columns.get_loc('ToD')] >= visual_window[0]) \
+     					& (X.values[:, X.columns.get_loc('ToD')] <= visual_window[1])	  \
+						& (X.values[:, X.columns.get_loc('DoW')] > 0))[0]
+	
+	X_raw = X.iloc[index_keep, :].values
 
 	#load in scaler
 	scaler = joblib.load(scaler_path)
