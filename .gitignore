@@ -16,5 +16,8 @@ RotationalEnsemble/spx_test.csv
 RotationalEnsemble/spx_full.csv
 RotationalEnsemble/DoubleRotational.html
 RotationalEnsemble/models
+RotationalEnsemble/live/dirty.csv
+RotationalEnsemble/live/live_clean.csv
+RotationalEnsemble/live/live.csv
 .tf_/
 .torch_/
