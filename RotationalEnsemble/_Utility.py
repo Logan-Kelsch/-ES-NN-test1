@@ -230,8 +230,12 @@ def graph_range(function, kw, kw_range, show_graph:bool=True, **kwargs):
 
 	return values
 
-def show_predictions_chart(X_raw, predictions, t_start=645,t_end=800):
+def show_predictions_chart(X_raw, predictions, t_start=645,t_end=800, add_chart:list=[], fss=None):
 	'''This function must have X_raw come in with first features as high,low,close,volume,time,ToD,DoW'''
+
+	#temporary assertion for limited implementation and mplfinance library knowledge, keeping feature plotting to max of 1
+	assert (len(add_chart) < 5), \
+		NotImplementedError(f"FATAL: Adding {len(add_chart)} charts is above the implemented maximum of 4.")
 
 	#create batches based off of day loops
 	batches = make_batches_with_ToD(X_raw, t_start, t_end)
@@ -239,11 +243,25 @@ def show_predictions_chart(X_raw, predictions, t_start=645,t_end=800):
 	#iterable variable to keep batch looping parallel to prediction plotting
 	sample_iter = 0
 
+	#create batches for each day
 	for batch in batches:
+
+		#collect the high low and close and generate open from the given raw dataset
 		h = batch[:,0]
 		l = batch[:,1]
 		c = batch[:,2]
 		o = np.roll(c, shift=1)
+
+		#check if plotting a parallel feature was requested
+		if(len(add_chart)!=0):
+			ft = []
+			for feature_index in add_chart:
+				ft.append(batch[:,feature_index])
+
+			#also check if a collection of feature subsets were brought into
+			#the function for printout confirmation of which feature is being printed
+			if(fss != None):
+				print(f"Plotting Features: {[get_name_from_fss(fss, i) for i in add_chart]}")
 
 		#small for loop to force direction of candle based on prediction of model
 		for sample in range(len(c)):
@@ -267,7 +285,18 @@ def show_predictions_chart(X_raw, predictions, t_start=645,t_end=800):
 		df['Date'] = pd.to_datetime(df['Date'])
 		df.set_index('Date',inplace=True)
 
-		mpf.plot(df[1:], type='candle',style='yahoo',figratio=(20,8))
+		#check whether or not chart printout should be with a feature
+		if(len(add_chart) == 0):
+			#this is reached if no feature is being shown parallel to the given candles
+			mpf.plot(df[1:], type='candle',style='yahoo',figratio=(20,8))
+
+		else:
+			#this is reached if a requested feature is being printed parallel to the candle charts
+			features = pd.DataFrame(ft).T
+
+			add_plots = [mpf.make_addplot(i, panel=1, color='blue',secondary_y=False) for i in features[1:]]
+			#add_plot = mpf.make_addplot(features[1:], panel=1, color='blue',secondary_y=False)
+			mpf.plot(df[1:], type='candle',style='yahoo',figratio=(20,12), addplot=add_plots)
 		
 		#move sample prediction iterator up based off of size of this batch
 		sample_iter+=len(batch[:])
@@ -287,3 +316,16 @@ def make_batches_with_ToD(X_raw, batch_begin, batch_end):
 		batches.append(np.array(current_batch))
 
 	return batches
+
+def get_name_from_fss(fss:list=[], index:int=-1):
+	'''This function takes a given feature subsets list and returns the feature name from a requested index value'''
+
+	#check each feature subset (dict) within the list of feature subsets
+	for subset in fss:
+		#if the index value exists within the feature subset
+		if(index in subset):
+			#return the value to the given key
+			return subset[index]
+	
+	#getting here means all feature subsets were checked and feature index is not contained within this
+	return None

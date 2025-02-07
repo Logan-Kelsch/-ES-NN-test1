@@ -1110,4 +1110,3 @@ def tn_classification_exception(num_classes, class_split, minute):
 			[f'tc_4c_5p_{i}m' for i in range(5, minute, 5)]+\
 			[f'tc_4c_5p_{i}m' for i in range(minute+5, 61, 5)]
 	return cols
-	
