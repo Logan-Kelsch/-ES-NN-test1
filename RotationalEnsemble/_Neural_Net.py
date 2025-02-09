@@ -368,6 +368,7 @@ class NN:
 	def predict(self
 			,X
 			,y								=	None
+			,proba				:	bool	=	False
 			,threshold			:	float	=	0.5
 			,use_class_weight	:	bool	=	False
 	):
@@ -378,7 +379,10 @@ class NN:
 		#if(self._LSTM):
 		#	X, y = self.format_LSTM(X, y, self._time_steps)
 		y_pred = self.model.predict(X)
-		y_pred = (y_pred > threshold)
+		
+		#if probability function is not selected, prediction must be turned into binary through a threshold
+		if(proba == False):
+			y_pred = (y_pred > threshold)
 
 		#if(self._LSTM):
 		#	return y_pred, y
