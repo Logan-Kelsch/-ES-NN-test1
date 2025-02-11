@@ -230,7 +230,15 @@ def graph_range(function, kw, kw_range, show_graph:bool=True, **kwargs):
 
 	return values
 
-def show_predictions_chart(X_raw, predictions, t_start=645,t_end=800, add_chart:list=[], fss=None):
+def show_predictions_chart(
+	X_raw, 
+	predictions, 
+	t_start=645,
+	t_end=800, 
+	add_chart:list=[], 
+	fss=None, 
+	naked_features=False
+):
 	'''This function must have X_raw come in with first features as high,low,close,volume,time,ToD,DoW'''
 
 	#temporary assertion for limited implementation and mplfinance library knowledge, keeping feature plotting to max of 1
@@ -294,11 +302,19 @@ def show_predictions_chart(X_raw, predictions, t_start=645,t_end=800, add_chart:
 
 		else:
 			#this is reached if a requested feature is being printed parallel to the candle charts
-			features = pd.DataFrame(ft).T
+			features = pd.DataFrame(ft)
 
 			add_plots = []#[mpf.make_addplot(features[1:i], panel=1, color='blue',secondary_y=False) for i in range(len(features[1:]))]
-			#add_plot = mpf.make_addplot(features[1:], panel=1, color='blue',secondary_y=False)
-			mpf.plot(df[1:], type='candle',style='yahoo',figratio=(20,12), addplot=add_plots)
+			for i, feat in enumerate(features.values):
+				color = ((len(features.values) -i)/(len(features.values)+1))
+				add_plots.append(mpf.make_addplot(feat[1:].clip(min=0,max=100), panel=1, color=(color/2,color/2,color), secondary_y=False))
+			
+			#naked features disabled allows for panel to have standard info lines such as 0,100 and 20,80
+			if((naked_features==False) & (len(add_plots) > 0)):
+				add_plots.append(mpf.make_addplot(pd.Series(0, index=range(len(df)-1)), panel=1, color='black', secondary_y=False))
+				add_plots.append(mpf.make_addplot(pd.Series(100, index=range(len(df)-1)), panel=1, color='black', secondary_y=False))
+
+			mpf.plot(df[1:], type='candle',style='yahoo',figratio=(16,9),figsize=(12,8), addplot=add_plots)
 		
 		#move sample prediction iterator up based off of size of this batch
 		sample_iter+=len(batch[:])
