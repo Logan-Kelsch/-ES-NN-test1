@@ -383,6 +383,8 @@ class NN:
 		#if probability function is not selected, prediction must be turned into binary through a threshold
 		if(proba == False):
 			y_pred = (y_pred > threshold)
+		
+		#if proba is true, then for each prediciton a float value between 0-1 is returned
 
 		#if(self._LSTM):
 		#	return y_pred, y

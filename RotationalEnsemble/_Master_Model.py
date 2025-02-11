@@ -110,13 +110,19 @@ class Master():
 			self._lvl2_findx	=	lvl2_formatters[0]
 			'''NOTE NOTE NOTE so far only findx is implemented for lvl2 formatters, add new indices if developed further here'''
 
-	def master_predict(self, X, threshold:float=0.5):
+	def master_predict(
+		self, 
+		X,
+		lvl1_threshold:float=0.5, 
+		lvl0_threshold:float=0.5,
+		mode:Literal['binary','proba']='binary'
+	):
 		'''This function is in charge of making a master prediction from a given dataset'''
 
 		#quick assertion to stop execution if the masterclass is still NULL
 		assert self._level_0 != None, f"FATAL: Master prediction blocked -> level-0 models do not currently exist."
 
-		level_0_pred	=	self.predict_level0(X)
+		level_0_pred	=	self.predict_level0(X, lvl0_threshold, mode)
 		print(level_0_pred.shape)#showing shape of predictions set leaving level-0
 
 		level_1_pred	=	self.predict_level1(level_0_pred)
@@ -124,15 +130,15 @@ class Master():
 		if((self._model_depth>2) & (self._level_2 is not None)):
 
 			#predict using level 2 model if level 2 exists
-			level_2_pred=	self.predict_level2(level_1_pred, threshold, X)
+			level_2_pred=	self.predict_level2(level_1_pred, lvl1_threshold, X)
 			return level_2_pred
 		
 		else:
 			#this is reached when there is no level 2
-			level_1_pred = (level_1_pred > threshold)
+			level_1_pred = (level_1_pred > lvl1_threshold)
 			return level_1_pred
 
-	def predict_level0(self, X, model:Literal['binary','proba']='binary'):
+	def predict_level0(self, X, threshold, mode):
 		'''This function makes the initial modeslset predictions for the master_predict function
 		## Returns
 		This function returns the prediction set, as data interpretable by a model'''
@@ -149,7 +155,8 @@ class Master():
 					#Use rotation function[relevant to model].to transform(test-set using only[:, features[that are model specific]])
 					local_set = self._lvl0_trans[f].transform(X[:, self.lvl0_findx[f]])
 					local_pred= model.predict(local_set)
-					local_pred= local_pred > 0.5
+					if(mode == 'binary'):
+						local_pred= (local_pred > threshold)
 					predictions.append(local_pred)
 					#proba_predictions.append(model.proba_predict())
 

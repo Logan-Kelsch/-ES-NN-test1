@@ -71,7 +71,7 @@ def train_test_meta_model(
 				#Explanation:
 				#Use rotation function[relevant to model].to transform(test-set using only[:, features[that are model specific]])
 				local_set = X_trans[f_index].transform(X_test[:, X_findx[f_index]])
-				local_pred= model.predict(local_set)
+				local_pred= model.predict(local_set, proba=True)
 				#print(local_pred)
 				binary_predictions.append(local_pred)
 				#proba_predictions.append(model.proba_predict())
@@ -202,7 +202,7 @@ def meta_train(metam_type, X_train, y_train, X_test, y_test, use_class_weight, m
 
 	return model
 
-def meta_predict(metam_type, metamodel, X_test):
+def meta_predict(metam_type, metamodel, X_test, proba:bool=False):
 	#first ensure that X_test is iterable
 	try:
 		iter(X_test)
@@ -254,7 +254,7 @@ def meta_predict(metam_type, metamodel, X_test):
 			return y_pred
 
 		case 'NN':
-			y_pred = metamodel.predict(X_test)
+			y_pred = metamodel.predict(X_test, proba)
 			return y_pred
 
 
