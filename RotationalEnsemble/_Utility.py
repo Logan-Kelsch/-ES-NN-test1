@@ -255,6 +255,8 @@ def show_predictions_chart(X_raw, predictions, t_start=645,t_end=800, add_chart:
 		#check if plotting a parallel feature was requested
 		if(len(add_chart)!=0):
 			ft = []
+
+			#now append each feature column into a list
 			for feature_index in add_chart:
 				ft.append(batch[:,feature_index])
 
@@ -294,7 +296,7 @@ def show_predictions_chart(X_raw, predictions, t_start=645,t_end=800, add_chart:
 			#this is reached if a requested feature is being printed parallel to the candle charts
 			features = pd.DataFrame(ft).T
 
-			add_plots = [mpf.make_addplot(i, panel=1, color='blue',secondary_y=False) for i in features[1:]]
+			add_plots = []#[mpf.make_addplot(features[1:i], panel=1, color='blue',secondary_y=False) for i in range(len(features[1:]))]
 			#add_plot = mpf.make_addplot(features[1:], panel=1, color='blue',secondary_y=False)
 			mpf.plot(df[1:], type='candle',style='yahoo',figratio=(20,12), addplot=add_plots)
 		

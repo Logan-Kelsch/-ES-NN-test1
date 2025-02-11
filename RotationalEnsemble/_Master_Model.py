@@ -129,7 +129,7 @@ class Master():
 		X,
 		lvl1_threshold:float=0.5, 
 		lvl0_threshold:float=0.5,
-		mode:Literal['binary','proba']='binary'
+		mode:Literal['binary','proba']='proba'
 	):
 		'''This function is in charge of making a master prediction from a given dataset'''
 
@@ -381,7 +381,7 @@ class Master():
 		try:
 			#pulling out data from files
 			pulling_path = f'{name}/level_1/lvl1_formatter.joblib'
-			pulled_data = joblib.dump(pulling_path)
+			pulled_data = joblib.load(pulling_path)
 
 			#loading the data into class details
 			self._lvl1_trans = pulled_data[0]

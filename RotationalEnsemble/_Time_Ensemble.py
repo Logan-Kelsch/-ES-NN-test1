@@ -88,9 +88,25 @@ def chronos_predict(
 
 def chronos_fusion(
 	master_predictions	:	any	=	None
-	,fusion_method:Literal['pv','mv']='pv'
+	,fusion_method:Literal['pv','mv','ev']='pv'
 	,vote_var	:	int	=	0
 ):
+	"""
+	fusion methods:
+	- pv:
+	-	_Popular Vote
+	- mv:
+	-	_Minimun Vote
+	- ev:
+	-	_Exact Vote
+	"""
+
+	#print(len(master_predictions[0]))
+	#NOTE SINGLE MASTER MODEL CASE, to avoid bugs with only one model being tested
+	if(type(master_predictions[0]) != np.ndarray):
+		#this suggests only one prediction is made for each sample
+		return master_predictions
+
 	#combine predictions based on method
 	match(fusion_method):
 	
@@ -106,6 +122,12 @@ def chronos_fusion(
 			for sample in master_predictions:
 				pred_counts = np.bincount(sample.flatten())
 				final_predictions = np.append(final_predictions, pred_counts[0] <= (len(master_predictions[0])-vote_var))
+
+		case 'ev':
+			final_predictions = np.array([])
+			for sample in master_predictions:
+				pred_counts = np.bincount(sample.flatten())
+				final_predictions = np.append(final_predictions, pred_counts[0] == (len(master_predictions[0])-vote_var))
 			
 		#for any other request outside of this switch case, it has not yet been implemented.
 		case _:
