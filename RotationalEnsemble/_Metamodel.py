@@ -17,6 +17,7 @@
 
 from importlib import reload
 import _Utility
+import joblib
 reload(_Utility)
 import _Neural_Net
 from typing import Literal
@@ -24,6 +25,10 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, precision_score, recall_score
 from sklearn.metrics import confusion_matrix
 from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import FunctionTransformer
+from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import RobustScaler
+from sklearn.preprocessing import MinMaxScaler
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 from aeon.classification.interval_based import TimeSeriesForestClassifier
@@ -46,6 +51,8 @@ def train_test_meta_model(
 	,use_mm_params	:	bool	=	False
 	,metam_params	:	dict	=	None
 	,prediciton_type:	Literal['Classification','Regression']		=	'Classification'
+	,meta_scaler	:	Literal['Custom','Robust','MinMax','Standard','None']=	'None'
+	,custom_scaler	:	any		=	None
 )   ->    list:
 	'''
 		This function takes in a 3D list of trained models and uses their predictions as
@@ -85,6 +92,27 @@ def train_test_meta_model(
 		y_test = np.array(y_test)
 
 	print(X_test.shape)
+
+	#here we are going to standardize the data with desired scaler
+	if(meta_scaler!='Custom'):
+		scaler = StandardScaler() if meta_scaler=='Standard' else\
+		RobustScaler() if meta_scaler=='Robust' else\
+		MinMaxScaler(feature_range=(0,1)) if meta_scaler=='MinMax' else\
+		FunctionTransformer()
+	
+	else:
+		#this is reached when a custom function is desired
+		#the transformer would be brought in as this parameter using joblib.dump
+		scaler = custom_scaler
+
+	#fit scaler to this data
+	scaler.fit(X_test)
+
+	#save the current scaler to standard location
+	joblib.dump(scaler, 'scaler/meta.joblib')
+
+	#transform the current dataset based off of saved scaler
+	X_test = scaler.transform(X_test)
 
 	#Splitting the training set into what the metamodel is trained on, and what it is validated on.
 	X_metatrain, X_metatest, y_metatrain, y_metatest = train_test_split(X_test, y_test, test_size=val_size, shuffle=shuffle)

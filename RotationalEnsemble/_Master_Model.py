@@ -18,6 +18,7 @@ import tensorflow as tf
 import numpy as np
 from tensorflow.keras.models import load_model
 from sklearn.metrics import accuracy_score
+from sklearn.preprocessing import FunctionTransformer
 from typing import Literal
 import joblib
 import os
@@ -36,13 +37,17 @@ class Master():
 		-	_List of actual models by level
 		- lvl0-formatters
 		-	_List of lvl0-modelset specific iterables
-		-	Format: `[feat-idx-info, trans-func-info]`
+		-	Format: `[feat-idx-info, trans-func-info, lvl0-dims]'
+		- lvl1-formatters
+		-	_List of lvl1-model specific iterables
+		-	Format: `[into-lvl1-scaler]'
 	'''
 	def __init__(
 			self
 			,model_depth	:	int		=	2
 			,all_models		:	list	=	[]
 			,lvl0_formatters:	list	=	[]
+			,lvl1_formatters:	list	=	[]
 			,lvl2_formatters:	list	=	[]
 	):
 		
@@ -95,6 +100,15 @@ class Master():
 			
 			#declaration after assertion
 			self._lvl0_trans	=	lvl0_formatters[1]
+
+			#declare the scaler function for lvl0 prediction sets into lvl1
+			if(len(lvl1_formatters) != 1):
+				#this is reached if no lvl1 formatting information is added. use identity trans as function
+				self._lvl1_trans=	FunctionTransformer()
+
+			else:
+				#bring in desired transformation function
+				self._lvl1_trans=	lvl1_formatters[0]
 
 			#declaring dimensions of level 0 as tuple (featurespace, samplespace, modelspace)
 			self._lvl0_dims		=	(len(self._level_0),len(self._level_0[0]),len(self._level_0[0][0]))
@@ -163,7 +177,9 @@ class Master():
 		#return the transpose and np.array of this information since its a bunch of arrays of predictions
 		if(len(predictions) < len(predictions[0])):
 			predictions = np.array(predictions).T
-			return np.squeeze(predictions)
+			predictions = np.squeeze(predictions)
+			#finally standardize level 0 predictions on its way out of level0 predict
+			return self._lvl1_trans.transform(predictions)
 		else:
 			return np.array(predictions)
 	
@@ -306,7 +322,15 @@ class Master():
 		except Exception as e:
 			print(f'Failed to save level-0 formatters to -> {formatter_path}:\n{e}')
 
-		#level0 formatters are saved, now the lvl2 formatting information needs to be saved
+		#level0 formatters are saved, now the lvl1 formatting information needs to be saved
+		try:
+			#attempting to save the items of lvl1 formatting information to a single .joblib with joblib
+			formatter_path = f'{name}/level_1/lvl1_formatter.joblib'
+			joblib.dump([self._lvl1_trans], formatter_path)
+		except Exception as e:
+			print(f'Failed to save level-1 formatter to -> {formatter_path}:\n{e}')
+
+		#level0&1 formatters are saved, now the lvl2 formatting information needs to be saved
 		try:
 			#attempting to save the indices variable for features (MUST HAVE orig_time included) used in model
 			formatter_path = f'{name}/level_2/lvl2_formatter.joblib'
@@ -352,6 +376,17 @@ class Master():
 			self._lvl0_dims  = pulled_data[2]
 		except Exception as e:
 			print(f'Could not load level 0 formatters:\n{e}')
+
+		#now try loading in level 1 formatting data
+		try:
+			#pulling out data from files
+			pulling_path = f'{name}/level_1/lvl1_formatter.joblib'
+			pulled_data = joblib.dump(pulling_path)
+
+			#loading the data into class details
+			self._lvl1_trans = pulled_data[0]
+		except Exception as e:
+			print(f'Could not load level 1 formatters:\n{e}')
 
 		#now try loading in level 2 formatting data
 		try:
@@ -570,6 +605,16 @@ class Master():
 	@lvl2_findx.setter
 	def lvl2_findx(self, new):
 		self._lvl2_findx = new
+
+	#level 1 formatting attributes	----
+
+	@property
+	def lvl1_trans(self):
+		return self._lvl1_trans
+	
+	@lvl1_trans.setter
+	def lvl1_trans(self, new):
+		self._lvl1_trans = new
 	
 	#here are the level 0 formatting attributes
 
