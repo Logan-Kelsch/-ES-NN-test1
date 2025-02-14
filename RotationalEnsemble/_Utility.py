@@ -248,13 +248,16 @@ def show_predictions_chart(
 		NotImplementedError(f"FATAL: Adding {len(add_chart)} charts is above the implemented maximum of 4.")
 
 	#create batches based off of day loops
-	batches = make_batches_with_ToD(X_raw, t_start, t_end)
+	batches, batch_root_indices = make_batches_with_ToD(X_raw, t_start, t_end)
 
 	#iterable variable to keep batch looping parallel to prediction plotting
 	sample_iter = 0
 
+	#signals variable to append each signal going off
+	signals = []
+
 	#create batches for each day
-	for batch in batches:
+	for batch_index, batch in enumerate(batches):
 
 		#collect the high low and close and generate open from the given raw dataset
 		h = batch[:,0]
@@ -278,7 +281,7 @@ def show_predictions_chart(
 		#small for loop to force direction of candle based on prediction of model
 		for sample in range(len(c)):
 			#if predicts 1
-			if(predictions[sample_iter+sample]==1):
+			if(predictions[batch_root_indices[batch_index]+sample]==1):
 					if(c[sample]<o[sample]):#force green
 						c[sample],o[sample] = o[sample],c[sample]
 			else:#if predicts 0
@@ -309,7 +312,7 @@ def show_predictions_chart(
 			add_plots = []
 			for i, feat in enumerate(features.values):
 				color = ((len(features.values) -i)/(len(features.values)+1))
-				add_plots.append(mpf.make_addplot(feat[1:].clip(min=0,max=100), panel=1, color=(color/2,color/2,color), secondary_y=False))
+				add_plots.append(mpf.make_addplot(feat.clip(min=0,max=100), panel=1, color=(color/2,color/2,color), secondary_y=False))
 
 			#this area is for if singals are included
 			#excluding the use of signals if no plots have been added
@@ -325,7 +328,7 @@ def show_predictions_chart(
 						'''NOTE NOTE GOING TO MAKE SIGNALS TEMPORARILY ONLY APPLY TO THE FIRST FEATURE PLOTTED END#NOTE END#NOTE'''
 						#this feature contains NAN values
 						#also differentiating between whether there is more than one feature to grab signal from 
-						if(len(add_plots)>1):
+						if(len(add_plots)>1 or signal==None):
 
 							#more than one feature being plotted
 							raise KeyError('signal not supported with multiple plots')
@@ -334,7 +337,7 @@ def show_predictions_chart(
 							
 							#only one feature being plotted
 							#this one goes ontop of the feature plot
-							signal_feature = batch[1:,add_chart[0]]
+							signal_feature = batch[:,add_chart[0]]
 							#this one goes ontop of the candle plot
 							#the purpose of this one is to show the signal overlap between model AND feature
 							signal_candle  = copy.deepcopy(signal_feature)
@@ -344,7 +347,7 @@ def show_predictions_chart(
 							#checking each sample for whether there is a signal
 							for i in range(len(signal_feature)):
 
-								#checking for signal failure
+								#checking for feature signal failure
 								if(signal_feature[i] <= signal):
 
 									#if no signal, nullify this sample value in this vector
@@ -352,21 +355,25 @@ def show_predictions_chart(
 									signal_candle[i]  = np.nan
 									color = np.append(color, 'red')
 
-								#checking for signal success
+								#feature signal success case
 								else:
 
 									#signal is in lower half of range
 									if(signal_feature[i] <= ((100+signal)/2)):
 										color = np.append(color, 'blue')
 									else:
+										#purple temporarily denoting stronger signal
 										color = np.append(color, 'purple')
 
-									signal_feature[i] = signal_feature[i]
-
 									#model signal success case
-									if(df['Close'].iloc[i+1] > df['Open'].iloc[i+1]):
+									if(df['Close'].iloc[i] > df['Open'].iloc[i]):
 
-										signal_candle[i] = df['Low'].iloc[i+1]
+										#append this location to list of signals
+										#expln: batch specific offset + sample-of-batch specific offset + single sample visualization trimming offset
+										signals.append(batch_root_indices[batch_index] + i)
+
+										#set plottable value at low of candle, +1 is accounting for [1:] trimming in definition of signal_feature
+										signal_candle[i] = df['Low'].iloc[i]
 
 									#model signal failure case
 									else:
@@ -392,29 +399,63 @@ def show_predictions_chart(
 			
 			#naked features disabled allows for panel to have standard info lines such as 0,100 and 20,80
 			if((naked_features==False) & (len(add_plots) > 0)):
-				add_plots.append(mpf.make_addplot(pd.Series(0, index=range(len(df)-1)), panel=1, color='black', secondary_y=False))
-				add_plots.append(mpf.make_addplot(pd.Series(100, index=range(len(df)-1)), panel=1, color='black', secondary_y=False))
+				add_plots.append(mpf.make_addplot(pd.Series(0, index=range(len(df))), panel=1, color='black', secondary_y=False))
+				add_plots.append(mpf.make_addplot(pd.Series(100, index=range(len(df))), panel=1, color='black', secondary_y=False))
 
-			mpf.plot(df[1:], type='candle',style='yahoo',figratio=(16,9),figsize=(12,8), addplot=add_plots)
+			mpf.plot(df[:], type='candle',style='yahoo',figratio=(16,9),figsize=(12,8), addplot=add_plots)
 		
 		#move sample prediction iterator up based off of size of this batch
 		sample_iter+=len(batch[:])
 
+
+	#this function will return the X indices of where desired signals go off
+	return signals
+
+
+
 def make_batches_with_ToD(X_raw, batch_begin, batch_end):
+	'''This function returns the batches of samples as well as a list of parallel length containing sample indices of first sample of each batch'''
 	batches = []
 	current_batch = []
 
-	for row in X_raw:
-		if row[5] == batch_begin and current_batch:
-			batches.append(np.array(current_batch))
+	batch_root_indices = []
+
+	for row_index, row in enumerate(X_raw):
+
+		if(row[5]==batch_begin):
+
+			#toggle on switch to collect samples
+			is_collecting = True
+
+			#reset current working batch
 			current_batch = []
 
-		current_batch.append(row)
+			#collect first sample as the root index of the batch
+			batch_root_indices.append(row_index)
+
+		if(row[5]==batch_end):
+			
+			#turn off switch to collect samples
+			is_collecting = False
+
+			#append batch to grouping if a batch was made
+			if(current_batch):
+				current_batch.append(row)
+				batches.append(np.array(current_batch))
+
+		#now collect each sample in switch collecting toggle switch is ON
+		if(is_collecting):
+			current_batch.append(row)
 	
-	if current_batch:
+	#this case is reached if the batch_end value was never reached, and a 
+	#collection was building (Ex: dataset ends mid time range to plot)
+	if(current_batch):
 		batches.append(np.array(current_batch))
 
-	return batches
+	for i in range(len(batches)):
+		print(len(batches[i]),batch_root_indices[i])
+
+	return batches, batch_root_indices
 
 def get_name_from_fss(fss:list=[], index:int=-1):
 	'''This function takes a given feature subsets list and returns the feature name from a requested index value'''
@@ -428,3 +469,24 @@ def get_name_from_fss(fss:list=[], index:int=-1):
 	
 	#getting here means all feature subsets were checked and feature index is not contained within this
 	return None
+
+def backtester(
+	X_raw, 
+	signals,
+	method:Literal['time_held','time_held_range'] = 'time_held',
+	value:any=None):
+	'''This function is going to analyze the performance of the signals collected using various tactics'''
+
+	#approaching backtesting method based on method desired
+	match(method):
+
+		case 'time_held':
+			
+			#enforcing proper variable types
+			assert (type(value)==int or type(value)==float),\
+				f'Type of parameter value must be int or float for method time_held, got value type {type(value)}.'
+			
+
+
+		case 'time_held_range':
+			pass
