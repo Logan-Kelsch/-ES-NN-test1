@@ -6,6 +6,7 @@ from sklearn.metrics import confusion_matrix, accuracy_score, precision_score
 import seaborn as sns
 import matplotlib.pyplot as plt
 import mplfinance as mpf
+from typing import Literal
 import pandas as pd
 import copy
 
@@ -237,7 +238,8 @@ def show_predictions_chart(
 	t_end=800, 
 	add_chart:list=[], 
 	fss=None, 
-	naked_features=False
+	naked_features=False,
+	signal: any = None
 ):
 	'''This function must have X_raw come in with first features as high,low,close,volume,time,ToD,DoW'''
 
@@ -304,10 +306,89 @@ def show_predictions_chart(
 			#this is reached if a requested feature is being printed parallel to the candle charts
 			features = pd.DataFrame(ft)
 
-			add_plots = []#[mpf.make_addplot(features[1:i], panel=1, color='blue',secondary_y=False) for i in range(len(features[1:]))]
+			add_plots = []
 			for i, feat in enumerate(features.values):
 				color = ((len(features.values) -i)/(len(features.values)+1))
 				add_plots.append(mpf.make_addplot(feat[1:].clip(min=0,max=100), panel=1, color=(color/2,color/2,color), secondary_y=False))
+
+			#this area is for if singals are included
+			#excluding the use of signals if no plots have been added
+			if(len(add_plots)>0 and signal!=None):
+				
+				#checking to see if the given signal is a number, if so, goes into this if statement
+				if(type(signal)==int or type(signal)==float):
+
+					#checking to see if the value is around the overbought area
+					#then would use this as a greater than n parameter
+					if(signal >= 75 & signal <= 100):
+						
+						'''NOTE NOTE GOING TO MAKE SIGNALS TEMPORARILY ONLY APPLY TO THE FIRST FEATURE PLOTTED END#NOTE END#NOTE'''
+						#this feature contains NAN values
+						#also differentiating between whether there is more than one feature to grab signal from 
+						if(len(add_plots)>1):
+
+							#more than one feature being plotted
+							raise KeyError('signal not supported with multiple plots')
+							#signal_feature = pd.Series(np.where(features.iloc[1:,0].values >= signal, features.iloc[1:,0].values, np.nan))
+						else:
+							
+							#only one feature being plotted
+							#this one goes ontop of the feature plot
+							signal_feature = batch[1:,add_chart[0]]
+							#this one goes ontop of the candle plot
+							#the purpose of this one is to show the signal overlap between model AND feature
+							signal_candle  = copy.deepcopy(signal_feature)
+
+							color = np.array([])
+
+							#checking each sample for whether there is a signal
+							for i in range(len(signal_feature)):
+
+								#checking for signal failure
+								if(signal_feature[i] <= signal):
+
+									#if no signal, nullify this sample value in this vector
+									signal_feature[i] = np.nan
+									signal_candle[i]  = np.nan
+									color = np.append(color, 'red')
+
+								#checking for signal success
+								else:
+
+									#signal is in lower half of range
+									if(signal_feature[i] <= ((100+signal)/2)):
+										color = np.append(color, 'blue')
+									else:
+										color = np.append(color, 'purple')
+
+									signal_feature[i] = signal_feature[i]
+
+									#model signal success case
+									if(df['Close'].iloc[i+1] > df['Open'].iloc[i+1]):
+
+										signal_candle[i] = df['Low'].iloc[i+1]
+
+									#model signal failure case
+									else:
+										#if no double signal, nullify this sample value in this vector
+										signal_candle[i] = np.nan
+							
+							
+						#append the candle specific plot of the signal
+						add_plots.append(mpf.make_addplot(signal_candle, type='scatter',markersize=15,marker='^',color=color,secondary_y=False))
+						#append the feature specific plot of the signal
+						add_plots.append(mpf.make_addplot(signal_feature, type='scatter',markersize=5,color='black',secondary_y=False,panel=1))
+
+					else:
+						raise NotImplementedError(f'Signal desired has not yet been implemented, but is recognized as a number: {signal}')
+			
+			elif(signal != None):
+				raise NotImplemented(f'Signal desired has not yet been implemented, and is not recognized as a number, but as type: {type(signal)}')
+
+			else:
+				#this case is reached when no signal is desired
+				pass
+
 			
 			#naked features disabled allows for panel to have standard info lines such as 0,100 and 20,80
 			if((naked_features==False) & (len(add_plots) > 0)):
