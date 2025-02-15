@@ -420,37 +420,53 @@ def make_batches_with_ToD(X_raw, batch_begin, batch_end):
 
 	batch_root_indices = []
 
+	is_collecting = False
+	last_tod = X_raw[5]-1
+
 	for row_index, row in enumerate(X_raw):
 
+		#check if a new batch should start
 		if(row[5]==batch_begin):
 
 			#toggle on switch to collect samples
 			is_collecting = True
 
-			#reset current working batch
-			current_batch = []
-
 			#collect first sample as the root index of the batch
 			batch_root_indices.append(row_index)
 
-		if(row[5]==batch_end):
-			
-			#turn off switch to collect samples
-			is_collecting = False
-
-			#append batch to grouping if a batch was made
-			if(current_batch):
-				current_batch.append(row)
-				batches.append(np.array(current_batch))
+			#reset current working batch
+			#current_batch = []
 
 		#now collect each sample in switch collecting toggle switch is ON
 		if(is_collecting):
 			current_batch.append(row)
+
+		#check if the current batch should end
+		if(row[5]==batch_end):
+			
+			#toggle off switch to collect samples
+			is_collecting = False
+
+			#append batch to grouping if a batch was made
+			if(len(current_batch)>0):
+				
+				batches.append(np.array(current_batch))
+				
+				#reset current working batch
+				current_batch = []
+
+		#checking to see if the day is a shortened trading day
+		#if so, split the batch, but do not discontinue is_collecting value
+		if(row[5]-1 != last_tod):
+			pass
+
+		
+		last_tod = row[5]
 	
 	#this case is reached if the batch_end value was never reached, and a 
 	#collection was building (Ex: dataset ends mid time range to plot)
-	if(current_batch):
-		batches.append(np.array(current_batch))
+	#if(current_batch):
+	#	batches.append(np.array(current_batch))
 
 	for i in range(len(batches)):
 		print(len(batches[i]),batch_root_indices[i])
