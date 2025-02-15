@@ -21,5 +21,6 @@ RotationalEnsemble/live/live_clean.csv
 RotationalEnsemble/live/live.csv
 RotationalEnsemble/spx_large.csv
 RotationalEnsemble/spx_test2.csv
+RotationalEnsemble/spx_test3.csv
 .tf_/
 .torch_/

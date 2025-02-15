@@ -227,7 +227,7 @@ def graph_range(function, kw, kw_range, show_graph:bool=True, **kwargs):
 	if(show_graph):
 		plt.figure(figsize=(8,4))
 		plt.plot(kw_range, values, 'black')
-		plt.show
+		plt.show()
 
 	return values
 
@@ -553,6 +553,62 @@ def backtester(
 							fees		=	fees
 						)
 					
+		case 'RR_ratio':
+
+			#for this, going to have value come in as a tuple, being entry delay, SL tick distance, ratio (reward/ratio), max lookahead
+			assert (type(value)==tuple and len(value)==4),\
+				f'Type of parameter value must be tuple for method RR_ratio, got value type {type(value)}.'
+			
+			#trim the signals to avoid any end-of-data looping or error
+			#this line makes it so that all signals too late for testing in dataset are removed
+			applicable_signals = [s for s in signals if s < len(X_raw)-(value[0]+value[3])]
+			
+			#beginning a for loop to go through every sample looking for a signal
+			for sample_index, sample in enumerate(X_raw):
+
+				#check to see if the sample has a signal
+				if(sample_index in signals):
+
+					#grab stop loss and take profit lines from current close of signal
+
+					entry_price = X_raw[sample_index+value[0],2]
+
+					sl = entry_price - 1		 *value[1]
+					tp = entry_price + value[2]*value[1]
+
+					made_trade = False
+
+					#look ahead all requested lengths until trade is exited
+					for lookahead in range(1,value[3]):
+
+						exit_price = None
+						
+						#test first for low breakage of sl
+						if(X_raw[sample_index+value[0]+lookahead,1] <= sl):
+							exit_price = sl
+
+						#test first for high breakage of tp
+						if(X_raw[sample_index+value[0]+lookahead,0] >= tp):
+							exit_price = tp
+						
+						if(exit_price != None):
+							total_pl += trade_simulate(
+								entry_price	=	entry_price,
+								exit_price	=	exit_price,
+								fees		=	fees
+							)
+							#exits the foor loop lookahead
+							made_trade = True
+							break
+
+					#this is reached if no trade is made in the RR window before max lookahead is reached, (value[2])
+					#aka this is for trade exit based on time expiration
+					if(made_trade == False):
+						total_pl += trade_simulate(
+							entry_price	=	entry_price,
+							exit_price	=	X_raw[(sample_index+value[0]+value[3]),2],
+							fees		=	fees
+						)
 
 
 		case 'time_held_range':
@@ -589,6 +645,7 @@ def trade_simulate(entry_price, exit_price, fees):
 	'''this quick function does the math to simplify readability of code'''
 	
 	fee = 0
+	tick= 0
 
 	#match case to show different fees for different contracts
 	#I wrote out the math here to show what the fees actually are as of 2/15/25
@@ -596,18 +653,22 @@ def trade_simulate(entry_price, exit_price, fees):
 	match(fees):
 		case 'ES':
 			fee = 2.84*2 + 0.25
+			tick= 50
 
 		case 'MES':
 			fee = 0.87*2 + 0.25
+			tick= 5
 
 		case 'BAS':
 			fee = 0.25
+			tick= 5
 		
 		case None:
 			fee = 0
+			tick= 1
 
 		case _:
 			raise ValueError(f'A valid input was not given to parameter fees in trade_simulate, got type "{type(fees)}"')
 		
 	#return P/L of trade
-	return round((exit_price - entry_price)*5 - fee, 2)
+	return round((exit_price - entry_price)*tick - fee, 2)
