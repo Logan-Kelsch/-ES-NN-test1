@@ -417,13 +417,37 @@ def make_batches_with_ToD(X_raw, batch_begin, batch_end):
 	'''This function returns the batches of samples as well as a list of parallel length containing sample indices of first sample of each batch'''
 	batches = []
 	current_batch = []
-
 	batch_root_indices = []
 
 	is_collecting = False
-	last_tod = X_raw[5]-1
+
+	first_sample = X_raw[0]
+	last_tod = first_sample[5]-1
 
 	for row_index, row in enumerate(X_raw):
+
+		#checking to see if the day is a shortened trading day
+		#if so, split the batch, but do not discontinue is_collecting value
+		if(row[5]-1 != last_tod):
+			
+			#check to see if post splice time is within batch window
+			if(row[5]<batch_begin or row[5]>=batch_end):
+				is_collecting = False
+			
+			#this suggests that splice landed right back into a desired trading window
+			else:
+
+				is_collecting = True
+
+				if(row[5]!=batch_begin):
+					#add batch root if '==batchbegin' if statement will not be satisfied
+					batch_root_indices.append(row_index)
+
+				if(len(current_batch)>0):
+
+					#append and reset currend batch if current batch exists
+					batches.append(np.array(current_batch))
+					current_batch = []
 
 		#check if a new batch should start
 		if(row[5]==batch_begin):
@@ -454,11 +478,6 @@ def make_batches_with_ToD(X_raw, batch_begin, batch_end):
 				
 				#reset current working batch
 				current_batch = []
-
-		#checking to see if the day is a shortened trading day
-		#if so, split the batch, but do not discontinue is_collecting value
-		if(row[5]-1 != last_tod):
-			pass
 
 		
 		last_tod = row[5]
