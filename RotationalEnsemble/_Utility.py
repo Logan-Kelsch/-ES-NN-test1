@@ -226,7 +226,7 @@ def graph_range(function, kw, kw_range, show_graph:bool=True, **kwargs):
 	
 	if(show_graph):
 		plt.figure(figsize=(8,4))
-		plt.plot(values, kw_range, 'black')
+		plt.plot(kw_range, values, 'black')
 		plt.show
 
 	return values
@@ -508,9 +508,15 @@ def get_name_from_fss(fss:list=[], index:int=-1):
 def backtester(
 	X_raw, 
 	signals,
-	method:Literal['time_held','time_held_range'] = 'time_held',
-	value:any=None):
-	'''This function is going to analyze the performance of the signals collected using various tactics'''
+	method	:	Literal['time_held','time_held_range']	=	'time_held',
+	value	:	any	=	None,
+	fees	:	Literal['ES','MES']	=	None
+):
+	'''This function is going to analyze the performance of the signals collected using various tactics.
+	- NOTE NOTE NOTE SIGNALS ARE ONLY GRABBED FROM WITHIN VISUAL RANGE END#NOTE#END#NOTE#END#NOTE
+	- this function can also handle value as a tuple, as (trade entry delay, trade hold time)'''
+
+	total_pl = 0
 
 	#approaching backtesting method based on method desired
 	match(method):
@@ -518,10 +524,90 @@ def backtester(
 		case 'time_held':
 			
 			#enforcing proper variable types
-			assert (type(value)==int or type(value)==float),\
-				f'Type of parameter value must be int or float for method time_held, got value type {type(value)}.'
+			assert ((type(value)==int or type(value)==float) or type(value)==tuple),\
+				f'Type of parameter value must be int or float or tuple for method time_held, got value type {type(value)}.'
 			
+			#trim the signals to avoid any end-of-data looping or error
+			#this line makes it so that all signals too late for testing in dataset are removed
+			if(type(value)==tuple):
+				applicable_signals = [s for s in signals if s < len(X_raw)-(value[0]+value[1])]
+			else:
+				applicable_signals = [s for s in signals if s < len(X_raw)-(value)]
+
+			#beginning a for loop to go through every sample looking for a signal
+			for sample_index, sample in enumerate(X_raw):
+
+				#check to see if this sample has a signal
+				if(sample_index in signals):
+
+					if(type(value)==tuple):
+						total_pl += trade_simulate(
+							entry_price	=	X_raw[sample_index+value[0],2],
+							exit_price	=	X_raw[sample_index+value[0]+value[1],2],
+							fees		=	fees
+						)
+					else:
+						total_pl += trade_simulate(
+							entry_price	=	X_raw[sample_index,2],
+							exit_price	=	X_raw[sample_index+value,2],
+							fees		=	fees
+						)
+					
 
 
 		case 'time_held_range':
-			pass
+
+			total_pl = []
+
+			assert (type(value) == range),\
+				f'Type of parameter value must be range for method time_held, got value type {type(value)}.'
+			
+			applicable_signals = [s for s in signals if s < len(X_raw)-max(value)]
+
+			#trim the signals to avoid any end-of-data looping or error
+			#this line makes it so that all signals too late for testing in dataset are removed
+			applicable_signals = [s for s in signals if s < len(X_raw)-value]
+
+			#beginning a for loop to go through every sample looking for a signal
+			for sample_index, sample in enumerate(X_raw):
+
+				#check to see if this sample has a signal
+				if(sample_index in signals):
+
+					
+					total_pl += trade_simulate(
+						entry_price	=	X_raw[sample_index,2],
+						exit_price	=	X_raw[sample_index+value,2],
+						fees		=	fees
+					)
+
+
+	#return total P/L
+	return total_pl
+
+def trade_simulate(entry_price, exit_price, fees):
+	'''this quick function does the math to simplify readability of code'''
+	
+	fee = 0
+
+	#match case to show different fees for different contracts
+	#I wrote out the math here to show what the fees actually are as of 2/15/25
+	# trade fee *2(entry+exit) + bid-ask-spread
+	match(fees):
+		case 'ES':
+			fee = 2.84*2 + 0.25
+
+		case 'MES':
+			fee = 0.87*2 + 0.25
+
+		case 'BAS':
+			fee = 0.25
+		
+		case None:
+			fee = 0
+
+		case _:
+			raise ValueError(f'A valid input was not given to parameter fees in trade_simulate, got type "{type(fees)}"')
+		
+	#return P/L of trade
+	return round((exit_price - entry_price)*5 - fee, 2)
