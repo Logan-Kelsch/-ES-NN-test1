@@ -94,6 +94,12 @@ def preprocess_data(
 		data = data.drop(columns=tn_regression())
 		data = data.drop(columns=tn_classification())
 		data = data.drop(columns=tn_area_classification_exception(target_t))
+	
+	elif(mod_type == 'Stochastic_Classification'):
+		data = data.drop(columns=[])
+	elif(mod_type == 'Stochastic_Regression'):
+		data = data.drop(columns=[])
+	
 	else:
 		raise TypeError(f"\nFATAL: Model type of '{mod_type}' is not recognized.")
 	
