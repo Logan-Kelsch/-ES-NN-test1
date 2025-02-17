@@ -239,7 +239,8 @@ def show_predictions_chart(
 	add_chart:list=[], 
 	fss=None, 
 	naked_features=False,
-	signal: any = None
+	signal: any = None,
+	mode:Literal['live','backtest']='backtest'
 ):
 	'''This function must have X_raw come in with first features as high,low,close,volume,time,ToD,DoW'''
 
@@ -248,7 +249,7 @@ def show_predictions_chart(
 		NotImplementedError(f"FATAL: Adding {len(add_chart)} charts is above the implemented maximum of 4.")
 
 	#create batches based off of day loops
-	batches, batch_root_indices = make_batches_with_ToD(X_raw, t_start, t_end)
+	batches, batch_root_indices = make_batches_with_ToD(X_raw, t_start, t_end, mode)
 
 	#iterable variable to keep batch looping parallel to prediction plotting
 	sample_iter = 0
@@ -413,7 +414,7 @@ def show_predictions_chart(
 
 
 
-def make_batches_with_ToD(X_raw, batch_begin, batch_end):
+def make_batches_with_ToD(X_raw, batch_begin, batch_end, mode:Literal['live','backtest']='backtest'):
 	'''This function returns the batches of samples as well as a list of parallel length containing sample indices of first sample of each batch'''
 	batches = []
 	current_batch = []
@@ -424,63 +425,88 @@ def make_batches_with_ToD(X_raw, batch_begin, batch_end):
 	first_sample = X_raw[0]
 	last_tod = first_sample[5]-1
 
-	for row_index, row in enumerate(X_raw):
+	match(mode):
 
-		#checking to see if the day is a shortened trading day
-		#if so, split the batch, but do not discontinue is_collecting value
-		if(row[5]-1 != last_tod):
-			
-			#check to see if post splice time is within batch window
-			if(row[5]<batch_begin or row[5]>=batch_end):
-				is_collecting = False
-			
-			#this suggests that splice landed right back into a desired trading window
-			else:
+		#here is a for loop method of data collection under the case of backtesting
+		case 'backtest':
 
-				is_collecting = True
+			for row_index, row in enumerate(X_raw):
 
-				if(row[5]!=batch_begin):
-					#add batch root if '==batchbegin' if statement will not be satisfied
+				#checking to see if the day is a shortened trading day
+				#if so, split the batch, but do not discontinue is_collecting value
+				if(row[5]-1 != last_tod):
+					
+					#check to see if post splice time is within batch window
+					if(row[5]<batch_begin or row[5]>=batch_end):
+						is_collecting = False
+					
+					#this suggests that splice landed right back into a desired trading window
+					else:
+
+						is_collecting = True
+
+						if(row[5]!=batch_begin):
+							#add batch root if '==batchbegin' if statement will not be satisfied
+							batch_root_indices.append(row_index)
+
+						if(len(current_batch)>0):
+
+							#append and reset currend batch if current batch exists
+							batches.append(np.array(current_batch))
+							current_batch = []
+
+				#check if a new batch should start
+				if(row[5]==batch_begin):
+
+					#toggle on switch to collect samples
+					is_collecting = True
+
+					#collect first sample as the root index of the batch
 					batch_root_indices.append(row_index)
 
-				if(len(current_batch)>0):
+					#reset current working batch
+					#current_batch = []
 
-					#append and reset currend batch if current batch exists
-					batches.append(np.array(current_batch))
-					current_batch = []
+				#now collect each sample in switch collecting toggle switch is ON
+				if(is_collecting):
+					current_batch.append(row)
 
-		#check if a new batch should start
-		if(row[5]==batch_begin):
+				#check if the current batch should end
+				if(row[5]==batch_end):
+					
+					#toggle off switch to collect samples
+					is_collecting = False
 
-			#toggle on switch to collect samples
-			is_collecting = True
+					#append batch to grouping if a batch was made
+					if(len(current_batch)>0):
+						
+						batches.append(np.array(current_batch))
+						
+						#reset current working batch
+						current_batch = []
 
-			#collect first sample as the root index of the batch
-			batch_root_indices.append(row_index)
+				
+				last_tod = row[5]
 
-			#reset current working batch
-			#current_batch = []
+		case 'live':
 
-		#now collect each sample in switch collecting toggle switch is ON
-		if(is_collecting):
-			current_batch.append(row)
+			#when preparing live data for visualization the times need to be considered, 
+			#but not in the same way as when they are being backtested.
+			for row_index, row in enumerate(X_raw):
 
-		#check if the current batch should end
-		if(row[5]==batch_end):
+				#NOTE THIS IS NOT MEANT TO WORK WITH MORE THAN ONE DAY OF DATA SHOWING
+				if(row[5]>=batch_begin and row[5]<=batch_end):
+
+					#collect batch root information, this minute should be showing under any live data scraping
+					if(row[5]==batch_begin):
+						batch_root_indices.append(row_index)
+
+					current_batch.append(row)
 			
-			#toggle off switch to collect samples
-			is_collecting = False
+			batches.append(np.array(current_batch))
 
-			#append batch to grouping if a batch was made
-			if(len(current_batch)>0):
-				
-				batches.append(np.array(current_batch))
-				
-				#reset current working batch
-				current_batch = []
+					
 
-		
-		last_tod = row[5]
 	
 	#this case is reached if the batch_end value was never reached, and a 
 	#collection was building (Ex: dataset ends mid time range to plot)

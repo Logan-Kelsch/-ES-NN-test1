@@ -34,6 +34,7 @@ def e2e_predict(
 		'fusion_method':'mv',
 		'vote_var':4
 	}
+	,strategy		:	str		=	None
 ):
 	'''END TO END prediction function'''
 	assert (len(visual_window) == 2), \
@@ -110,4 +111,15 @@ def e2e_predict(
 
 	super_death_6000_predictions = _Time_Ensemble.chronos_fusion(master_predictions=chronos_array, **chronos_fusion_kwargs)
 
-	_Utility.show_predictions_chart(X_raw=X_raw, predictions=super_death_6000_predictions, t_start=visual_window[0], t_end=visual_window[1])
+	if(strategy!=None):
+		print(f'Showing Strategy: {strategy}')
+
+		strategy_visual_kwargs = None
+
+		if(strategy == '00'):
+			strategy_visual_kwargs = {
+				'signal' : 80,
+				'add_chart' : [517]
+			}
+
+	_Utility.show_predictions_chart(X_raw=X_raw, predictions=super_death_6000_predictions, t_start=visual_window[0], t_end=visual_window[1], mode='live', **strategy_visual_kwargs)

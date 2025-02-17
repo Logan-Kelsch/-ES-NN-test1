@@ -83,11 +83,11 @@ def preprocess_data(
 	#set target here
 	if(mod_type == 'Regression'):		  ### REGRESSION #####################
 		data = data.drop(columns=tn_classification())
-		#data = data.drop(columns=tn_area_classification())
+		data = data.drop(columns=tn_area_classification())
 		data = data.drop(columns=tn_regression_excpetion(target_t))
 	elif(mod_type == 'Classification'):   ### CLASSIFICATION #################
 		data = data.drop(columns=tn_regression())
-		#data = data.drop(columns=tn_area_classification())
+		data = data.drop(columns=tn_area_classification())
 		data = data.drop(columns=tn_classification_exception(\
 			num_class, split_val, target_t))
 	elif(mod_type == 'Area_Classification'):## AREA CLASSIFICATION ###########
@@ -96,10 +96,24 @@ def preprocess_data(
 		data = data.drop(columns=tn_area_classification_exception(target_t))
 	
 	elif(mod_type == 'Stochastic_Classification'):
-		data = data.drop(columns=[])
+		data = data.drop(columns=tn_regression())
+		data = data.drop(columns=tn_classification())
+		data = data.drop(columns=tn_area_classification())
+		data = data.drop(columns=tn_stoch_regression())
+
 	elif(mod_type == 'Stochastic_Regression'):
-		data = data.drop(columns=[])
+		data = data.drop(columns=tn_regression())
+		data = data.drop(columns=tn_classification())
+		data = data.drop(columns=tn_area_classification())
+		data = data.drop(columns=tn_stoch_classification())
+
 	
+	#considering temporary implementation if playing with new type of dataset
+	elif(mod_type == 'Stochastic_Classification_Only'):
+		data = data.drop(columns=[])
+	elif(mod_type == 'Stochastic_Regression_Only'):
+		data = data.drop(columns=[])
+
 	else:
 		raise TypeError(f"\nFATAL: Model type of '{mod_type}' is not recognized.")
 	

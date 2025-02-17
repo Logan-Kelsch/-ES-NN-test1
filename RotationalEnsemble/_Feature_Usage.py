@@ -94,6 +94,7 @@ def augmod_dataset(
 	data
 	,index_names	:	list	=	['spx','ndx']
 	,format_mode	:	Literal['live','backtest'] = 'backtest'
+	,clip_stochastic:	bool	=	False
 ):
 
 	'''NOTE NOTE broke these processes down into a few different areas of multiprocessing based off of
@@ -155,7 +156,7 @@ def augmod_dataset(
 	#collect spx specific data
 	f_vel = fe_vel(data, i[0])#set
 	f_acc = fe_acc(data, i[0])#set
-	f_stchK = fe_stoch_k(data, i[0])#set
+	f_stchK = fe_stoch_k(data, i[0], clip_stochastic)#set
 	f_barH = fe_height_bar(data, i[0])#single
 	f_wickH = fe_height_wick(data, i[0])#single
 	f_wickD = fe_diff_hl_wick(data, i[0])#single
@@ -165,13 +166,13 @@ def augmod_dataset(
 	f_hihi = fe_hihi_diff(data, i[0])#set
 	f_lolo = fe_lolo_diff(data, i[0])#set
 	f_hilo = fe_hilo_diff(f_hihi,f_lolo, i[0])#set
-	f_stochHiLo = fe_hilo_stoch(data, f_hihi, f_lolo, i[0])#set
+	f_stochHiLo = fe_hilo_stoch(data, f_hihi, f_lolo, i[0], clip_stochastic)#set
 
 	if(len(index_names)>1):
 		#collect ndx specific data
 		f_vel2 = fe_vel(data, i[1])#set
 		f_acc2 = fe_acc(data, i[1])#set
-		f_stchK2 = fe_stoch_k(data, i[1])#set
+		f_stchK2 = fe_stoch_k(data, i[1], clip_stochastic)#set
 		f_barH2 = fe_height_bar(data, i[1])#single
 		f_wickH2 = fe_height_wick(data, i[1])#single
 		f_wickD2 = fe_diff_hl_wick(data, i[1])#single
@@ -181,7 +182,7 @@ def augmod_dataset(
 		f_hihi2 = fe_hihi_diff(data, i[1])#set
 		f_lolo2 = fe_lolo_diff(data, i[1])#set
 		f_hilo2 = fe_hilo_diff(f_hihi2,f_lolo2, i[1])#set
-		f_stochHiLo2 = fe_hilo_stoch(data, f_hihi2, f_lolo2, i[1])#set
+		f_stochHiLo2 = fe_hilo_stoch(data, f_hihi2, f_lolo2, i[1], clip_stochastic)#set
 
 	#collect index comparison data
 
@@ -191,6 +192,8 @@ def augmod_dataset(
 		target_r = te_vel_reg(data, i[0])
 		target_c = te_vel_class(data, i[0])
 		target_a = te_area_class(data, i[0])
+		#target_sc = te_stoch_class(data, i[0])
+		#target_sr = te_stoch_reg(data, i[0])
 
 	#list of dataframes
 	if(len(index_names)==1):
@@ -542,7 +545,7 @@ def fe_acc(X, index):
 #Stochastic K ONLY
 #this function requires cutting first 120 samples (df.iloc[120:])
 #used zero-out method for Null values instead of looping.
-def fe_stoch_k(X, index):
+def fe_stoch_k(X, index, clip):
 
 	new_data = []
 	#get high, low, close values
@@ -565,6 +568,8 @@ def fe_stoch_k(X, index):
 				k = 0
 				if(c2!=0):
 					k = c1/c2*100
+				if(k>100 and clip):
+					k = 100
 				row.append(round(k,2))
 		new_data.append(row)
 	
@@ -657,7 +662,7 @@ def fe_hilo_diff(hihi_data, lolo_data, index):
 
 #function returns location percent (like stochastic) between hihi lolo for each
 #this function requires cutting first -- samples
-def fe_hilo_stoch(X, hihi_data, lolo_data, index):
+def fe_hilo_stoch(X, hihi_data, lolo_data, index, clip):
 	#orig feature #3
 	# # # deals with all close of minute values
 	close = X.iloc[:, 2+index].values
@@ -681,6 +686,8 @@ def fe_hilo_stoch(X, hihi_data, lolo_data, index):
 				k = 0
 				if(c2!=0):
 					k = c1/c2*100
+				if(k>100 and clip):
+					k = 100
 				row.append(round(k,2))
 		new_data.append(row)
 	cols = []
@@ -718,6 +725,12 @@ def te_vel_reg(X, index):
 
 	#print(feature_set)
 	return feature_set
+
+def te_stoch_class():
+	return
+
+def te_stoch_reg():
+	return
 
 #simple classification set for 1-60 minutes
 #this function requires cutting first 60 samples
@@ -1110,3 +1123,9 @@ def tn_classification_exception(num_classes, class_split, minute):
 			[f'tc_4c_5p_{i}m' for i in range(5, minute, 5)]+\
 			[f'tc_4c_5p_{i}m' for i in range(minute+5, 61, 5)]
 	return cols
+
+def tn_stoch_classification():
+	return
+
+def tn_stoch_regression():
+	return
