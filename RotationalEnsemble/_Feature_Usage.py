@@ -726,7 +726,19 @@ def te_vel_reg(X, index):
 	#print(feature_set)
 	return feature_set
 
-def te_stoch_class():
+def te_stoch_class(
+	X
+	,num_classes:int=2
+):
+	assert (num_classes > 1 and num_classes < 5), 'stoch target only supports 2-4 classes'
+	
+	#collect required data from raw set
+	close = X.iloc[:, 2+index].values
+	high  = X.iloc[:, 0+index].values
+	low   = X.iloc[:, 1+index].values
+	
+	
+	
 	return
 
 def te_stoch_reg():
