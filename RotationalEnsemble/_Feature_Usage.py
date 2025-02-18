@@ -728,15 +728,40 @@ def te_vel_reg(X, index):
 
 def te_stoch_class(
 	X
+	,index
 	,num_classes:int=2
 ):
 	assert (num_classes > 1 and num_classes < 5), 'stoch target only supports 2-4 classes'
 	
-	#collect required data from raw set
+	new_data = []
+	#get high, low, close values
+	low = X.iloc[:, 1+index].values
+	high = X.iloc[:, 0+index].values
 	close = X.iloc[:, 2+index].values
-	high  = X.iloc[:, 0+index].values
-	low   = X.iloc[:, 1+index].values
+	i = 0
+
+	l = len(X)
+	for sample in range(l):
+		row = []
+		for past in range(0,125,15):
+			for futr in range(15,65,15):
+				#zero-out to avoid segmentation bound error
+				if(sample-past<0 or sample+futr>l):
+					row.append(-1)
+				else:
+					#lowest of past range
+					bottom = np.min(low[sample-past:sample])
+					#
+					t_val = close[sample+futr] - bottom
+					top = np.max(high[sample-past:sample]) - bottom
+					k = 0
+					if(c2!=0):
+						k = c1/c2*100
+					
+					row.append(int(k))
+			new_data.append(row)
 	
+	features_set = pd.DataFrame(new_data, columns=[f'stchK{i}_{idx[index]}' for i in range(5, 125, 5)])
 	
 	
 	return
