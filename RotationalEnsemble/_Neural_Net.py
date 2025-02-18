@@ -57,7 +57,7 @@ class NN:
 				self._target_activation	=	'linear'
 				self._target_neurons		=	1
 				self._performance_metrics=	['R2Score','root_mean_squared_error']
-				self._performance_metrics=	'val_mse'
+				self._monitor_parameter	=	'val_mse'
 				self._monitor_condition	=	'min'
 				self._loss_function		=	'mse'
 

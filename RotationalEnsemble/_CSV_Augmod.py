@@ -13,12 +13,13 @@ def augmod(
 	,file_name_out	:	str		=	'live/live.csv'
 	,format_mode	:	Literal['backtest','live']	=	'backtest'
 	,overwrite_mode	:	bool	=	False
+	,clip_stochastic:	bool	=	True
 ):
 	'''This function expands a cleaned dataset and returns the exported file's name, with extension included'''
 	#bring in clean data to csv
 	data = pd.read_csv(file_name_in)
 	#augment the data and expand in a pandas dataframe
-	full_set = _Feature_Usage.augmod_dataset(data, index_names=['spx'],format_mode=format_mode)
+	full_set = _Feature_Usage.augmod_dataset(data, index_names=['spx'],format_mode=format_mode, clip_stochastic=clip_stochastic)
 	
 	#check if we are allowed to overwrite, and raise error if not
 	if(os.path.exists(file_name_out) & (overwrite_mode == False)):

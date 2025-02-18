@@ -35,6 +35,7 @@ def e2e_predict(
 		'vote_var':4
 	}
 	,strategy		:	str		=	None
+	,clip_stochastic:	bool	=	True
 ):
 	'''END TO END prediction function'''
 	assert (len(visual_window) == 2), \
@@ -70,7 +71,7 @@ def e2e_predict(
 			clean_csv_name = clean_file_name
 
 	#next, turn the clean dataset into an expanded featurespace usable csv 
-	expanded_csv_name = _CSV_Augmod.augmod(file_name_in=clean_csv_name, format_mode='live',overwrite_mode=overwrite_mode)
+	expanded_csv_name = _CSV_Augmod.augmod(file_name_in=clean_csv_name, format_mode='live',overwrite_mode=overwrite_mode, clip_stochastic=clip_stochastic)
 
 	#preparing to load in the dataset for predictions, ensuring different dependents currently exist
 	

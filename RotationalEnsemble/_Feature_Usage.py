@@ -94,7 +94,7 @@ def augmod_dataset(
 	data
 	,index_names	:	list	=	['spx','ndx']
 	,format_mode	:	Literal['live','backtest'] = 'backtest'
-	,clip_stochastic:	bool	=	False
+	,clip_stochastic:	bool	=	True
 ):
 
 	'''NOTE NOTE broke these processes down into a few different areas of multiprocessing based off of

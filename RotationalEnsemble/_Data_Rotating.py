@@ -403,58 +403,72 @@ def split_by_samples(
 	ss_part_length = int(np.floor((ds_length / num_parts)))
 	ol_part_length = int((1-ss_part_length)*overlap + ss_part_length)
 
-	#for each feature space partition
-	for fs_part in X_partitions:
+	#NOTE later addition of a NO SPLIT isolate case. this occurs in testing and whatnot when NOTE num_parts is set to 1!!!!!
+	#want to avoid any disruption when its on even or random or any other specific splitting method
+	if(num_parts == 1):
+		#for each feature space partition
+		for fs_part in X_partitions:
+			sample_parts = []
+			
+			sample_parts.append(fs_part)
+			double_partitions.append(sample_parts)
 
-		#assembly of the partitions made across sample space
-		sample_parts = []
+		y_partitions.append(y_train)
 
-		#fs_part can be altered, but only as a temporary variable, therefore shuffle is here
-		if(shuffle):
-			#This can be implemented without too much hassle, just need to add y as a parameter
-			#into this function to allow the y to be shuffled WITH, also need to check function
-			#To know that shuffling for any segment of samples will have a consistent
-			#and correct y label values to maintain truth
-			raise NotImplementedError("FATAL: Shuffle has not yet been implemented into split_by_samples.")
+	#if there IS going to be a split, aka if num_parts has a value greater than 1
+	else:
+		#for each feature space partition
+		for fs_part in X_partitions:
 
-		if(splt_type == 'Even'):
-			#for making partitions, used simple p-q-r notation
-			#for all sample partitions to be made except last partition, made after loop
-			for i in range(num_parts - 1):
-				p = i*ss_part_length
-				q = (i+1)*ss_part_length
-				sample_parts.append(fs_part[p:q, :])
+			#assembly of the partitions made across sample space
+			sample_parts = []
+
+			#fs_part can be altered, but only as a temporary variable, therefore shuffle is here
+			if(shuffle):
+				#This can be implemented without too much hassle, just need to add y as a parameter
+				#into this function to allow the y to be shuffled WITH, also need to check function
+				#To know that shuffling for any segment of samples will have a consistent
+				#and correct y label values to maintain truth
+				raise NotImplementedError("FATAL: Shuffle has not yet been implemented into split_by_samples.")
+
+			if(splt_type == 'Even'):
+				#for making partitions, used simple p-q-r notation
+				#for all sample partitions to be made except last partition, made after loop
+				for i in range(num_parts - 1):
+					p = i*ss_part_length
+					q = (i+1)*ss_part_length
+					sample_parts.append(fs_part[p:q, :])
+					if(part_y):
+						y_partitions.append(y_train[p:q])
+				#final partition creation, q here equals q above always.
+				q = (num_parts-1)*ss_part_length
+				r = ds_length
+				sample_parts.append(fs_part[q:r, :])
 				if(part_y):
-					y_partitions.append(y_train[p:q])
-			#final partition creation, q here equals q above always.
-			q = (num_parts-1)*ss_part_length
-			r = ds_length
-			sample_parts.append(fs_part[q:r, :])
-			if(part_y):
-				y_partitions.append(y_train[q:r])
+					y_partitions.append(y_train[q:r])
 
-		if(splt_type == 'Sliding'):
-			#not currently implemented
-			raise NotImplementedError(f"FATAL: Split type in split_by_sample of '{splt_type}' is not yet implemented.")
-		
-		if(splt_type == 'Random'):
-			#And even though you face disappointments, you have to know within yourself, 
-			#that 'I can do this. Even if no one else sees it for me, I must see it for myself.'\
+			if(splt_type == 'Sliding'):
+				#not currently implemented
+				raise NotImplementedError(f"FATAL: Split type in split_by_sample of '{splt_type}' is not yet implemented.")
+			
+			if(splt_type == 'Random'):
+				#And even though you face disappointments, you have to know within yourself, 
+				#that 'I can do this. Even if no one else sees it for me, I must see it for myself.'\
 
-			for part in range(num_parts):
-				indices = pick_n_from_list(ol_part_length, list(range(ds_length)))
-				sample_parts.append(fs_part[indices, :])
-				if(part_y):
-					y_partitions.append(y_train[indices])
+				for part in range(num_parts):
+					indices = pick_n_from_list(ol_part_length, list(range(ds_length)))
+					sample_parts.append(fs_part[indices, :])
+					if(part_y):
+						y_partitions.append(y_train[indices])
 
 
 
-		
-		#toggle off partition, reaching here means a SINGLE set of samplespace partitions has occured
-		part_y = False
+			
+			#toggle off partition, reaching here means a SINGLE set of samplespace partitions has occured
+			part_y = False
 
-		#append a list of sample space partitions of this given (fs_part) feature space partition
-		double_partitions.append(sample_parts)
+			#append a list of sample space partitions of this given (fs_part) feature space partition
+			double_partitions.append(sample_parts)
 
 	#returns a 2d array, with first dimension being splits along feature space, and second dimension being splits along sample space.
 	#and a list of y_train samplespace partitions
