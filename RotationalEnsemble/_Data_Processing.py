@@ -149,6 +149,7 @@ def preprocess_data(
 		print(f'\n# of Samples:	{len(data.index)}')
 		print(f'\n# of Features:	{len(data.columns) - 1}')
 		print(f'\nTarget:		{data.columns[-1]}\n')
+
  
 	print("Trying to split DataFrame into X and y...",end="") if verbose else do_nothing()
 	#split data into features and targets
