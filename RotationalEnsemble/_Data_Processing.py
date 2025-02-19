@@ -28,8 +28,8 @@ def preprocess_data(
     ,shfl_splt:	bool	=		True
     ,t_start:	int		=		570
     ,t_end:		int		=		720
-    ,mod_type:	Literal['Classification','Regression','Area_Classification']= 'Classification'
-    ,target_t:	int		=		15
+    ,mod_type:	Literal['Classification','Regression','Area_Classification','Stochastic_Classification','Stochastic_Regression']= 'Classification'
+    ,target_t:	any		=		15
     ,num_class:	int		=		2
     ,split_val:	int		=		5
     ,verbose:	int		=		1	
@@ -85,23 +85,31 @@ def preprocess_data(
 		data = data.drop(columns=tn_classification())
 		data = data.drop(columns=tn_area_classification())
 		data = data.drop(columns=tn_regression_excpetion(target_t))
+		for i in range(2, 5):
+			data = data.drop(columns=tn_stoch_classification(i), errors='ignore')
 	elif(mod_type == 'Classification'):   ### CLASSIFICATION #################
 		data = data.drop(columns=tn_regression())
 		data = data.drop(columns=tn_area_classification())
 		data = data.drop(columns=tn_classification_exception(\
 			num_class, split_val, target_t))
+		for i in range(2, 5):
+			data = data.drop(columns=tn_stoch_classification(i), errors='ignore')
 	elif(mod_type == 'Area_Classification'):## AREA CLASSIFICATION ###########
 		data = data.drop(columns=tn_regression())
 		data = data.drop(columns=tn_classification())
 		data = data.drop(columns=tn_area_classification_exception(target_t))
+		for i in range(2, 5):
+			data = data.drop(columns=tn_stoch_classification(i), errors='ignore')
 	
 	elif(mod_type == 'Stochastic_Classification'):
-		data = data.drop(columns=tn_regression())
-		data = data.drop(columns=tn_classification())
-		data = data.drop(columns=tn_area_classification())
-		data = data.drop(columns=tn_stoch_regression())
+		data = data.drop(columns=tn_regression(), errors='ignore')
+		data = data.drop(columns=tn_classification(), errors='ignore')
+		data = data.drop(columns=tn_area_classification(), errors='ignore')
+		for i in range(2, 5):
+			data = data.drop(columns=tn_stoch_classification_exception(i, target_t), errors='ignore')
 
 	elif(mod_type == 'Stochastic_Regression'):
+		raise NotImplementedError(f"FATAL: mod_type '{mod_type}' has not yet been implemented.")
 		data = data.drop(columns=tn_regression())
 		data = data.drop(columns=tn_classification())
 		data = data.drop(columns=tn_area_classification())

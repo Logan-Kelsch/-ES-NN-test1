@@ -95,6 +95,7 @@ def augmod_dataset(
 	,index_names	:	list	=	['spx','ndx']
 	,format_mode	:	Literal['live','backtest'] = 'backtest'
 	,clip_stochastic:	bool	=	True
+	,target_isolate	:	Literal['r','c','a','sc']	=	None
 ):
 
 	'''NOTE NOTE broke these processes down into a few different areas of multiprocessing based off of
@@ -189,11 +190,30 @@ def augmod_dataset(
 
 	if(format_mode == 'backtest'):
 	#TARGET ENGINEERING
-		target_r = te_vel_reg(data, i[0])
-		target_c = te_vel_class(data, i[0])
-		target_a = te_area_class(data, i[0])
-		#target_sc = te_stoch_class(data, i[0])
+		if(target_isolate == None):
+			target_r = te_vel_reg(data, i[0])
+			target_c = te_vel_class(data, i[0])
+			target_a = te_area_class(data, i[0])
+			target_sc = te_stoch_class(data, i[0], 2)
 		#target_sr = te_stoch_reg(data, i[0])
+		else:
+			#under the case there is target isolation, that means all other targets will not be calculated other than one.
+			match(target_isolate):
+				case 'r':
+					target_r = te_vel_reg(data, i[0])
+				case 'c':
+					target_c = te_vel_class(data, i[0])
+				case 'a':
+					target_a = te_area_class(data, i[0])
+				case 'sc':
+					target_sc2 = te_stoch_class(data, i[0], 2)
+					target_sc3 = te_stoch_class(data, i[0], 3)
+					target_sc4 = te_stoch_class(data, i[0], 4)
+				case None:
+					target_r = te_vel_reg(data, i[0])
+					target_c = te_vel_class(data, i[0])
+					target_a = te_area_class(data, i[0])
+					target_sc = te_stoch_class(data, i[0], 2)
 
 	#list of dataframes
 	if(len(index_names)==1):
@@ -202,9 +222,23 @@ def augmod_dataset(
 							f_volData, f_maData, f_maDiff, f_hihi, f_lolo,\
 								f_hilo, f_stochHiLo]
 		if(format_mode == 'backtest'):
-			df_list.append(target_r)
-			df_list.append(target_c)
-			df_list.append(target_a)
+			match(target_isolate):
+				case 'r':
+					df_list.append(target_r)
+				case 'c':
+					df_list.append(target_c)
+				case 'a':
+					df_list.append(target_a)
+				case 'sc':
+					df_list.append(target_sc2)
+					df_list.append(target_sc3)
+					df_list.append(target_sc4)
+				case None:
+					df_list.append(target_r)
+					df_list.append(target_c)
+					df_list.append(target_a)
+					df_list.append(target_sc)
+					
 	if(len(index_names)==2):
 		df_list = [data, f_ToD, f_DoW, f_vel, f_acc, \
 						f_stchK, f_barH, f_wickH, f_wickD,\
@@ -215,9 +249,22 @@ def augmod_dataset(
 								f_volData2, f_maData2, f_maDiff2, f_hihi2, f_lolo2,\
 									f_hilo2, f_stochHiLo2]
 		if(format_mode == 'backtest'):
-			df_list.append(target_r)
-			df_list.append(target_c)
-			df_list.append(target_a)
+			match(target_isolate):
+				case 'r':
+					df_list.append(target_r)
+				case 'c':
+					df_list.append(target_c)
+				case 'a':
+					df_list.append(target_a)
+				case 'sc':
+					df_list.append(target_sc2)
+					df_list.append(target_sc3)
+					df_list.append(target_sc4)
+				case None:
+					df_list.append(target_r)
+					df_list.append(target_c)
+					df_list.append(target_a)
+					df_list.append(target_sc)
 
 	#cut off error head and error tail of dataframes
 
@@ -743,28 +790,47 @@ def te_stoch_class(
 	l = len(X)
 	for sample in range(l):
 		row = []
-		for past in range(0,125,15):
-			for futr in range(15,65,15):
+		for past in range(15,125,15):
+			for futr in range(0,65,15):
 				#zero-out to avoid segmentation bound error
-				if(sample-past<0 or sample+futr>l):
+				if(sample-past<0 or sample+futr>=l):
 					row.append(-1)
 				else:
 					#lowest of past range
 					bottom = np.min(low[sample-past:sample])
-					#
+					#difference between lowest and highest
+					diff = np.max(high[sample-past:sample]) - bottom
+					#location of future close in regards to bottom of range
 					t_val = close[sample+futr] - bottom
-					top = np.max(high[sample-past:sample]) - bottom
-					k = 0
-					if(c2!=0):
-						k = c1/c2*100
 					
-					row.append(int(k))
-			new_data.append(row)
+					k = 0
+					if(diff!=0):
+						k = t_val/diff
+
+					#define number of classes based on 
+					match(num_classes):
+						case 2:
+							c = 0 if (k<0.5) else 1
+						
+						case 3:
+							c = 0 if (k<0.25) else \
+								1 if (k<=0.75) else 2
+
+						case 4:
+							c = 0 if (k<=0) else \
+								1 if (k<0.5) else \
+								2 if (k<1.0) else 3
+						
+						case _:
+							raise ValueError(f'FATAL, num_classes in te_stoch_class was not defined properly, got {num_classes}.')
+
+					row.append(int(c))
+		new_data.append(row)
 	
-	features_set = pd.DataFrame(new_data, columns=[f'stchK{i}_{idx[index]}' for i in range(5, 125, 5)])
-	
-	
-	return
+	#name is formatted as "target-stochastic-classification", past-range, future-displacement, trading index
+	target_set = pd.DataFrame(new_data, columns=[f'tsc_{num_classes}_{i}_{j}_{idx[index]}' for i in range(15, 125, 15) for j in range(0, 65, 15)])
+		
+	return target_set
 
 def te_stoch_reg():
 	return
@@ -1161,8 +1227,12 @@ def tn_classification_exception(num_classes, class_split, minute):
 			[f'tc_4c_5p_{i}m' for i in range(minute+5, 61, 5)]
 	return cols
 
-def tn_stoch_classification():
-	return
+def tn_stoch_classification(num_classes, index=0):
+	return [f'tsc_{num_classes}_{i}_{j}_{idx[index]}' for i in range(15, 125, 15) for j in range(0, 65, 15)]
+
+def tn_stoch_classification_exception(num_classes, past_future_string, index=0):
+	all_tn = tn_stoch_classification(num_classes=num_classes, index=index)
+	return [str for str in all_tn if past_future_string not in str]
 
 def tn_stoch_regression():
 	return
