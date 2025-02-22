@@ -1,0 +1,1 @@
+this folder will contain exports of weekly trade performances and suggested %cap entry and winrate and other stats. update this.
