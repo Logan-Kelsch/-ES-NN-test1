@@ -20,7 +20,8 @@ def rotate_partitions(
 	,y
 	,n_feat_parts	:	int		=	5
 	,feat_subsets	:	list	=	[]
-	,feat_part_type	:	Literal['full_set','by_subset']	='by_subset'
+	,feat_part_type	:	Literal['full_set','by_subset','specific_subsets']	='by_subset'
+	,specific_sbsts	:	list	=	[]
 	,fraction_feats	:	float	=	0.5
 	,no_feat_overlap:	bool	=	False
 	,feats_for_all	:	list	=	[]
@@ -83,6 +84,7 @@ def rotate_partitions(
 		,feat_sbst=feat_subsets
 		,num_parts=n_feat_parts
 		,part_type=feat_part_type
+		,spec_sbst=specific_sbsts
 		,full_excl=no_feat_overlap
 		,univ_incl=feats_for_all
 		,part_sbst=fraction_feats
@@ -117,7 +119,8 @@ def split_by_features(
 	X
 	,feat_sbst	:	list		=	[]
 	,num_parts	:	int			=	5
-	,part_type	:	Literal['full_set','by_subset']	=	'by_subset'
+	,part_type	:	Literal['full_set','by_subset','specific_subsets']	=	'by_subset'
+	,spec_sbst	:	list		=	[]
 	,full_excl	:	bool		=	False
 	,univ_incl	:	list		=	[]
 	,part_sbst	:	float		=	0.5
@@ -161,6 +164,44 @@ def split_by_features(
 
 	#split function cases first by partition type:
 	match(part_type):
+
+		#new implementation 3/6/2025
+		#features will be picked out of specified subsets
+		case 'specific_subsets':
+
+			#for the number of requested partitions
+			for partition in range(num_parts):
+
+				#include al universal inclusion features to each partition feature
+				feature_indices = [k for k, v in all_feats.items() if v in univ_incl]
+
+				#for each specified subset index in the list
+				for sbst in spec_sbst:
+
+					featset = feat_sbst[sbst]
+
+					#ceil to lean towards inclusivity of features in small featuresets
+					num_feats_from_here = int(np.ceil(len(featset) * part_sbst))
+
+					#ensuring inclusive ceil function does not push out of bounds
+					num_feats_from_here = len(featset) if \
+					(num_feats_from_here>len(featset)) else num_feats_from_here
+
+					#add random picks from each subset
+					feature_indices+= pick_n_from_list(num_feats_from_here, \
+         												list(featset.keys()))
+					
+				#quickly remove all duplicates, possible here with complex
+				#exclusion of subset (universal inclusion) for each featureset,
+				#so I did not implement that, should not impact much considering
+				#wide functionality range of this model.
+				feature_indices = list(set(feature_indices))
+
+				#create new partitions for each
+				X_partition.append(X[:,:, feature_indices] if lstm_frmt else X[:,feature_indices])
+				X_part_find.append(feature_indices)
+
+
      
 		#features will be picked out of one basket
 		case 'full_set':
@@ -215,7 +256,7 @@ def split_by_features(
 		#illegal case, neither option (of 2) entered
 		case _:
 			print("Illegal input for parameter 'part_type'.")
-			print("Must be Literal['full_set','by_subset']")
+			print("Must be Literal['full_set','by_subset','specific_subset']")
 			traceback.print_exc()
 			raise
 

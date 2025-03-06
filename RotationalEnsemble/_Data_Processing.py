@@ -5,6 +5,7 @@
 
 #import libraries
 import pandas as pd
+#import tensorflow as tf
 import numpy as np
 import sys
 import traceback
@@ -14,6 +15,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import RobustScaler
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import LabelBinarizer, LabelEncoder, OneHotEncoder
 from typing import Literal
 import gc
 
@@ -167,6 +169,10 @@ def preprocess_data(
 	print("Success.\nTrying to encode y and make class weights...",end='') if verbose else do_nothing()
 	#update class weights.. if necessary? #determining unneeded
 	#label encoder implementation? #determining unneeded
+	#if(num_class > 2):
+		#labelencoder = OneHotEncoder(sparse_output=False)
+		#Ey = labelencoder.fit_transform(y)
+
 	print("Failed [NON-FATAL: NOT IMPLEMENTED]" if 1 else "Success.") if verbose else do_nothing()
 
 	if(scaler!='None'):

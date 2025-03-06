@@ -48,11 +48,11 @@ class NN:
 				self._loss_function		=	'binary_crossentropy'
 			case 'Multi-Class':
 				self._target_activation	=	'softmax'
-				self._target_neurons		=	class_count
+				self._target_neurons	=	class_count
 				self._performance_metrics=	['precision','recall','accuracy']
 				self._monitor_parameter	=	'val_accuracy'
 				self._monitor_condition	=	'max'
-				self._loss_function		=	'categorical_crossentropy'
+				self._loss_function		=	tf.keras.losses.SparseCategoricalCrossentropy()
 			case 'Regression':
 				self._target_activation	=	'linear'
 				self._target_neurons		=	1

@@ -79,7 +79,7 @@ def train_models(
 	,tnr_verbose:	bool	=	True
 	,use_cls_wt	:	bool	=	True
 	,lstm_frmt	:	bool	=	False
-	,pred_type	:	str		=	'Classification'
+	,nn_kwargs	:	dict	=	{'predict_mode':'Classification'}
 )	->	list:
 	'''
 		This function trains a set of models (identical type?) on a list of dataset partitions.
@@ -405,7 +405,7 @@ def train_models(
 
 								#see if keyword parameters will fit to model type
 								try:
-									model = _Neural_Net.NN(pred_type)
+									model = _Neural_Net.NN(**nn_kwargs)
 									model.build(X_current_partition, y_current_partition, **default_parameters(model_types[m]))
 								#expecting typeErrors if any, printout and show here
 								except TypeError as e:
@@ -426,7 +426,7 @@ def train_models(
 
 								#see if keyword parameters will fit to model type
 								try:
-									model = _Neural_Net.NN(pred_type)
+									model = _Neural_Net.NN(**nn_kwargs)
 									model.build(X_current_partition, y_current_partition, **cst_mod_prm[m])
 								#expecting typeErrors if any, printout and show here
 								except TypeError as e:
@@ -448,7 +448,7 @@ def train_models(
 								#using try-except, (12/24/24) unsure of WHICH way this may fail
 								try: 
 									model = hyperparameter_tuner(
-										model_with_start_params=_Neural_Net.NN(pred_type).build(X_current_partition, y_current_partition, **default_parameters(model_types[m]))
+										model_with_start_params=_Neural_Net.NN(**nn_kwargs).build(X_current_partition, y_current_partition, **default_parameters(model_types[m]))
 										,tuner_verbose=tnr_verbose)
 								#generalize exception-e statement as tuner error if it fails
 								except Exception as e:
