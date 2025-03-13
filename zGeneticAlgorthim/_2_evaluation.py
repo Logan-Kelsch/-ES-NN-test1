@@ -47,8 +47,35 @@ def fitness(
 
 	#boolean 2d array containing entry/or-not (0|1) for each gene
 	gene_presence = []
+	length = len(data)
 
-
+	#test all samples in the set, accounting for
+	#lag allowance and hold length
+	for i in range(lag_allow, length-hold_for):
+		
+		i_presence = []
+		
+		#check presence of each gene at each sample
+		for gene in genes:
+			matches = True
+			
+			for p in gene._patterns:
+				#if given pattern holds true
+				if(p._op(data[i-p._l1, p._v1],data[i-p._l2, p._v2])
+					pass#pattern matches
+				else:
+					matches = False
+					break
+		
+			#check if matches variable held
+			if(matches == False):
+				i_presence.append(0)
+			else:
+				i_presence.append(1)
+		
+		#now have a fully built sample presence
+		gene_presence.append(i_presence)
+			
 	gene_presence = np.array(gene_presence)
 	
 	return 
