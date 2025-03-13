@@ -13,7 +13,8 @@ def fitness(
 	data		:	np.ndarray	=	None,
 	genes		:	list|np.ndarray	=	None,
 	method		:	function	=	None,
-	holdfor		:	int		=	-1,
+	hold_for		:	int		=	-1,
+	lag_allow : int = -1,
 	specific_data	:	str		=	None
 ):
 	'''
@@ -27,7 +28,8 @@ def fitness(
 	assert data != None, "No data was provided to the fitness function."
 	assert genes != None, "No genes were provided to the fitness function."
 	assert method != None, "No ground-truth method was provided to the fitness function."
-	assert holdfor != -1, "No holdfor length was provided to the fitness function."
+	assert hold_for != -1, "No holdfor length was provided to the fitness function."
+	assert lag_allow != -1, "No Lagallow length was provided to the fitness function."
 	
 	#close and low data specific assertions and array formations
 	match(specific_data):
