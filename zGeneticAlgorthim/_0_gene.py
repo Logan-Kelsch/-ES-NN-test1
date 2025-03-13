@@ -11,7 +11,6 @@ class Gene():
         patterns    :   list    =   []
     ):
         
-
         self._patterns = patterns
         return
     
@@ -33,8 +32,10 @@ class Pattern():
     '''
     def __init__(
         v1  :   any =   None,
+        l1  :   any =   None,
         op  :   any =   None,
-        v2  :   any =   None
+        v2  :   any =   None,
+        l2  :   any =   None
     ):
         
         return
