@@ -14,8 +14,8 @@ def fitness(
 	data		:	np.ndarray	=	None,
 	genes		:	list|np.ndarray	=	None,
 	method		:	function	=	None,
-	hold_for		:	int		=	-1,
-	lag_allow : int = -1,
+	hold_for	:	int			=	-1,
+	lag_allow	:	int			=	-1,
 	specific_data	:	str		=	None
 ):
 	'''
@@ -41,7 +41,7 @@ def fitness(
 				assert arr_low != None, \
 					"Data is not specified, martin ratio is selected, but low data was not provided to the fitness function."
 		case "form_519":
-			raise notImplementedError("MAKE INDEX VALUE")
+			raise NotImplementedError("MAKE INDEX VALUE")
 			some_index = -1
 			arr_close = data[:, some_index]
 			arr_low = data[:, some_index]
@@ -56,6 +56,7 @@ def fitness(
 		
 		if(i < lag_allow | i > length-hold_for):
 			#want to avoid usage of these values for safe analysis
+			pass
 		else:
 		
 			i_presence = []
@@ -65,7 +66,7 @@ def fitness(
 				matches = True
 				for p in gene._patterns:
 					#if given pattern holds true
-					if(p._op(data[i-p._l1, p._v1],data[i-p._l2, p._v2])
+					if(p._op(data[i-p._l1, p._v1],data[i-p._l2, p._v2])):
 						pass#pattern matches
 					else:
 						matches = False
@@ -92,10 +93,11 @@ def fitness(
 		
 		if(i < lag_allow | i > length-hold_for):
 			#want to avoid usage of these values for safe analysis
+			pass
 		else:
 		
 			#calculate returns
-			ret_local = (arr_close[i+hold_for]-arr_close[i]
+			ret_local = (arr_close[i+hold_for]-arr_close[i])
 			returns.append(gene_presence[i]*ret_local)
 			
 			#calculate index values here if desired
