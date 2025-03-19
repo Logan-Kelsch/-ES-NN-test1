@@ -111,8 +111,13 @@ def fitness(
 			kelsch_ratio_local = ret_local / ki_local
 			
 			kelsch_index.append(gene_presence[i]*(kelsch_ratio_local))
+
+	returns = np.array(returns)
+	kelsch_index = np.array(kelsch_index)
 	
-	return 
+	#This function will by default return the returns and kelsch_index values for each gene
+	#these are iterable, along dim0 (by data sample) are gene column local values
+	return returns, kelsch_index
 
 def profit_factor(
 	data	:	np.ndarray	=	None,
