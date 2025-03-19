@@ -97,14 +97,15 @@ def fitness(
 		else:
 		
 			#calculate returns
-			ret_local = (arr_close[i+hold_for]-arr_close[i])
+			ret_local = np.log(arr_close[i+hold_for]-arr_close[i])
 			returns.append(gene_presence[i]*ret_local)
 			
 			#calculate index values here if desired
 			ki_local = 0
 			entry_price = arr_close[i]
 			for c in range(1,hold_for+1):
-				ki_local+=((entry_price-arr_low[i+c])**2)
+				ki_local+=( np.log(entry_price-arr_low[i+c]) )**2
+			#taking square root of the mean drawdown squared
 			ki_local = sqrt(ki_local/hold_for)
 			
 			kelsch_ratio_local = ret_local / ki_local
