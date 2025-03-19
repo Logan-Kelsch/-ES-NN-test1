@@ -2,77 +2,295 @@
 '''
 
 import operator
+import random
+from typing import Literal
+import numpy as np
 
 class Gene():
-    '''
-    '''
-    def __init__(
-        self,
-        patterns    :   list    =   []
-    ):
-        
-        self._patterns = patterns
-        return
-    
-    #patterns - list of classes
-    #index range or index list
+	'''
+	'''
+	def __init__(
+		self,
+		patterns    :   list    =   []
+	):
+		
+		self._patterns = patterns
 
-    @property
-    def patterns(self):
-        return self._patterns
-    
-    @patterns.setter
-    def patterns(self, new:any):
-        self._patterns = new
+		self._lastarray_presence = None
+		self._lastarray_returns = None
+		self._lastarray_kelsch_ratio = None
 
+		self._lastavg_returns = None
+		self._lastavg_kelsch_ratio = None
+		self._last_profit_factor = None
+
+		return	
+
+	def update(
+		self,
+		lastarray_returns	:	any	=	None,
+		lastarray_kelsch_ratio:	any	=	None,
+		lastavg_returns		:	any	=	None,
+		lastavg_kelsch_ratio:	any	=	None,
+		last_profit_factor	:	any	=	None
+	):
+		'''
+		### info:
+		This function takes in arrays and performances to save locally to gene class
+		'''
+		
+		if(lastarray_returns != None):
+			self._lastarray_returns = lastarray_returns
+		
+		if(lastarray_kelsch_ratio != None):
+			self._lastarray_kelsch_ratio = lastarray_kelsch_ratio
+		
+		if(lastavg_returns != None):
+			self._lastavg_returns = lastavg_returns
+		
+		if(lastavg_kelsch_ratio != None):
+			self._lastavg_kelsch_ratio = lastavg_kelsch_ratio
+
+		if(last_profit_factor != None):
+			self._last_profit_factor - last_profit_factor
+
+
+	#patterns - list of classes
+	#index range or index list
+
+	@property
+	def patterns(self):
+		return self._patterns
+	
+	@patterns.setter
+	def patterns(self, new:any):
+		self._patterns = new
+
+	#arrays for holding onto returns and ratio values for evaluation
+
+	@property
+	def lastarray_returns(self):
+		return self._lastarray_returns
+	
+	@lastarray_returns.setter
+	def lastarray_returns(self, new:any):
+		self._lastarray_returns = new
+
+	@property
+	def lastarray_kelsch_ratio(self):
+		return self._lastarray_kelsch_ratio
+	
+	@lastarray_kelsch_ratio.setter
+	def lastarray_kelsch_ratio(self, new:any):
+		self._lastarray_kelsch_ratio = new
+
+	#individual values used for gene evaluation
+
+	@property
+	def lastavg_returns(self):
+		return self._lastavg_returns
+	
+	@lastavg_returns.setter
+	def lastavg_returns(self, new:any):
+		self._lastavg_returns = new
+
+	@property
+	def lastavg_kelsch_ratio(self):
+		return self._lastavg_kelsch_ratio
+	
+	@lastavg_kelsch_ratio.setter
+	def lastavg_kelsch_ratio(self, new:any):
+		self._lastavg_kelsch_ratio = new
+
+	@property
+	def last_profit_factor(self):
+		return self._last_profit_factor
+	
+	@last_profit_factor.setter
+	def last_profit_factor(self, new:any):
+		self._last_profit_factor = new
 
 
 class Pattern():
-    '''
-    '''
-    def __init__(
-        v1  :   any =   None,
-        l1  :   any =   None,
-        op  :   any =   None,
-        v2  :   any =   None,
-        l2  :   any =   None
-    ):
-        
-        return
-    #var1 - feature index
-    #operator - (<, >)
-    #var2 - feature index
+	'''
+	### info: ###
 
-    #generate random
-    def random(
-        acceptable_vals :   list    =   [],
-        acceptable_lags :   list|range  =   None
-    ):
-        assert acceptable_lags != None, \
-            f"A random pattern was requested, but {acceptable_lags} acceptable lags were entered."
+	The pattern class is used for comparing two values at two locations in a dataset, in respect to a local index value.
 
+	### params: ###
 
+	- v1 / v2:
+	-	-	integers containing feature index values
+	- l1 / l2:
+	-	-	integers containing lag (sample displacement) values
+	- op:
+	-	-	operator for comparison between values
 
-    @property
-    def v1(self):
-        return self._v1
-    
-    @property
-    def op(self):
-        return self._op
-    
-    @property
-    def v2(self):
-        return self._v2
-    
-    @v1.setter
-    def v1(self, new:any):
-        self._v1 = new
+	### example: ###
 
-    @op.setter
-    def op(self, new:any):
-        self._op = new
+	feature v1 at (sample - l1) op feature v2 at (sample - l2) <br>
+	>>> #returns boolean
+	>>> ptrn_istrue = ptrn._op(data[(curr_smpl-ptrn._l1) , ptrn._v1], data[(curr_smpl-ptrn._l2) , ptrn._v2])
+	'''
 
-    @v2.setter
-    def v2(self, new:any):
-        self._v2 = new
+	def __init__(
+		self,
+		acceptable_vals :   list    =   [],
+		acceptable_lags :   list|range    =   [],
+		v1  :   int =   None,
+		l1  :   int =   None,
+		op  :   operator	=   None,
+		v2  :   int =   None,
+		l2  :   int =   None
+	):
+		assert acceptable_lags != None, \
+			f"A pattern was created, but {acceptable_lags} acceptable lags were entered."
+		assert acceptable_vals != None, \
+			f"A pattern was created, but {acceptable_vals} acceptable vals were entered."
+		
+		self._acceptable_lags = acceptable_lags
+		self._acceptable_vals = acceptable_vals
+
+		#var1 - feature index
+		#lag1 - lag offset
+		#operator - (< or >) only
+		#var2 - feature index
+		#lag2 - lag offset
+		self._v1 = v1
+		self._l1 = l1
+		self._op = op
+		self._v2 = v2
+		self._l2 = l2
+
+		#randomization for initial creation (only acceptable lags and vals are entered)
+		#if any v1,v2,l1,l1,op are None, this means these are initial pattern creations, therefore..
+		if( any(n in None for n in [v1, v2, l1, l2, op])):
+			#make this pattern a random and legal generation
+			random()
+		
+		return
+
+	#generate random
+	def random(
+		self
+	):
+		#This is successfull on initial call, 
+		#as switch has full value inclusion when called on None values
+		self._v1 = self.switch('v1')
+		self._v2 = self.switch('v2')
+		self._l1 = self.switch('l1')
+		self._l2 = self.switch('l2')
+		self._op = self.switch('op')
+		
+	def switch(
+		self,
+		type	:	Literal['op','l1','v1','l2','v2']	=	None,
+		spec	:	any	=	None
+	):
+		'''
+		### info: ###
+		This function takes a given pattern parameter and replaced with a specified value, or a random value in none is specified.
+		
+		### params: ###
+		- type:
+		-	-	choose the parameter that will be switched.
+		- spec:
+		-	-	optional specific value to switch to, will select (NEW/DIFFERENT) acceptable value if not specified. 
+		'''
+		assert type != None, \
+			"pattern.switch was requested, but switch type was defined as 'None'."
+		
+		#if spec comes in as None, that means a random value is requested
+		#for each case, if random is requested, ensure we are not selecting
+		#the same value a second time.
+		if(spec == None):
+			match(type):
+				case 'op':
+					tmp = [operator.lt,operator.gt]
+					self._op = random.choice([o for o in tmp if tmp != self._op])
+				case 'l1':
+					self._l1 = random.choice([n for n in self._acceptable_lags if n != self._l1])
+				case 'l2':
+					self._l2 = random.choice([n for n in self._acceptable_lags if n != self._l2])
+				case 'v1':
+					self._v1 = random.choice([n for n in self._acceptable_lags if n != self._v1])
+				case 'v2':
+					self._v2 = random.choice([n for n in self._acceptable_lags if n != self._v2])
+				case _:
+					raise ValueError("FATAL: bad 'type' value in some_pattern.switch function call. (Random Switch)")
+		#this case is reached when we are entering a specified value
+		else:
+			match(type):
+				case 'op':
+					self._op = spec
+				case 'l1':
+					self._l1 = spec
+				case 'l2':
+					self._l2 = spec
+				case 'v1':
+					self._v1 = spec
+				case 'v2':
+					self._v2 = spec
+				case _:
+					raise ValueError("FATAL: bad 'type' value in some_pattern.switch function call. (Specific Switch)")
+
+								
+	#acceptable lags and vals list/ranges for logical and repeatable operating. properties and setters
+
+	@property
+	def acceptable_vals(self):
+		return self._acceptable_vals
+	
+	@acceptable_vals.setter
+	def acceptable_vals(self, new:any):
+		self._acceptable_vals = new
+
+	@property
+	def acceptable_lags(self):
+		return self._acceptable_lags
+	
+	@acceptable_lags.setter
+	def acceptable_lags(self, new:any):
+		self._acceptable_lags = new
+
+	#variable, lag, and operation properties and setters
+
+	@property
+	def v1(self):
+		return self._v1
+	
+	@property
+	def l1(self):
+		return self._l1
+	
+	@property
+	def op(self):
+		return self._op
+	
+	@property
+	def v2(self):
+		return self._v2
+	
+	@property
+	def l2(self):
+		return self._l2
+	
+	@v1.setter
+	def v1(self, new:any):
+		self._v1 = new
+
+	@l1.setter
+	def l1(self, new:any):
+		self._l1 = new
+
+	@op.setter
+	def op(self, new:any):
+		self._op = new
+
+	@v2.setter
+	def v2(self, new:any):
+		self._v2 = new
+
+	@l2. setter
+	def l2(self, new:any):
+		self._l2 = new

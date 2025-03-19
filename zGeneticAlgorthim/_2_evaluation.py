@@ -13,7 +13,8 @@ def fitness(
 	arr_low		:	np.ndarray	=	None,
 	data		:	np.ndarray	=	None,
 	genes		:	list|np.ndarray	=	None,
-	method		:	function	=	None,
+	#NOTE removing method parameter, as fully inclusive evaluations will be done first.
+	#method		:	function	=	None,
 	hold_for	:	int			=	-1,
 	lag_allow	:	int			=	-1,
 	specific_data	:	str		=	None
@@ -28,7 +29,8 @@ def fitness(
 	#function bare-bones assertions
 	assert data != None, "No data was provided to the fitness function."
 	assert genes != None, "No genes were provided to the fitness function."
-	assert method != None, "No ground-truth method was provided to the fitness function."
+	#NOTE removed method assertion as im going to do full inclusive runs first END#NOTE!!!
+	#assert method != None, "No ground-truth method was provided to the fitness function."
 	assert hold_for != -1, "No holdfor length was provided to the fitness function."
 	assert lag_allow != -1, "No Lagallow length was provided to the fitness function."
 	
@@ -37,9 +39,9 @@ def fitness(
 		case None:
 			assert arr_close != None, \
 				"Data is not specified, but close data was not provided to the fitness function."
-			if(method is martin_ratio):
-				assert arr_low != None, \
-					"Data is not specified, martin ratio is selected, but low data was not provided to the fitness function."
+			#if(method is martin_ratio):
+			#	assert arr_low != None, \
+			#		"Data is not specified, martin ratio is selected, but low data was not provided to the fitness function."
 		case "form_519":
 			raise NotImplementedError("MAKE INDEX VALUE")
 			some_index = -1
@@ -56,7 +58,7 @@ def fitness(
 		
 		if(i < lag_allow | i > length-hold_for):
 			#want to avoid usage of these values for safe analysis
-			pass
+			gene_presence.append([0]*len(genes))
 		else:
 		
 			i_presence = []
@@ -69,6 +71,7 @@ def fitness(
 					if(p._op(data[i-p._l1, p._v1],data[i-p._l2, p._v2])):
 						pass#pattern matches
 					else:
+						#this is reached when any pattern does not match
 						matches = False
 						break
 				#check if matches variable held
@@ -83,7 +86,7 @@ def fitness(
 	gene_presence = np.array(gene_presence)
 	
 	returns = []
-	kelsch_index = []
+	kelsch_ratio = []
 	
 	gp_len = len(gene_presence)
 	
@@ -93,7 +96,8 @@ def fitness(
 		
 		if(i < lag_allow | i > length-hold_for):
 			#want to avoid usage of these values for safe analysis
-			pass
+			returns.append(gene_presence[i]*0)
+			kelsch_ratio.append(gene_presence[i]*0)
 		else:
 		
 			#calculate returns
@@ -110,17 +114,43 @@ def fitness(
 			
 			kelsch_ratio_local = ret_local / ki_local
 			
-			kelsch_index.append(gene_presence[i]*(kelsch_ratio_local))
+			kelsch_ratio.append(gene_presence[i]*(kelsch_ratio_local))
 
 	returns = np.array(returns)
-	kelsch_index = np.array(kelsch_index)
+	kelsch_ratio = np.array(kelsch_ratio)
 	
 	#This function will by default return the returns and kelsch_index values for each gene
 	#these are iterable, along dim0 (by data sample) are gene column local values
-	return returns, kelsch_index
+	return returns, kelsch_ratio
+
+
+def associate(
+	genes	:	list,
+	returns,
+	kelsch_ratio
+):
+	#iterate through all genes and associate calculated values and collected arrays
+	for gi, gene in enumerate(genes):
+		
+		#calculate relevant statistics for each gene
+		local_profit_factor = profit_factor(returns[:, gi])
+		local_avg_return = average_nonzero(returns[:, gi])
+		local_avg_kelsch_ratio = average_nonzero(kelsch_ratio[:, gi])
+
+		#update data within the gene for local storage for quick evaluation or recall
+		gene.update(
+			lastarray_returns		=	returns[:, gi],
+			lastarray_kelsch_ratio	=	kelsch_ratio[:, gi],
+			lastavg_returns			=	local_avg_return,
+			lastavg_kelsch_ratio	=	local_avg_kelsch_ratio,
+			last_profit_factor		=	local_profit_factor
+		)
+
+	#returns updated genes
+	return genes
+
 
 def profit_factor(
-	data	:	np.ndarray	=	None,
 	returns	:	np.ndarray	=	None
 ):
 	wins, losses = 0, 0
@@ -131,18 +161,31 @@ def profit_factor(
 			losses+=1
 	return round((wins/losses), 4)
 
+
 def total_return(
-	data	:	np.ndarray	=	None,
 	returns	:	np.ndarray	=	None
 ):
 	return sum(returns)
 
+
+def average_nonzero(
+	array	:	np.ndarray	=	None		
+):
+	#will be traditionally used for averaging returns or ratios
+	return np.mean(array[array != 0])
+
+
+
 def ulcer_index():
+	#do something
+	#possibly remove this
 	return
+
 
 def martin_ratio(
 	data	:	np.ndarray	=	None,
 	returns	:	np.ndarray	=	None
 ):
-	tr = total_return(data, returns)
+	#do something
+	#possibly remove this
 	return
