@@ -6,6 +6,7 @@ This file will contain all evaluation functions - created 3/10/2025
 
 import numpy as np
 from math import sqrt
+from operator import attrgetter
 from _0_gene import *
 
 def fitness(
@@ -148,6 +149,37 @@ def associate(
 
 	#returns updated genes
 	return genes
+
+def sort_population(
+	population	:	list	=	None,
+	criteria	:	Literal['profit_factor','kelsch_ratio','average_return']	=	'profit_factor'
+):
+	'''
+	This function sorts a population based on a specific criteria
+	'''
+
+	assert (population != None), "Tried to sort a population that came in as None."
+	
+	#variable used for sorting in sorted function in attribute getter from operator lib
+	metric = ""
+
+	#for each type of criteria added
+	match(criteria):
+		#profit factor
+		case 'profit_factor':
+			metric = "_last_profit_factor"
+		#average return
+		case 'average_return':
+			metric = "_lastavg_returns"
+		#kelsch ratio
+		case 'kelsch_ratio':
+			metric = "_lastavg_kelsch_ratio"
+		#invalid entry, should be impossible anyways
+		case _:
+			raise ValueError(f"FATAL: Tried sorting population with invalid criteria ({criteria})")
+
+	#return population sorted by specified metric within each gene
+	return sorted(population, key=attrgetter(metric))
 
 
 def profit_factor(
