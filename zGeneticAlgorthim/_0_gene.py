@@ -26,6 +26,7 @@ class Gene():
 
 		return	
 
+	#this funcction takes in arrays and performances to save locally to gene class
 	def update(
 		self,
 		lastarray_returns	:	any	=	None,
@@ -169,6 +170,36 @@ class Pattern():
 			random()
 		
 		return
+	
+	def equals(
+		self,
+		foreign	:	any	=	None
+	):
+		#if is an illegal format
+		if(not isinstance(foreign, Pattern)):
+			return False
+
+		#now check each parameter to see if they are identical
+		
+		if(self._v1 != foreign._v1):
+			return False
+		
+		if(self._l1 != foreign._l1):
+			return False
+		
+		if(self._op != foreign._op):
+			return False
+		
+		if(self._v2 != foreign._v2):
+			return False
+		
+		if(self._l2 != foreign._l2):
+			return False
+		
+		#all parameters are identical if this area is reached
+		return True
+		
+		
 
 	#generate random
 	def random(

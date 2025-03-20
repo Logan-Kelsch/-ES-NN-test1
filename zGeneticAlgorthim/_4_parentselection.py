@@ -1,10 +1,94 @@
-#select 2 patterns, randomly, to act as parents
-
-#sum fitness
-#make 2 random vals between 0 and best
-#go down sorted population list ma e aselection sum
-#first FOR EACH random to be selected is selected as parent, no overlap
-
-#parent selects random 'split point'
-#makes two children
+#select two patterns to serve as parents
+#they create two children patterns
 #
+#first sum all fitness values
+#gen rand value between zero and pool sum
+#create select sum
+#loop throuhg pool, add pattern fitness
+#first pattern where sel sum >=rand value is selected as parent
+#
+#if fitness is non-positive, cannot be selected as parent
+#
+
+#repeat process again
+
+import random
+from typing import Literal
+from operator import attrgetter
+
+def collect_parents(
+	sorted_population	:	list	=	None,
+    criteria	:	Literal['profit_factor','kelsch_ratio','average_return']	=	'profit_factor',
+	num_parents			:	int		=	2
+):
+	
+	#create list variable for selected parents
+	parents = []
+    
+	#variable used for selecting which metric to use in pool sum
+	metric = ""
+	metric_min = 0
+
+	#for each type of criteria added
+	match(criteria):
+		#profit factor
+		case 'profit_factor':
+			metric = "_last_profit_factor"
+			metric_min = 1
+		#average return
+		case 'average_return':
+			metric = "_lastavg_returns"
+			metric_min = 0
+		#kelsch ratio
+		case 'kelsch_ratio':
+			metric = "_lastavg_kelsch_ratio"
+			metric_min = 0
+		#invalid entry, should be impossible anyways
+		case _:
+			raise ValueError(f"FATAL: Tried sorting population with invalid criteria ({criteria})")
+		
+	#make attribute getter
+	fetch_metric = attrgetter(metric)
+
+	#collect the total of fitness values
+	pool_sum = 0
+
+	#go thrugh all genes and add up metric values
+	for gene in sorted_population:
+		
+		#fetch gene local metric
+		fetched_metric = fetch_metric(gene)
+
+		#ensure the gene is able to be selected
+		if(fetch_metric>metric_min):
+			pool_sum += fetched_metric
+
+	#for each parent selected, do the following
+	for p in range(num_parents):
+
+		#generate a random variable between the minimum metric and the pool sum
+		survival_threshold = random.uniform(metric_min, pool_sum)
+
+		#sum up metrics until it is greater than the threshold, save as a parent
+		selection_sum = 0
+
+		#go through all genes searching for first sample above survival threshold
+		for gene in sorted_population:
+
+			#fetch the relevant metric
+			fetched_metric = fetch_metric(gene)
+
+			#ensure the gene is able to be selected
+			if(fetch_metric>metric_min):
+				selection_sum += fetched_metric
+
+			#check if the survival threshold was surpassed
+			if(selection_sum >= survival_threshold):
+				
+				#appended gene that survived first to list
+				parents.append(gene)
+				#and move into next parent selection
+				break
+
+	#return list of selected parents
+	return parents
