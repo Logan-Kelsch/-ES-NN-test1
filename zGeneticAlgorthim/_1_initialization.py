@@ -46,3 +46,7 @@ def generate_initial_population(
 
 	#returns the list of created genes
 	return genes
+
+def combine_populations(
+	populations
+)

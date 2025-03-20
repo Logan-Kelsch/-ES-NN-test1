@@ -215,7 +215,7 @@ class Pattern():
 		
 	def switch(
 		self,
-		type	:	Literal['op','l1','v1','l2','v2']	=	None,
+		type	:	Literal['op','l1','v1','l2','v2','mutation']	=	None,
 		spec	:	any	=	None
 	):
 		'''
@@ -231,6 +231,14 @@ class Pattern():
 		assert type != None, \
 			"pattern.switch was requested, but switch type was defined as 'None'."
 		
+		#if the sample coming in is a mutation case, pick random new switcher
+		if(type == 'mutation'):
+			#pick random value to switch
+			type = random.choice(['op','l1','v1','l2','v2'])
+			#enforce this comes in as None so that it can be randomly generated below
+			spec = None
+
+		
 		#if spec comes in as None, that means a random value is requested
 		#for each case, if random is requested, ensure we are not selecting
 		#the same value a second time.
@@ -244,9 +252,9 @@ class Pattern():
 				case 'l2':
 					self._l2 = random.choice([n for n in self._acceptable_lags if n != self._l2])
 				case 'v1':
-					self._v1 = random.choice([n for n in self._acceptable_lags if n != self._v1])
+					self._v1 = random.choice([n for n in self._acceptable_vals if n != self._v1])
 				case 'v2':
-					self._v2 = random.choice([n for n in self._acceptable_lags if n != self._v2])
+					self._v2 = random.choice([n for n in self._acceptable_vals if n != self._v2])
 				case _:
 					raise ValueError("FATAL: bad 'type' value in some_pattern.switch function call. (Random Switch)")
 		#this case is reached when we are entering a specified value
