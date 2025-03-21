@@ -60,7 +60,7 @@ def collect_parents(
 		fetched_metric = fetch_metric(gene)
 
 		#ensure the gene is able to be selected
-		if(fetch_metric>metric_min):
+		if(fetched_metric>metric_min):
 			pool_sum += fetched_metric
 
 	#for each parent selected, do the following
@@ -79,7 +79,7 @@ def collect_parents(
 			fetched_metric = fetch_metric(gene)
 
 			#ensure the gene is able to be selected
-			if(fetch_metric>metric_min):
+			if(fetched_metric>metric_min):
 				selection_sum += fetched_metric
 
 			#check if the survival threshold was surpassed

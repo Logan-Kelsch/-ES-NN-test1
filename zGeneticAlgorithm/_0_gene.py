@@ -41,20 +41,20 @@ class Gene():
 		This function takes in arrays and performances to save locally to gene class
 		'''
 		
-		if(lastarray_returns != None):
-			self._lastarray_returns = lastarray_returns
+		#if(lastarray_returns != None):
+		self._lastarray_returns = lastarray_returns
 		
-		if(lastarray_kelsch_ratio != None):
-			self._lastarray_kelsch_ratio = lastarray_kelsch_ratio
+		#if(lastarray_kelsch_ratio != None):
+		self._lastarray_kelsch_ratio = lastarray_kelsch_ratio
 		
-		if(lastavg_returns != None):
-			self._lastavg_returns = lastavg_returns
+		#if(lastavg_returns != None):
+		self._lastavg_returns = lastavg_returns
 		
-		if(lastavg_kelsch_ratio != None):
-			self._lastavg_kelsch_ratio = lastavg_kelsch_ratio
+		#if(lastavg_kelsch_ratio != None):
+		self._lastavg_kelsch_ratio = lastavg_kelsch_ratio
 
-		if(last_profit_factor != None):
-			self._last_profit_factor - last_profit_factor
+		#if(last_profit_factor != None):
+		self._last_profit_factor = last_profit_factor
 
 
 	#patterns - list of classes
@@ -166,9 +166,16 @@ class Pattern():
 
 		#randomization for initial creation (only acceptable lags and vals are entered)
 		#if any v1,v2,l1,l1,op are None, this means these are initial pattern creations, therefore..
-		if( any(n in None for n in [v1, v2, l1, l2, op])):
-			#make this pattern a random and legal generation
-			random()
+		if(self._v1 == None):
+			self.switch('v1')
+		if(self._v2 == None):
+			self.switch('v2')
+		if(self._l1 == None):
+			self.switch('l1')
+		if(self._l2 == None):
+			self.switch('l2')
+		if(self._op == None):
+			self.switch('op')
 		
 		return
 	

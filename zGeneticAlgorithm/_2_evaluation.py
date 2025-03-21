@@ -28,7 +28,7 @@ def fitness(
 	-
 	'''
 	#function bare-bones assertions
-	assert data != None, "No data was provided to the fitness function."
+	#assert data != None, "No data was provided to the fitness function."
 	assert genes != None, "No genes were provided to the fitness function."
 	#NOTE removed method assertion as im going to do full inclusive runs first END#NOTE!!!
 	#assert method != None, "No ground-truth method was provided to the fitness function."
@@ -44,10 +44,10 @@ def fitness(
 			#	assert arr_low != None, \
 			#		"Data is not specified, martin ratio is selected, but low data was not provided to the fitness function."
 		case "form_519":
-			raise NotImplementedError("MAKE INDEX VALUE")
-			some_index = -1
-			arr_close = data[:, some_index]
-			arr_low = data[:, some_index]
+			
+			#some_index = -1
+			arr_close = data[:, 2]
+			arr_low = data[:, 1]
 
 	#boolean 2d array containing entry/or-not (0|1) for each gene
 	gene_presence = []
@@ -65,10 +65,12 @@ def fitness(
 			i_presence = []
 		
 			#check presence of each gene at each sample
-			for gene in genes:
+			for g, gene in enumerate(genes):
 				matches = True
 				for p in gene._patterns:
 					#if given pattern holds true
+					#print(f"p: {type(p)} at {g}")
+					#print(f'v1,v2,l1,l2: {p._v1} {p._v2} {p._l1} {p._l2}')
 					if(p._op(data[i-p._l1, p._v1],data[i-p._l2, p._v2])):
 						pass#pattern matches
 					else:
@@ -189,7 +191,7 @@ def profit_factor(
 	for i in returns:
 		if(i>0):
 			wins+=1
-		if(i<0):
+		if(i<=0):
 			losses+=1
 	return round((wins/losses), 4)
 
@@ -228,6 +230,21 @@ def simple_generational_stat_output(
 	metric		:	str		=	None
 ):
 	all_metrics = []
+
+	#for each type of criteria added
+	match(metric):
+		#profit factor
+		case 'profit_factor':
+			metric = "_last_profit_factor"
+		#average return
+		case 'average_return':
+			metric = "_lastavg_returns"
+		#kelsch ratio
+		case 'kelsch_ratio':
+			metric = "_lastavg_kelsch_ratio"
+		#invalid entry, should be impossible anyways
+		case _:
+			raise ValueError(f"FATAL: Tried sorting population with invalid criteria ({metric})")
 
 	fetch_metric = attrgetter(metric)
 
