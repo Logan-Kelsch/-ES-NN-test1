@@ -48,5 +48,26 @@ def generate_initial_population(
 	return genes
 
 def combine_populations(
-	populations
-)
+	populations	:	list	=	None
+):
+	'''
+	This function will take a list OF POPULATIONS and turn them into a single population list
+	'''
+
+	#create variable to combine populations
+	combined_populations = []
+
+	#run nested loop to collect all genes from all populations
+	for population in populations:
+		for gene in population:
+
+			#add gene to combined pool
+			combined_populations.append(gene)
+
+	#returns single list of all populations members
+	return combined_populations
+
+def shuffle_population(
+	population	:	list	=	None
+):
+	return random.shuffle(population)

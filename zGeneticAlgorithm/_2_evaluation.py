@@ -221,3 +221,21 @@ def martin_ratio(
 	#do something
 	#possibly remove this
 	return
+
+
+def simple_generational_stat_output(
+	population	:	list	=	None,
+	metric		:	str		=	None
+):
+	all_metrics = []
+
+	fetch_metric = attrgetter(metric)
+
+	for gene in population:
+
+		all_metrics.append(fetch_metric(gene))
+
+	avg_metric = np.mean(all_metrics)
+	top_metric = max(all_metrics)
+
+	return avg_metric, top_metric

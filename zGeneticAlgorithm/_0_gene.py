@@ -5,6 +5,7 @@ import operator
 import random
 from typing import Literal
 import numpy as np
+import _9_utility as util
 
 class Gene():
 	'''
@@ -203,8 +204,14 @@ class Pattern():
 
 	#generate random
 	def random(
-		self
+		self,
+		mutation	:	bool	=	False,
+		fss			:	list	=	None
 	):
+		
+		#check if this is a mutation call, if so, replace the fss (possibly)
+		if(mutation):
+			self.switch(type='fs', fss=fss)
 		#This is successfull on initial call, 
 		#as switch has full value inclusion when called on None values
 		self._v1 = self.switch('v1')
@@ -215,8 +222,9 @@ class Pattern():
 		
 	def switch(
 		self,
-		type	:	Literal['op','l1','v1','l2','v2','mutation']	=	None,
-		spec	:	any	=	None
+		type	:	Literal['op','l1','v1','l2','v2','fs','mutation']	=	None,
+		spec	:	any	=	None,
+		fss		:	list=	None
 	):
 		'''
 		### info: ###
@@ -255,6 +263,8 @@ class Pattern():
 					self._v1 = random.choice([n for n in self._acceptable_vals if n != self._v1])
 				case 'v2':
 					self._v2 = random.choice([n for n in self._acceptable_vals if n != self._v2])
+				case 'fs':
+					self._acceptable_vals = random.choice(fss)
 				case _:
 					raise ValueError("FATAL: bad 'type' value in some_pattern.switch function call. (Random Switch)")
 		#this case is reached when we are entering a specified value
@@ -270,9 +280,13 @@ class Pattern():
 					self._v1 = spec
 				case 'v2':
 					self._v2 = spec
+				case 'fs':
+					self._acceptable_vals = fss[spec]
 				case _:
 					raise ValueError("FATAL: bad 'type' value in some_pattern.switch function call. (Specific Switch)")
 
+
+	#universal feature subsets, passed in and does not chance
 								
 	#acceptable lags and vals list/ranges for logical and repeatable operating. properties and setters
 
