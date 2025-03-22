@@ -107,6 +107,11 @@ def drop_all_targets(
 
 
 
+def get_full_feature_dict(fssd):
+	combined = {}
+	for d in fssd:
+		combined.update(d)
+	return combined
 
 
 

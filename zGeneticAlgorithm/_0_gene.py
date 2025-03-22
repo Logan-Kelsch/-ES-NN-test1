@@ -26,6 +26,16 @@ class Gene():
 		self._last_profit_factor = None
 
 		return	
+	
+	def show_patterns(
+		self,
+		fss
+	):
+		for pattern in self._patterns:
+			pattern.show(fss)
+
+		return
+
 
 	#this funcction takes in arrays and performances to save locally to gene class
 	def update(
@@ -166,18 +176,43 @@ class Pattern():
 
 		#randomization for initial creation (only acceptable lags and vals are entered)
 		#if any v1,v2,l1,l1,op are None, this means these are initial pattern creations, therefore..
-		if(self._v1 == None):
-			self.switch('v1')
-		if(self._v2 == None):
-			self.switch('v2')
-		if(self._l1 == None):
-			self.switch('l1')
-		if(self._l2 == None):
-			self.switch('l2')
-		if(self._op == None):
-			self.switch('op')
+		missing = self.has_missing()
+		for miss in missing:
+			self.switch(miss)
 		
 		return
+	
+	def show(
+		self,
+		fss
+	):
+		
+		fd = util.get_full_feature_dict(fss)
+		
+		op_map = {
+			operator.lt : "<",
+			operator.gt : ">"
+		}
+		
+		print(f"{fd[self._v1]}[{self._l1}] {op_map[self._op]} {fd[self._v2]}[{self._l2}]")
+	
+	def has_missing(
+		self
+	):
+		missing = []
+		if(self._v1 == None):
+			missing.append('v1')
+		if(self._v2 == None):
+			missing.append('v2')
+		if(self._l1 == None):
+			missing.append('l1')
+		if(self._l2 == None):
+			missing.append('l2')
+		if(self._op == None):
+			missing.append('op')
+		
+		return missing
+		
 	
 	def equals(
 		self,

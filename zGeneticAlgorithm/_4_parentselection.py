@@ -53,6 +53,9 @@ def collect_parents(
 	#collect the total of fitness values
 	pool_sum = 0
 
+	#list of all metric values for ease of checking
+	population_metrics = []
+
 	#go thrugh all genes and add up metric values
 	for gene in sorted_population:
 		
@@ -62,6 +65,11 @@ def collect_parents(
 		#ensure the gene is able to be selected
 		if(fetched_metric>metric_min):
 			pool_sum += fetched_metric
+			population_metrics.append(fetched_metric)
+		else:
+			population_metrics.append(metric_min)
+
+	print(population_metrics)
 
 	#for each parent selected, do the following
 	for p in range(num_parents):

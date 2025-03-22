@@ -70,4 +70,5 @@ def combine_populations(
 def shuffle_population(
 	population	:	list	=	None
 ):
-	return random.shuffle(population)
+	random.shuffle(population)
+	return population

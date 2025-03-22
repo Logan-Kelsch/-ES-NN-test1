@@ -37,13 +37,15 @@ def reproduce(
 			split = random.randint(1,num_patterns)
 
 			#create shuffled list of parent indices for random linear size pairing
-			parent_pairing_idx = random.shuffle(list(range(num_parents)))
+			
+			parent_pairing_idx = list(range(num_parents))
+			random.shuffle(parent_pairing_idx)
 
 			#append all parents to family list
 			for p in parents:
 				family.append(
 					_0.Gene(
-						patterns=parents[p]._patterns
+						patterns=p._patterns
 					)
 				)
 
@@ -97,7 +99,7 @@ def reproduce(
 					for j in range(i+1, len(pattern_pool)):
 
 						#this comparator lands at every pair, compairs patterns
-						if(pattern_pool[i].equals(pattern_pool[i])):
+						if(pattern_pool[i].equals(pattern_pool[j])):
 
 							#if they are identical, define bool to allow for double escape
 							fully_unique = False
@@ -114,10 +116,13 @@ def reproduce(
 			#shuffle all attributes
 			random.shuffle(pattern_pool)
 
+			print(f'pattern pool len = {len(pattern_pool)}')
+
 			#generate all possibly combinations of these patterns. thanks to
 			#a wonderful library I don't have to code this myself.
 			#NOTE WITHOUT REPLACEMENT !! END#NOTE
-			all_pattern_combos = combinations(pattern_pool, num_patterns)
+			all_pattern_combos = list(combinations(pattern_pool, num_patterns))
+			print(f'combo len = {len(all_pattern_combos)}')
 
 			#now create a fresh gene of all combinations and add them to the family list
 			for pattern in all_pattern_combos:

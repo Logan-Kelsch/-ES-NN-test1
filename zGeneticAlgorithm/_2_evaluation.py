@@ -18,7 +18,8 @@ def fitness(
 	#method		:	function	=	None,
 	hold_for	:	int			=	-1,
 	lag_allow	:	int			=	-1,
-	specific_data	:	str		=	None
+	specific_data	:	str		=	None,
+	log_normalize	:	bool	=	False
 ):
 	'''
 	### info: ###
@@ -104,18 +105,24 @@ def fitness(
 		else:
 		
 			#calculate returns
-			ret_local = np.log(arr_close[i+hold_for]-arr_close[i])
+			if(log_normalize):
+				ret_local = np.log(arr_close[i+hold_for]/arr_close[i])
+			else:
+				ret_local = (arr_close[i+hold_for] - arr_close[i])
 			returns.append(gene_presence[i]*ret_local)
 			
 			#calculate index values here if desired
 			ki_local = 0
 			entry_price = arr_close[i]
 			for c in range(1,hold_for+1):
-				ki_local+=( np.log(entry_price-arr_low[i+c]) )**2
+				if(log_normalize):
+					ki_local+=(( np.log( max( entry_price/arr_low[i+c], 1 ) ) )**2)
+				else:
+					ki_local+=((max(entry_price - arr_low[i+c] , 0)) ** 2)
 			#taking square root of the mean drawdown squared
 			ki_local = sqrt(ki_local/hold_for)
 			
-			kelsch_ratio_local = ret_local / ki_local
+			kelsch_ratio_local = (ret_local / (ki_local if ki_local!=0 else 0.00001))
 			
 			kelsch_ratio.append(gene_presence[i]*(kelsch_ratio_local))
 
@@ -142,8 +149,8 @@ def associate(
 
 		#update data within the gene for local storage for quick evaluation or recall
 		gene.update(
-			lastarray_returns		=	returns[:, gi],
-			lastarray_kelsch_ratio	=	kelsch_ratio[:, gi],
+			#lastarray_returns		=	returns[:, gi],
+			#lastarray_kelsch_ratio	=	kelsch_ratio[:, gi],
 			lastavg_returns			=	local_avg_return,
 			lastavg_kelsch_ratio	=	local_avg_kelsch_ratio,
 			last_profit_factor		=	local_profit_factor
@@ -183,16 +190,32 @@ def sort_population(
 	#return population sorted by specified metric within each gene
 	return sorted(population, key=attrgetter(metric))
 
+def show_best_gene_patterns(
+	population	:	list	=	None,
+	criteria	:	Literal['profit_factor','kelsch_ratio','average_return']	=	'profit_factor',
+	fss			:	list	=	None
+):
+	s_p = sort_population(population,criteria)
+	s_p[0].show_patterns(fss)
+
 
 def profit_factor(
-	returns	:	np.ndarray	=	None
+	returns	:	any	=	None
 ):
+
 	wins, losses = 0, 0
 	for i in returns:
 		if(i>0):
 			wins+=1
-		if(i<=0):
+		if(i<0):
 			losses+=1
+	
+	if(losses == 0):
+		if(wins>50):
+			raise ValueError(f'Perfect strategy detected, 0 losses, >50 wins!!!!!! AHAHAHAHA go check your code bro')
+		else:
+			return 0
+
 	return round((wins/losses), 4)
 
 
