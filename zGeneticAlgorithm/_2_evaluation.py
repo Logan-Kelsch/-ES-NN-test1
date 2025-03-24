@@ -147,14 +147,15 @@ def fitness(
 def associate(
 	genes	:	list,
 	returns,
-	kelsch_ratio
+	kelsch_ratio,
+	log_normalize
 ):
 	#iterate through all genes and associate calculated values and collected arrays
 	for gi, gene in enumerate(genes):
 		
 		#calculate relevant statistics for each gene
 		local_profit_factor = profit_factor(returns[:, gi])
-		local_avg_return = average_nonzero(returns[:, gi])
+		local_avg_return = average_nonzero(returns[:, gi], log_normalize)
 		local_avg_kelsch_ratio = average_nonzero(kelsch_ratio[:, gi])
 
 		#update data within the gene for local storage for quick evaluation or recall
@@ -241,12 +242,19 @@ def total_return(
 
 
 def average_nonzero(
-	array	:	np.ndarray	=	None		
+	array	:	np.ndarray	=	None,
+	log_normalize:bool		=	True	
 ):
 	#will be traditionally used for averaging returns or ratios
 	filtered = array[array != 0]
 
-	return np.mean(filtered) if filtered.size > 0 else 0
+	if(log_normalize):
+		avg = np.exp(np.mean(filtered)) if filtered.size > 0 else 0
+		avg = avg-1
+	else:
+		avg = np.mean(filtered) if filtered.size > 0 else 0
+
+	return avg
 
 
 
