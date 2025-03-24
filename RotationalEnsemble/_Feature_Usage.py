@@ -95,7 +95,7 @@ def augmod_dataset(
 	,index_names	:	list	=	['spx','ndx']
 	,format_mode	:	Literal['live','backtest'] = 'backtest'
 	,clip_stochastic:	bool	=	True
-	,target_isolate	:	Literal['r','c','a','sc']	=	None
+	,target_isolate	:	Literal['r','c','a','sc','kr']	=	None
 ):
 
 	'''NOTE NOTE broke these processes down into a few different areas of multiprocessing based off of
@@ -209,6 +209,8 @@ def augmod_dataset(
 					target_sc2 = te_stoch_class(data, i[0], 2)
 					target_sc3 = te_stoch_class(data, i[0], 3)
 					target_sc4 = te_stoch_class(data, i[0], 4)
+				case 'kr':
+					target_kr = te_kelsch_reg(data, i[0])
 				case None:
 					target_r = te_vel_reg(data, i[0])
 					target_c = te_vel_class(data, i[0])
@@ -233,6 +235,8 @@ def augmod_dataset(
 					df_list.append(target_sc2)
 					df_list.append(target_sc3)
 					df_list.append(target_sc4)
+				case 'kr':
+					df_list.append(target_kr)
 				case None:
 					df_list.append(target_r)
 					df_list.append(target_c)
@@ -260,6 +264,8 @@ def augmod_dataset(
 					df_list.append(target_sc2)
 					df_list.append(target_sc3)
 					df_list.append(target_sc4)
+				case 'kr':
+					df_list.append(target_kr)
 				case None:
 					df_list.append(target_r)
 					df_list.append(target_c)
@@ -772,6 +778,9 @@ def te_vel_reg(X, index):
 
 	#print(feature_set)
 	return feature_set
+
+def te_kelsch_reg(X, index):
+	pass
 
 def te_stoch_class(
 	X

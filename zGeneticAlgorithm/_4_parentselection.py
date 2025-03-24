@@ -69,7 +69,7 @@ def collect_parents(
 		else:
 			population_metrics.append(metric_min)
 
-	print(population_metrics)
+	#print(population_metrics)
 
 	#for each parent selected, do the following
 	for p in range(num_parents):

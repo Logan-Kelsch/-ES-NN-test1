@@ -116,14 +116,21 @@ def fitness(
 			entry_price = arr_close[i]
 			for c in range(1,hold_for+1):
 				if(log_normalize):
-					ki_local+=(( np.log( max( entry_price/arr_low[i+c], 1 ) ) )**2)
+					ki_local+=(np.log(max(entry_price/arr_low[i+c], 1))**2)
 				else:
 					ki_local+=((max(entry_price - arr_low[i+c] , 0)) ** 2)
 			#taking square root of the mean drawdown squared
-			ki_local = sqrt(ki_local/hold_for)
+			if(log_normalize):
+				ki_local = np.exp(sqrt(ki_local/hold_for))
+			else:
+				ki_local = sqrt(ki_local/hold_for)
 			
-			kelsch_ratio_local = (ret_local / (ki_local if ki_local!=0 else 0.00001))
-			
+
+			if(ki_local != 0):
+				kelsch_ratio_local = (ret_local / (ki_local))
+			else:
+				kelsch_ratio_local = 100 #force a maximum value
+
 			kelsch_ratio.append(gene_presence[i]*(kelsch_ratio_local))
 
 	returns = np.array(returns)
@@ -176,13 +183,13 @@ def sort_population(
 	match(criteria):
 		#profit factor
 		case 'profit_factor':
-			metric = "_last_profit_factor"
+			metric = "last_profit_factor"
 		#average return
 		case 'average_return':
-			metric = "_lastavg_returns"
+			metric = "lastavg_returns"
 		#kelsch ratio
 		case 'kelsch_ratio':
-			metric = "_lastavg_kelsch_ratio"
+			metric = "lastavg_kelsch_ratio"
 		#invalid entry, should be impossible anyways
 		case _:
 			raise ValueError(f"FATAL: Tried sorting population with invalid criteria ({criteria})")
