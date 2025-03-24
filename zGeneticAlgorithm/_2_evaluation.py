@@ -116,17 +116,20 @@ def fitness(
 			entry_price = arr_close[i]
 			for c in range(1,hold_for+1):
 				if(log_normalize):
-					ki_local+=(np.log(max(entry_price/arr_low[i+c], 1))**2)
+					ki = entry_price/arr_low[i+c] #>=1 means is below entry
+					ki_local+=(np.log(max(ki, 1))**2)
 				else:
 					ki_local+=((max(entry_price - arr_low[i+c] , 0)) ** 2)
 			#taking square root of the mean drawdown squared
 			if(log_normalize):
-				ki_local = np.exp(sqrt(ki_local/hold_for))
+				#is in log space, so is returns, so i dont think np.exp goes here
+				ki_local = (sqrt(ki_local/hold_for))
 			else:
 				ki_local = sqrt(ki_local/hold_for)
 			
 
 			if(ki_local != 0):
+				#print(f"{ret_local} ++++++ {ki_local}")
 				kelsch_ratio_local = (ret_local / (ki_local))
 			else:
 				kelsch_ratio_local = 100 #force a maximum value
@@ -193,9 +196,11 @@ def sort_population(
 		#invalid entry, should be impossible anyways
 		case _:
 			raise ValueError(f"FATAL: Tried sorting population with invalid criteria ({criteria})")
+		
+	sorted_pop = sorted(population, key=attrgetter(metric))
 
 	#return population sorted by specified metric within each gene
-	return sorted(population, key=attrgetter(metric))
+	return sorted_pop
 
 def show_best_gene_patterns(
 	population	:	list	=	None,
@@ -204,6 +209,9 @@ def show_best_gene_patterns(
 ):
 	s_p = sort_population(population,criteria)
 	s_p[0].show_patterns(fss)
+	print(f"Profit Factor:	{s_p[0]._last_profit_factor}")
+	print(f"Average Return:	{s_p[0]._lastavg_returns}")
+	print(f"Average KRatio:	{s_p[0]._lastavg_kelsch_ratio}")
 
 
 def profit_factor(
@@ -236,7 +244,9 @@ def average_nonzero(
 	array	:	np.ndarray	=	None		
 ):
 	#will be traditionally used for averaging returns or ratios
-	return np.mean(array[array != 0])
+	filtered = array[array != 0]
+
+	return np.mean(filtered) if filtered.size > 0 else 0
 
 
 
