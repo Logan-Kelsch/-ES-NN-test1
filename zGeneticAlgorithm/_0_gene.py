@@ -31,10 +31,12 @@ class Gene():
 		self,
 		fss
 	):
+		
+		patterns = ""
 		for pattern in self._patterns:
-			pattern.show(fss)
+			patterns += pattern.show(fss)
 
-		return
+		return patterns
 
 
 	#this funcction takes in arrays and performances to save locally to gene class
@@ -194,7 +196,7 @@ class Pattern():
 			operator.gt : ">"
 		}
 		
-		print(f"{fd[self._v1]}[{self._l1}] {op_map[self._op]} {fd[self._v2]}[{self._l2}]")
+		return f"({self._v1}){fd[self._v1]}[{self._l1}] {op_map[self._op]} ({self._v2}){fd[self._v2]}[{self._l2}]\n"
 	
 	def has_missing(
 		self

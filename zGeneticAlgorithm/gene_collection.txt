@@ -1,0 +1,29 @@
+This file will be a very rough collection of gene info that does pretty well
+
+hilo_stoch_30_15_spx[7] > hilo_stoch_120_120_spx[8]
+barH_spx[27] > ToD[26]
+Profit Factor:	1.2308
+Average Return:	0.00013805443776893078	(~0.69 on /MES == $3.45)
+Average KRatio:	3.162630435582514e-05	(~0.16 on /MES == $0.8)
+holdfor:10
+
+DoW[14] > DoW[12]
+diff_ma_15_120_spx[15] > diff_ma_5_15_spx[10]
+Profit Factor:	3.5
+Average Return:	0.0002473917080394461	(~1.24 on /MES == $6.2)
+Average KRatio:	0.00013052737875351994	(~0.65 on /MES == $3.25)
+holdfor:10
+
+vol_avgDiff48_spx[6] < vol_avgDiff37_spx[1]
+volume[8] < wickH_spx[1]
+Profit Factor:	1.0
+Average Return:	0.0002610264036926324	(~1.31 on /MES == $6.55)
+Average KRatio:	0.0001992249895019782	(~1.0 on /MES == $5.0)
+holdfor:10
+
+(412)diff_ma_5_240_spx[10] > (412)diff_ma_5_240_spx[14]
+(454)diff_hilo_15_15_spx[8] > (464)diff_hilo_30_240_spx[24]
+Profit Factor:	1.2681
+Average Return:	7.600399618512554e-05	(~0.38 on /MES == $1.9)
+Average KRatio:	nan	(~nan on /MES == $nan)
+holdfor:15

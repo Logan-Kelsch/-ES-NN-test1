@@ -1,5 +1,7 @@
 import _0_gene as _0
 import random
+import numpy as np
+from math import sqrt
 
 def generate_initial_population(
 	sample_size	:	int	=	None,
@@ -46,6 +48,70 @@ def generate_initial_population(
 
 	#returns the list of created genes
 	return genes
+
+def collect_parallel_metrics(
+	arr_close:	np.ndarray	=	None,
+	arr_low	:	np.ndarray	=	None,
+	hold_for:	int			=	0,
+	lag_allow:	int			=	0,
+	log_normalize:	bool	=	True
+):
+	'''
+	This function is going to take a given dataset and return the essential parallel data<br>
+	such as:
+	- kelsch ratio of given holdfor length
+	- returns of given holdfor length
+	'''
+	
+	#list variables for holding metrics
+	returns = []
+	kelsch_ratio = []
+
+	length = len(arr_close)
+
+	for i in range(length):
+		if(i < lag_allow | i > length-hold_for-1):
+			#want to avoid usage of these values for safe analysis
+			returns.append(0)
+			kelsch_ratio.append(0)
+		else:
+		
+			#calculate returns
+			if(log_normalize):
+				returns_local = np.log(arr_close[i+hold_for]/arr_close[i])
+			else:
+				returns_local = (arr_close[i+hold_for] - arr_close[i])
+			returns.append(returns_local)
+			
+			#calculate index values here if desired
+			ki_local = 0
+			entry_price = arr_close[i]
+			for c in range(1,hold_for+1):
+				if(log_normalize):
+					ki = entry_price/arr_low[i+c] #>=1 means is below entry
+					ki_local+=(np.log(max(ki, 1))**2)
+				else:
+					ki_local+=((max(entry_price - arr_low[i+c] , 0)) ** 2)
+			#taking square root of the mean drawdown squared
+			if(log_normalize):
+				#is in log space, so is returns, so i dont think np.exp goes here
+				ki_local = (sqrt(ki_local/hold_for))
+			else:
+				ki_local = sqrt(ki_local/hold_for)
+			
+			#this should NEVER come up
+			if(ki_local == np.nan):
+				print('nan found!')
+			
+			#take difference to show differential between std drawdown and profit
+			kelsch_ratio_local = np.log( (np.exp(returns_local)-1 / np.exp(ki_local)-1)+1)
+
+			kelsch_ratio.append((kelsch_ratio_local))
+
+	#metrics are built, return parallel metrics
+	return returns, kelsch_ratio
+
+
 
 def combine_populations(
 	populations	:	list	=	None

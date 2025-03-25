@@ -2,16 +2,21 @@
 This file will contain all evaluation functions - created 3/10/2025
 '''
 
+
+
 #DEV NOTE ensure all fitfuncs are generated parallel to data to allow for parallel analysis.
 
 import numpy as np
 from math import sqrt
 from operator import attrgetter
+import matplotlib.pyplot as plt
 from _0_gene import *
 
 def fitness(
 	arr_close	:	np.ndarray	=	None,
 	arr_low		:	np.ndarray	=	None,
+	arr_returns	:	np.ndarray	=	None,
+	arr_kratio	:	np.ndarray	=	None,
 	data		:	np.ndarray	=	None,
 	genes		:	list|np.ndarray	=	None,
 	#NOTE removing method parameter, as fully inclusive evaluations will be done first.
@@ -39,8 +44,9 @@ def fitness(
 	#close and low data specific assertions and array formations
 	match(specific_data):
 		case None:
-			assert arr_close != None, \
-				"Data is not specified, but close data was not provided to the fitness function."
+			pass
+			#assert arr_close != None, \
+			#	"Data is not specified, but close data was not provided to the fitness function."
 			#if(method is martin_ratio):
 			#	assert arr_low != None, \
 			#		"Data is not specified, martin ratio is selected, but low data was not provided to the fitness function."
@@ -51,16 +57,26 @@ def fitness(
 			arr_low = data[:, 1]
 
 	#boolean 2d array containing entry/or-not (0|1) for each gene
-	gene_presence = []
+	#gene_presence = []
+
+	gene_presence_local = []
+
 	length = len(data)
+
+	returns = []
+	kelsch_ratio = []
 
 	#test all samples in the set, accounting for
 	#lag allowance and hold length
 	for i in range(length):
 		
-		if(i < lag_allow | i > length-hold_for):
+		if(i < lag_allow | i > length-hold_for-1):
 			#want to avoid usage of these values for safe analysis
-			gene_presence.append([0]*len(genes))
+			#gene_presence.append([0]*len(genes))
+			gene_presence_local = np.array([0]*len(genes))
+			
+			returns.append(gene_presence_local*arr_returns[i])
+			kelsch_ratio.append(gene_presence_local*arr_kratio[i])
 		else:
 		
 			i_presence = []
@@ -69,9 +85,12 @@ def fitness(
 			for g, gene in enumerate(genes):
 				matches = True
 				for p in gene._patterns:
-					#if given pattern holds true
+
+					#some referrential point printouts if needed
 					#print(f"p: {type(p)} at {g}")
 					#print(f'v1,v2,l1,l2: {p._v1} {p._v2} {p._l1} {p._l2}')
+					
+					#if given pattern holds true
 					if(p._op(data[i-p._l1, p._v1],data[i-p._l2, p._v2])):
 						pass#pattern matches
 					else:
@@ -84,21 +103,31 @@ def fitness(
 				else:
 					i_presence.append(1)
 		
-		#now have a fully built sample presence
-		gene_presence.append(i_presence)
+			#now have a fully built sample presence
+			#gene_presence.append(i_presence)
+
+			gene_presence_local = np.array(i_presence)
+
+			#since we have moved returns and kelsch ratio to an earlier step, append those values now
+			returns.append(gene_presence_local*arr_returns[i])
+			kelsch_ratio.append(gene_presence_local*arr_kratio[i])
 			
-	gene_presence = np.array(gene_presence)
+	#gene_presence = np.array(gene_presence)
+	returns = np.array(returns)
+	kelsch_ratio = np.array(kelsch_ratio)
 	
-	returns = []
-	kelsch_ratio = []
 	
-	gp_len = len(gene_presence)
-	
-	#now going to take gene presence and define
+	'''#now going to take gene presence and define
 	#returns and custom index values
 	for i in range(length):
 		
-		if(i < lag_allow | i > length-hold_for):
+		#we do not need to account for illogical extreme values of i,
+		#since that was already taken  into account when collecting gene presence above.
+		#those values are all zero.
+		#illogical extremes means hold_for at end of dataset, and lag allownace at beginning of dataset
+
+
+		if(i < lag_allow | i > length-hold_for-1):
 			#want to avoid usage of these values for safe analysis
 			returns.append(gene_presence[i]*0)
 			kelsch_ratio.append(gene_presence[i]*0)
@@ -128,16 +157,18 @@ def fitness(
 				ki_local = sqrt(ki_local/hold_for)
 			
 
-			if(ki_local != 0):
+			if(ki_local == np.nan):
+				print('nan found!')
+			#if(ki_local != 0):
 				#print(f"{ret_local} ++++++ {ki_local}")
-				kelsch_ratio_local = (ret_local / (ki_local))
-			else:
-				kelsch_ratio_local = 100 #force a maximum value
+			kelsch_ratio_local = (ret_local - (ki_local))
+			#else:
+			#	kelsch_ratio_local = 100 #force a maximum value
 
 			kelsch_ratio.append(gene_presence[i]*(kelsch_ratio_local))
 
 	returns = np.array(returns)
-	kelsch_ratio = np.array(kelsch_ratio)
+	kelsch_ratio = np.array(kelsch_ratio)'''
 	
 	#This function will by default return the returns and kelsch_index values for each gene
 	#these are iterable, along dim0 (by data sample) are gene column local values
@@ -155,12 +186,24 @@ def associate(
 		
 		#calculate relevant statistics for each gene
 		local_profit_factor = profit_factor(returns[:, gi])
-		local_avg_return = average_nonzero(returns[:, gi], log_normalize)
+		local_avg_return = average_nonzero(returns[:, gi])
 		local_avg_kelsch_ratio = average_nonzero(kelsch_ratio[:, gi])
+
+		#if this is reached, this means the returns are coming in as the percent
+		#difference for each trade IN LOG SPACE
+		#and also that the kelsch ratios are coming in as the percent difference
+		#minus standard deviation of drawdowns ALL IN LOG SPACE
+		if(log_normalize):
+			
+			#bring them out of log space
+			local_avg_return = np.exp(local_avg_return)-1
+			local_avg_kelsch_ratio = np.exp(local_avg_kelsch_ratio)-1
+			#these are now exact average % price differences (KR having some complexities)
+			
 
 		#update data within the gene for local storage for quick evaluation or recall
 		gene.update(
-			#lastarray_returns		=	returns[:, gi],
+			lastarray_returns		=	returns[:, gi],
 			#lastarray_kelsch_ratio	=	kelsch_ratio[:, gi],
 			lastavg_returns			=	local_avg_return,
 			lastavg_kelsch_ratio	=	local_avg_kelsch_ratio,
@@ -198,7 +241,7 @@ def sort_population(
 		case _:
 			raise ValueError(f"FATAL: Tried sorting population with invalid criteria ({criteria})")
 		
-	sorted_pop = sorted(population, key=attrgetter(metric))
+	sorted_pop = sorted(population, key=attrgetter(metric), reverse=True)
 
 	#return population sorted by specified metric within each gene
 	return sorted_pop
@@ -208,11 +251,33 @@ def show_best_gene_patterns(
 	criteria	:	Literal['profit_factor','kelsch_ratio','average_return']	=	'profit_factor',
 	fss			:	list	=	None
 ):
+	'''
+	This function shows the basic data of the best gene in a list of genes (population)
+	'''
+
+	#variable to collect string
+	output=""
+
+	#sort population so we can grab the first guy
 	s_p = sort_population(population,criteria)
-	s_p[0].show_patterns(fss)
-	print(f"Profit Factor:	{s_p[0]._last_profit_factor}")
-	print(f"Average Return:	{s_p[0]._lastavg_returns}")
-	print(f"Average KRatio:	{s_p[0]._lastavg_kelsch_ratio}")
+
+	#use the pattern class built in function to show all patterns first
+	output+=f"{s_p[0].show_patterns(fss)}"
+
+	last_profit_factor = round(s_p[0]._last_profit_factor, 5)
+
+	#collect more interpretable data for the return and KRatio
+	#this is done by considering their values being percent differences, and
+	#multiplying it by a very rough real price guesstimate, also assuming this is on SPY
+	avg_return_ticks = round( (s_p[0]._lastavg_returns)*5000 , 2) #5k is super rough estimate on spy price
+	avg_kratio_ticks = round( (s_p[0]._lastavg_kelsch_ratio)*5000 , 2) #5k is super rough estimate on spy price
+
+	#then show basic metrics of the gene across last test
+	output+=f"Profit Factor:	{str(last_profit_factor)}\n"
+	output+=str(f"Average Return:	{str(round(s_p[0]._lastavg_returns,5))}	(~{avg_return_ticks} on /MES == ${round(avg_return_ticks*5, 2)})\n")
+	output+=str(f"Average KRatio:	{s_p[0]._lastavg_kelsch_ratio}	(~{avg_kratio_ticks} on /MES == ${round(avg_kratio_ticks*5, 2)})\n")
+
+	return output
 
 
 def profit_factor(
@@ -242,17 +307,12 @@ def total_return(
 
 
 def average_nonzero(
-	array	:	np.ndarray	=	None,
-	log_normalize:bool		=	True	
+	array	:	np.ndarray	=	None	
 ):
 	#will be traditionally used for averaging returns or ratios
 	filtered = array[array != 0]
 
-	if(log_normalize):
-		avg = np.exp(np.mean(filtered)) if filtered.size > 0 else 0
-		avg = avg-1
-	else:
-		avg = np.mean(filtered) if filtered.size > 0 else 0
+	avg = (np.mean(filtered)) if filtered.size > 0 else 0
 
 	return avg
 
@@ -283,13 +343,13 @@ def simple_generational_stat_output(
 	match(metric):
 		#profit factor
 		case 'profit_factor':
-			metric = "_last_profit_factor"
+			metric = "last_profit_factor"
 		#average return
 		case 'average_return':
-			metric = "_lastavg_returns"
+			metric = "lastavg_returns"
 		#kelsch ratio
 		case 'kelsch_ratio':
-			metric = "_lastavg_kelsch_ratio"
+			metric = "lastavg_kelsch_ratio"
 		#invalid entry, should be impossible anyways
 		case _:
 			raise ValueError(f"FATAL: Tried sorting population with invalid criteria ({metric})")
@@ -304,3 +364,34 @@ def simple_generational_stat_output(
 	top_metric = max(all_metrics)
 
 	return avg_metric, top_metric
+
+
+
+def show_returns(
+	arr_returns	:	np.ndarray	=	None,
+	arr_close	:	np.ndarray	=	None,
+	gene_kwargs	:	any			=	None
+):
+	cum_pl = []
+	total = 0
+
+	base_pl = []
+	base_tot= 0
+
+	print(len(arr_returns))
+	print(len(arr_close))
+
+	for i, r in enumerate(arr_returns):
+		total+=r
+		cum_pl.append(total)
+		base_tot=(arr_close[i]/arr_close[0])-1
+		base_pl.append(base_tot)
+
+	gene_info = show_best_gene_patterns(**gene_kwargs)
+
+	plt.title(f"Percent Return of a Gene:\n(412)diff_ma_5_240_spx[10] > (412)diff_ma_5_240_spx[14]\n(454)diff_hilo_15_15_spx[8] > (464)diff_hilo_30_240_spx[24]\n{gene_info}")
+
+	plt.plot(cum_pl,color='maroon', label='Strategy Return')
+	plt.plot(base_pl, color='black', label='Market Return')
+	plt.legend()
+	plt.show()
