@@ -10,7 +10,7 @@ import numpy as np
 from math import sqrt
 from operator import attrgetter
 import matplotlib.pyplot as plt
-from _0_gene import *
+from _00_gene import *
 import sys
 
 def fitness(

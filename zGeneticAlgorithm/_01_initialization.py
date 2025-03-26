@@ -1,4 +1,4 @@
-import _0_gene as _0
+import _00_gene as _0
 import random
 import numpy as np
 from math import sqrt

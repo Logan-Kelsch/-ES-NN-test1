@@ -5,7 +5,7 @@ import operator
 import random
 from typing import Literal
 import numpy as np
-import _9_utility as util
+import _09_utility as util
 
 class Gene():
 	'''

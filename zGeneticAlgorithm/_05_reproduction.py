@@ -2,7 +2,7 @@
 from typing import Literal
 from itertools import combinations
 import random
-import _0_gene as _0
+import _00_gene as _0
 
 def reproduce(
 	parents	:	list	=	None,
