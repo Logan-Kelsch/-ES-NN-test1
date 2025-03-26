@@ -27,6 +27,29 @@ class Gene():
 
 		return	
 	
+	def copy(
+		self,
+		patterns_only	:	bool	=	True
+	):
+		#make empty gene
+		new = Gene()
+
+		#copy over patterns
+		new._patterns = self._patterns
+
+		#if desired, copy over everything else
+		if(not patterns_only):
+			new._lastarray_presence = self._lastarray_presence
+			new._lastarray_returns = self._lastarray_returns
+			new._lastarray_kelsch_ratio = self._lastarray_kelsch_ratio
+			new._lastavg_returns = self._lastavg_returns
+			new._lastavg_kelsch_ratio = self._lastavg_kelsch_ratio
+			new._last_profit_factor = self._last_profit_factor
+
+		#return duplicate gene
+		return new
+
+
 	def show_patterns(
 		self,
 		fss
@@ -38,6 +61,45 @@ class Gene():
 
 		return patterns
 
+	def custom(
+		self,
+		fss				:	list,
+		acceptable_lag	:	list,
+		pattern_vals	:	list
+	):
+		'''
+		This function takes a list of tuples|lists pattern values and loads them into a gene
+		'''
+
+		#need to ensure that all pattern_vals coming in are of logical structure
+		for i, p in enumerate(pattern_vals):
+			assert len(p) == 5, f"Custom pattern #{i+1} came in with {len(p)} parameters, need exactly 5."
+		
+		self._pattern = []
+
+		#for ease of declaring operator from string
+		op_map = {
+			"lt" : operator.lt,
+			"gt" : operator.gt
+		}
+
+		#for each new pattern, add according to provided data
+		for newp in pattern_vals:
+			
+			self._patterns.append(
+				Pattern(
+					#take on fss collection overhead here to avoid needing to find and add by hand
+					acceptable_vals=util.get_fss_from_value(fss,newp[0]),
+					#pass in lags and all other params
+					acceptable_lags=acceptable_lag,
+					v1=newp[0],
+					l1=newp[1],
+					op=op_map[newp[2]],
+					v2=newp[3],
+					l2=newp[4]
+				)
+			)
+		
 
 	#this funcction takes in arrays and performances to save locally to gene class
 	def update(

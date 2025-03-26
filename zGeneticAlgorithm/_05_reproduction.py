@@ -1,12 +1,15 @@
 
 from typing import Literal
 from itertools import combinations
+from operator import attrgetter
+import numpy as np
 import random
 import _00_gene as _0
 
 def reproduce(
 	parents	:	list	=	None,
-    mode	:	Literal['linear','exponential']	=	'exponential'
+    mode	:	Literal['linear','exponential']	=	'exponential',
+	custom_num_patterns	:	int	=	-1
 ):
     
 	#parent pattern-sets p are brought into this function
@@ -21,8 +24,12 @@ def reproduce(
     #list variable of gene class variables
 	family = []
 
-	#gather number of patterns in each gene
-	num_patterns = len(parents[0]._patterns)
+	#if a custom number of patterns is not used, this value comes in as -1
+	#the number of patterns is then collected from parents data
+	#ex: parents have n patterns therefore children have exactly n patterns.
+	if(custom_num_patterns == -1):
+		#gather number of patterns in each gene
+		num_patterns = len(parents[0]._patterns)
 
 	#gather number of parents brought into function
 	num_parents = len(parents)
@@ -135,3 +142,78 @@ def reproduce(
     
 	#return formed children
 	return family
+
+
+def evolutionary_branch(
+	gene	:	any,
+	branch_size	:	int,
+	proba_num_mutations	:	list	=	[0.20, 0.45, 0.25, 0.10],
+	proba_var_mutations	:	list	=	[0.15, 0.38, 0.04, 0.15, 0.38],
+	include_original	:	bool	=	True
+):
+	'''
+	### info: ###
+	#### This function: 
+	-	takes a SINGLE gene,
+	-	creates an evolutionary branch..
+	-	of num_mutations number of genes
+	### params: ###
+	- gene:
+	-	-	the parent gene coming in
+	- branch-size:
+	-	-	the number of mutated members desired
+	- proba-num-mutations:
+	-	-	probabilities of number of mutations per pattern, starting from 1
+	- proba-var-mutations:
+	-	-	probabilities for each variable being mutated in a given instance
+	- include-original:
+	-	-	boolean for in the original gene is in the returned population
+	### returns: ###
+	a population list of mutated genes (family branch)
+	'''
+
+	#get the number of patterns that are in each gene
+	num_patterns = len(gene._patterns)
+
+	#variable to hold the family branch of genes (population)
+	family_branch = []
+
+	#check if user wants the original in the family branch
+	if(include_original):
+		family_branch.append(gene)
+
+	#for ease of reference, actually I think there is an easier way, too late LOL
+	attr_map = {
+		0	:	"v1",
+		1	:	"l1",
+		2	:	"op",
+		3	:	"v2",
+		4	:	"l2"
+	}
+
+	#for each new gene mutation
+	for i in range(branch_size):
+
+		#make a local duplicate of the gene coming in
+		new = gene.copy()
+
+		#for each pattern of the parent gene
+		for pattern in range(num_patterns):
+
+			#decide how many mutations are made per pattern
+			num_mutations = np.random.choice(list(range(1,5)), p=proba_num_mutations)
+
+			#create a list of variables that will be mutated
+			spec_mutations = np.random.choice(list(range(5)), size=num_mutations, replace=False, p=proba_var_mutations).tolist()
+
+			#for each variable index to mutate
+			for mutate in spec_mutations:
+
+				#call switch for new variable value on the chosen pattern variable to mutate
+				new._patterns[pattern].switch(attr_map[mutate])
+
+		#by here, all patterns have been mutated to desired extent, local gene i is ready.
+		family_branch.append(new)
+
+	#by here, all mutated family members have been added to the family branch
+	return family_branch

@@ -16,8 +16,6 @@ def get_fss_aslists(
 		case _:
 
 			raise NotImplementedError(f"DANG YOU USING A SOURCE FOR FEATURE SUBSET INDICES THAT ISNT IMPLEMENTED.")
-		
-
 
 def load_large_csv(
 	file_name	:	str	=	''
@@ -59,8 +57,23 @@ def drop_all_targets(
 			pass
 	return#do something
 
+def get_fss_from_value(
+	fss	:	list,
+	index:	int
+):
+	'''
+	This function takes a given index and checks a fss <br>
+	index collection and returns the index collection it is from
+	'''
+	
+	iswhere = []
 
+	for fs in fss:
+		if(index in fs):
+			iswhere = fs
+			break
 
+	return iswhere
 
 
 
