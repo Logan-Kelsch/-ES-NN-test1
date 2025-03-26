@@ -104,7 +104,7 @@ def collect_parallel_metrics(
 				print('nan found!')
 			
 			#take difference to show differential between std drawdown and profit
-			kelsch_ratio_local = np.log( (np.exp(returns_local)-1 / np.exp(ki_local)-1)+1)
+			kelsch_ratio_local = ( ((returns_local) - (ki_local)))
 
 			kelsch_ratio.append((kelsch_ratio_local))
 

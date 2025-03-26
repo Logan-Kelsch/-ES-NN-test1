@@ -11,6 +11,7 @@ from math import sqrt
 from operator import attrgetter
 import matplotlib.pyplot as plt
 from _0_gene import *
+import sys
 
 def fitness(
 	arr_close	:	np.ndarray	=	None,
@@ -80,6 +81,10 @@ def fitness(
 		else:
 		
 			i_presence = []
+
+			if(i%25000==0):
+				sys.stdout.write(f"\r{i}")
+				sys.stdout.flush()
 		
 			#check presence of each gene at each sample
 			for g, gene in enumerate(genes):
@@ -365,7 +370,13 @@ def simple_generational_stat_output(
 
 	return avg_metric, top_metric
 
-
+def load_custom_genes(
+	gene_args	:	list
+):	
+	'''
+	takes in a list of dict kwargs and creates sets of genes with them.
+	'''
+	
 
 def show_returns(
 	arr_returns	:	np.ndarray	=	None,
@@ -389,7 +400,7 @@ def show_returns(
 
 	gene_info = show_best_gene_patterns(**gene_kwargs)
 
-	plt.title(f"Percent Return of a Gene:\n(412)diff_ma_5_240_spx[10] > (412)diff_ma_5_240_spx[14]\n(454)diff_hilo_15_15_spx[8] > (464)diff_hilo_30_240_spx[24]\n{gene_info}")
+	plt.title(f"Percent Return of a Gene:\n{gene_info}")
 
 	plt.plot(cum_pl,color='maroon', label='Strategy Return')
 	plt.plot(base_pl, color='black', label='Market Return')
