@@ -209,6 +209,7 @@ def associate(
 			#bring them out of log space
 			local_avg_return = np.exp(local_avg_return)-1
 			local_avg_kelsch_ratio = (local_avg_kelsch_ratio)
+			local_total_return = np.exp(local_total_return)-1
 			#these are now exact average % price differences (KR having some complexities)
 			
 
@@ -232,7 +233,8 @@ def associate(
 
 def sort_population(
 	population	:	list	=	None,
-	criteria	:	Literal['profit_factor','kelsch_ratio','average_return','total_return','consistency']	=	'profit_factor'
+	criteria	:	Literal['profit_factor','kelsch_ratio','average_return','total_return','consistency',\
+							'frequency','total_kelsch_ratio','martin_ratio','mkr']	=	'profit_factor'
 ):
 	'''
 	This function sorts a population based on a specific criteria
@@ -247,17 +249,25 @@ def sort_population(
 	match(criteria):
 		#profit factor
 		case 'profit_factor':
-			metric = "last_profit_factor"
+			metric = "profit_factor"
 		#average return
 		case 'average_return':
-			metric = "lastavg_returns"
+			metric = "avg_returns"
 		#kelsch ratio
 		case 'kelsch_ratio':
-			metric = "lastavg_kelsch_ratio"
+			metric = "avg_kelsch_ratio"
 		case 'total_return':
-			metric = "last_total_return"
+			metric = "total_return"
 		case 'consistency':
-			metric = "last_consistency"
+			metric = "consistency"
+		case 'frequency':
+			metric = "frequency"
+		case "total_kelsch_ratio":
+			metric = "total_kelsch_ratio"
+		case "martin_ratio":
+			metric = "martin_ratio"
+		case "mkr":
+			metric = "mkr"
 		#invalid entry, should be impossible anyways
 		case _:
 			raise ValueError(f"FATAL: Tried sorting population with invalid criteria ({criteria})")
@@ -269,7 +279,8 @@ def sort_population(
 
 def show_best_gene_patterns(
 	population	:	list	=	None,
-	criteria	:	Literal['profit_factor','kelsch_ratio','average_return']	=	'profit_factor',
+	criteria	:	Literal['profit_factor','kelsch_ratio','average_return','total_return','consistency',\
+							'frequency','total_kelsch_ratio','martin_ratio','mkr']	=	'profit_factor',
 	fss			:	list	=	None
 ):
 	'''
@@ -285,18 +296,19 @@ def show_best_gene_patterns(
 	#use the pattern class built in function to show all patterns first
 	output+=f"{s_p[0].show_patterns(fss)}"
 
-	last_profit_factor = round(s_p[0]._last_profit_factor, 5)
+	profit_factor = round(s_p[0]._profit_factor, 5)
 
 	#collect more interpretable data for the return and KRatio
 	#this is done by considering their values being percent differences, and
 	#multiplying it by a very rough real price guesstimate, also assuming this is on SPY
-	avg_return_ticks = round( (s_p[0]._lastavg_returns)*5000 , 2) #5k is super rough estimate on spy price
-	avg_kratio_ticks = round( (s_p[0]._lastavg_kelsch_ratio)*5000 , 2) #5k is super rough estimate on spy price
+	avg_return_ticks = round( (s_p[0]._avg_returns)*5000 , 2) #5k is super rough estimate on spy price
+	avg_kratio_ticks = round( (s_p[0]._avg_kelsch_ratio)*5000 , 2) #5k is super rough estimate on spy price
 
 	#then show basic metrics of the gene across last test
-	output+=f"Profit Factor:	{str(last_profit_factor)}\n"
-	output+=str(f"Average Return:	{str(round(s_p[0]._lastavg_returns,5))}	(~{avg_return_ticks} on /MES == ${round(avg_return_ticks*5, 2)})\n")
-	output+=str(f"Average KRatio:	{s_p[0]._lastavg_kelsch_ratio}	(~{avg_kratio_ticks} on /MES == ${round(avg_kratio_ticks*5, 2)})\n")
+	output+=f"Profit Factor: {str(profit_factor)}\n"
+	output+=str(f"Average Return: {str(round(s_p[0]._avg_returns,5))} (~{avg_return_ticks} on /MES == ${round(avg_return_ticks*5, 2)})\n")
+	output+=str(f"Average KRatio: {round(s_p[0]._avg_kelsch_ratio, 5)}\n")
+	output+=str(f"MKR: {s_p[0]._mkr}")
 
 	return output
 
@@ -343,25 +355,50 @@ def total_returns(
 	return np.sum(array)
 
 
-
-def ulcer_index():
-	#do something
-	#possibly remove this
-	return
-
-
 def martin_ratio(
-	data	:	np.ndarray	=	None,
 	returns	:	np.ndarray	=	None
 ):
-	#do something
-	#possibly remove this
-	return
+	#collect the average trade return
+	ret_nonzero = returns[returns != 0]
+	avg_ret_nonzero = np.mean(ret_nonzero) if ret_nonzero.size > 0 else 0
+
+	#collect the ulcer index of the strategy
+	ulcer_i = ulcer_index(returns)
+
+	#create the martin ratio of the current strategy
+	martin_r = (avg_ret_nonzero / ulcer_i) if ulcer_i > 0 else 0
+
+	#print(f"MR OUT {round(martin_r, 2)}")
+
+	#return said ratio
+	return martin_r
+
+def ulcer_index(
+	returns	:	np.ndarray	=	None
+):
+	#array of developing strategy PL
+	cum_ret = np.cumsum(returns)
+
+	#array of developing strategy max PL
+	cum_max = np.maximum.accumulate(cum_ret)
+
+	#array of developing strategy drawdowns
+	ind_ddn = (cum_max - cum_ret)
+
+	#turn this into nonzeros only
+	ind_ddn_nonzero = ind_ddn[ind_ddn != 0]
+
+	#create a standard drawdown variable
+	std_ddn = np.sqrt(np.mean(ind_ddn_nonzero ** 2)) if ind_ddn_nonzero.size > 0 else 0
+	
+	#return the standard drawdown
+	return std_ddn
+
 
 def consistency(
 	returns	:	np.ndarray	=	None
 ):
-	return 0
+	return NotImplementedError(f"have not implemented this function.")
 
 def frequency(
 	returns	:	np.ndarray	=	None
@@ -382,17 +419,25 @@ def simple_generational_stat_output(
 	match(metric):
 		#profit factor
 		case 'profit_factor':
-			metric = "last_profit_factor"
-		#average return
+			metric = "profit_factor"
+		#average retur
 		case 'average_return':
-			metric = "lastavg_returns"
+			metric = "avg_returns"
 		#kelsch ratio
 		case 'kelsch_ratio':
-			metric = "lastavg_kelsch_ratio"
+			metric = "avg_kelsch_ratio"
 		case 'total_return':
-			metric = "last_total_return"
+			metric = "total_return"
 		case 'consistency':
-			metric = "last_consistency"
+			metric = "consistency"
+		case 'frequency':
+			metric = "frequency"
+		case "total_kelsch_ratio":
+			metric = "total_kelsch_ratio"
+		case "martin_ratio":
+			metric = "martin_ratio"
+		case "mkr":
+			metric = "mkr"
 		#invalid entry, should be impossible anyways
 		case _:
 			raise ValueError(f"FATAL: Tried sorting population with invalid criteria ({metric})")
@@ -438,7 +483,7 @@ def show_returns(
 
 	gene_info = show_best_gene_patterns(**gene_kwargs)
 
-	plt.title(f"Percent Return of a Gene:\n{gene_info}")
+	plt.title(gene_info)
 
 	plt.plot(base_pl, color='black', label='Market Return')
 	plt.plot(cum_pl,color='maroon', label='Strategy Return')
@@ -468,19 +513,19 @@ def filter_population(
 	for g, gene in enumerate(population):
 
 		#check first for insufficient avg return
-		if(gene._lastavg_returns < avg_return):
+		if(gene._avg_returns < avg_return):
 			#print(f"pop avg return {gene._lastavg_returns}")
 			pop_list.append(g)
-		elif(gene._last_total_return < tot_return):
+		elif(gene._total_return < tot_return):
 			#print(f"pop tot return {gene._last_total_return}")
 			pop_list.append(g)
-		elif(gene._last_profit_factor < profit_factor):
+		elif(gene._profit_factor < profit_factor):
 			#print(f"pop prof fact {gene._last_profit_factor}")
 			pop_list.append(g)
-		elif(gene._lastavg_kelsch_ratio < kelsch_ratio):
+		elif(gene._avg_kelsch_ratio < kelsch_ratio):
 			#print(f"pop kratio {gene._lastavg_kelsch_ratio}")
 			pop_list.append(g)
-		elif(gene._last_frequency < entry_frequency):
+		elif(gene._frequency < entry_frequency):
 			#print(f"pop frequency {gene._last_frequency}")
 			pop_list.append(g)
 

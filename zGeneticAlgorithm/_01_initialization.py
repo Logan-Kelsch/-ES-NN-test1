@@ -70,7 +70,7 @@ def collect_parallel_metrics(
 	length = len(arr_close)
 
 	for i in range(length):
-		if(i < lag_allow | i > length-hold_for-1):
+		if((i < lag_allow) | (i > length-hold_for-1)):
 			#want to avoid usage of these values for safe analysis
 			returns.append(0)
 			kelsch_ratio.append(0)

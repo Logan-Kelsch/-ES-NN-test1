@@ -121,17 +121,17 @@ class Gene():
 		This function takes in arrays and performances to save locally to gene class
 		'''
 		
-		self._lastarray_returns = array_returns
-		self._lastarray_kelsch_ratio = array_kelsch_ratio
-		self._lastavg_returns = avg_returns
-		self._lastavg_kelsch_ratio = avg_kelsch_ratio
-		self._last_profit_factor = profit_factor
-		self._last_total_return = total_return
-		self._last_consistency = consistency
-		self._last_frequency = frequency
+		self._array_returns = array_returns
+		self._array_kelsch_ratio = array_kelsch_ratio
+		self._avg_returns = avg_returns
+		self._avg_kelsch_ratio = avg_kelsch_ratio
+		self._profit_factor = profit_factor
+		self._total_return = total_return
+		self._consistency = consistency
+		self._frequency = frequency
 		self._total_kelsch_ratio = total_kelsch_ratio
 		self._martin_ratio = martin_ratio
-		self._last_mkr = mkr
+		self._mkr = mkr
 
 	#patterns - list of classes
 	#index range or index list
@@ -230,10 +230,10 @@ class Gene():
 
 	@property
 	def mkr(self):
-		return self._last_mkr
+		return self._mkr
 	
 	@mkr.setter
-	def last_mkr(self, new:any):
+	def mkr(self, new:any):
 		self._mkr = new
 
 

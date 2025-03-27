@@ -18,7 +18,8 @@ from operator import attrgetter
 
 def collect_parents(
 	sorted_population	:	list	=	None,
-    criteria	:	Literal['profit_factor','kelsch_ratio','average_return','total_return','consistency']	=	'profit_factor',
+	criteria	:	Literal['profit_factor','kelsch_ratio','average_return','total_return','consistency',\
+							'frequency','total_kelsch_ratio','martin_ratio','mkr']	=	'profit_factor',
 	num_parents			:	int		=	2
 ):
 	
@@ -33,24 +34,39 @@ def collect_parents(
 	match(criteria):
 		#profit factor
 		case 'profit_factor':
-			metric = "_last_profit_factor"
+			metric = "profit_factor"
 			metric_min = 1
 		#average return
 		case 'average_return':
-			metric = "_lastavg_returns"
+			metric = "avg_returns"
 			metric_min = 0
 		#kelsch ratio
 		case 'kelsch_ratio':
-			metric = "_lastavg_kelsch_ratio"
+			metric = "avg_kelsch_ratio"
 			metric_min = 0
 
 		case 'total_return':
-			metric = "_last_total_return"
+			metric = "total_return"
 			metric_min = 0
 
 		case 'consistency':
-			metric = "_last_consistency"
+			metric = "consistency"
 			metric_min = 0
+
+		case 'frequency':
+			metric = "frequency"
+			metric_min = 0.001
+		case "total_kelsch_ratio":
+			metric = "total_kelsch_ratio"
+			metric_min = 1
+
+		case "martin_ratio":
+			metric = "martin_ratio"
+			metric_min = 1
+
+		case "mkr":
+			metric = "mkr"
+			metric_min = 1
 		#invalid entry, should be impossible anyways
 		case _:
 			raise ValueError(f"FATAL: Tried sorting population with invalid criteria ({criteria})")
