@@ -11,6 +11,7 @@ from math import sqrt
 from operator import attrgetter
 import matplotlib.pyplot as plt
 from _00_gene import *
+from sklearn.linear_model import LinearRegression as skLR
 import sys
 
 def fitness(
@@ -199,6 +200,8 @@ def associate(
 		local_total_kelsch_ratio = total_return(kelsch_ratio[:, gi])
 		local_martin_ratio = martin_ratio(returns[:, gi])
 		local_mkr = martin_ratio(kelsch_ratio[:, gi])
+		local_r2 = r2(returns[:, gi])
+		local_kr_r2 = r2(kelsch_ratio[:, gi])
 
 		#if this is reached, this means the returns are coming in as the percent
 		#difference for each trade IN LOG SPACE
@@ -225,7 +228,9 @@ def associate(
 			frequency			=	local_frequency,
 			total_kelsch_ratio	=	local_total_kelsch_ratio,
 			martin_ratio		=	local_martin_ratio,
-			mkr					=	local_mkr
+			mkr					=	local_mkr,
+			r2			=	local_r2,
+			kr_r2			=	local_kr_r2
 		)
 
 	#returns updated genes
@@ -234,7 +239,7 @@ def associate(
 def sort_population(
 	population	:	list	=	None,
 	criteria	:	Literal['profit_factor','kelsch_ratio','average_return','total_return','consistency',\
-							'frequency','total_kelsch_ratio','martin_ratio','mkr']	=	'profit_factor'
+							'frequency','total_kelsch_ratio','martin_ratio','mkr','r2','kr_r2']	=	'profit_factor'
 ):
 	'''
 	This function sorts a population based on a specific criteria
@@ -268,6 +273,10 @@ def sort_population(
 			metric = "martin_ratio"
 		case "mkr":
 			metric = "mkr"
+		case "r2":
+			metric = "r2"
+		case "kr_r2":
+			metric = "kr_r2"
 		#invalid entry, should be impossible anyways
 		case _:
 			raise ValueError(f"FATAL: Tried sorting population with invalid criteria ({criteria})")
@@ -280,7 +289,7 @@ def sort_population(
 def show_best_gene_patterns(
 	population	:	list	=	None,
 	criteria	:	Literal['profit_factor','kelsch_ratio','average_return','total_return','consistency',\
-							'frequency','total_kelsch_ratio','martin_ratio','mkr']	=	'profit_factor',
+							'frequency','total_kelsch_ratio','martin_ratio','mkr','r2','kr_r2']	=	'profit_factor',
 	fss			:	list	=	None,
 	hold_for	:	int		=	-1
 ):
@@ -311,7 +320,7 @@ def show_best_gene_patterns(
 	output+=str(f"Average KRatio: {round(s_p[0]._avg_kelsch_ratio, 5)}\n")
 	output+=str(f"MKR: {s_p[0]._mkr}\n")
 	output+=str(f"Frequency: {s_p[0]._frequency}\n")
-	output+=str(f"Hold For: {hold_for}")
+	output+=str(f"Hold For: {hold_for}\n")
 
 	return output
 
@@ -440,6 +449,10 @@ def simple_generational_stat_output(
 			metric = "martin_ratio"
 		case "mkr":
 			metric = "mkr"
+		case "r2":
+			metric = "r2"
+		case "kr_r2":
+			metric = "kr_r2"
 		#invalid entry, should be impossible anyways
 		case _:
 			raise ValueError(f"FATAL: Tried sorting population with invalid criteria ({metric})")
@@ -454,13 +467,6 @@ def simple_generational_stat_output(
 	top_metric = max(all_metrics)
 
 	return avg_metric, top_metric
-
-def load_custom_genes(
-	gene_args	:	list
-):	
-	'''
-	takes in a list of dict kwargs and creates sets of genes with them.
-	'''
 	
 
 def show_returns(
@@ -502,7 +508,9 @@ def filter_population(
 	tot_return	:	float	=	0.0,
 	profit_factor	:	float=	0,
 	kelsch_ratio	:	float=	0,
-	entry_frequency	:	float=	0.00
+	entry_frequency	:	float=	0.00,
+	r2		:	float=	5,
+	kr_r2		:	float=	5
 ):
 	'''
 	This function takes a few different areas and filters the population based on such
@@ -529,6 +537,10 @@ def filter_population(
 			pop_list.append(g)
 		elif(gene._frequency < entry_frequency):
 			#print(f"pop frequency {gene._last_frequency}")
+			pop_list.append(g)
+		elif(gene._r2 < r2):
+			pop_list.append(g)
+		elif(gene._kr_r2 < kr_r2):
 			pop_list.append(g)
 
 	pop_list = sorted(pop_list, reverse=True)
