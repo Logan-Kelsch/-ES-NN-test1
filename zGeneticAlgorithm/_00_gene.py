@@ -63,7 +63,7 @@ class Gene():
 
 	def custom(
 		self,
-		fss				:	list,
+		fss		:	list,
 		acceptable_lag	:	list,
 		pattern_vals	:	list
 	):
@@ -235,6 +235,47 @@ class Gene():
 	@mkr.setter
 	def mkr(self, new:any):
 		self._mkr = new
+
+def load_custom_genes(
+	fss		:	list,
+	lag_allowance	:	int,
+	gene_pattern_sets:	list
+):	
+	'''
+	### info: ###
+ 	This function takes sets of gene parameters and creates a list (population) of usable and mutatable genes.
+  	### params: ###
+   	- fss:
+    	-	-	The features space subsets for feature set reference upon mutation
+     	- lag-allowance:
+      	-	-	The allowed lag for reference upon mutation
+       	- gene-pattern-sets:
+	-	-	A list of lists of tuples,
+ 	-	-	where each list-1 item is per gene,
+  	-	-	each list-2 item is per pattern,
+   	-	-	and each tuple item is one of the 5 pattern parameters.
+    	### returns: ###
+     	This function returns a list of usable and mutate mobile genes (aka a population).
+	'''
+
+	#create a list to hold all formed genes
+	created_genes = []
+	
+	#for each collection of patterns
+	for gene_patterns in gene_pattern_sets:
+
+		#create blank gene
+		new = Gene()
+		#load in standard data with specific gene patterns
+		new.custom(
+			fss,lag_allowance,gene_patterns
+		)
+
+		#add each new gene to the list
+		created_genes.append(new)
+
+	#return the formed population
+	return created_genes
 
 
 class Pattern():
