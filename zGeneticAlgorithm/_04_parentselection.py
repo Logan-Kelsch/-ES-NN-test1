@@ -18,7 +18,7 @@ from operator import attrgetter
 
 def collect_parents(
 	sorted_population	:	list	=	None,
-    criteria	:	Literal['profit_factor','kelsch_ratio','average_return']	=	'profit_factor',
+    criteria	:	Literal['profit_factor','kelsch_ratio','average_return','total_return','consistency']	=	'profit_factor',
 	num_parents			:	int		=	2
 ):
 	
@@ -42,6 +42,14 @@ def collect_parents(
 		#kelsch ratio
 		case 'kelsch_ratio':
 			metric = "_lastavg_kelsch_ratio"
+			metric_min = 0
+
+		case 'total_return':
+			metric = "_last_total_return"
+			metric_min = 0
+
+		case 'consistency':
+			metric = "_last_consistency"
 			metric_min = 0
 		#invalid entry, should be impossible anyways
 		case _:

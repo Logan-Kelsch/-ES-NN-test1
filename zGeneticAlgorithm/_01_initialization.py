@@ -99,12 +99,12 @@ def collect_parallel_metrics(
 			else:
 				ki_local = sqrt(ki_local/hold_for)
 			
-			#this should NEVER come up
-			if(ki_local == np.nan):
-				print('nan found!')
-			
+			#this comes up when there is zero closes below the entry close
+			if(ki_local == 0):
+				kelsch_ratio_local = 10
 			#take difference to show differential between std drawdown and profit
-			kelsch_ratio_local = ( ((returns_local) - (ki_local)))
+			else:
+				kelsch_ratio_local = ((returns_local) / (ki_local))
 
 			kelsch_ratio.append((kelsch_ratio_local))
 

@@ -4,6 +4,7 @@ from itertools import combinations
 from operator import attrgetter
 import numpy as np
 import random
+import copy
 import _00_gene as _0
 
 def reproduce(
@@ -148,7 +149,7 @@ def evolutionary_branch(
 	gene	:	any,
 	branch_size	:	int,
 	proba_num_mutations	:	list	=	[0.20, 0.45, 0.25, 0.10],
-	proba_var_mutations	:	list	=	[0.15, 0.38, 0.04, 0.15, 0.38],
+	proba_var_mutations	:	list	=	[0.13, 0.35, 0.04, 0.13, 0.35],
 	include_original	:	bool	=	True
 ):
 	'''
@@ -195,7 +196,7 @@ def evolutionary_branch(
 	for i in range(branch_size):
 
 		#make a local duplicate of the gene coming in
-		new = gene.copy()
+		new = copy.deepcopy(gene)
 
 		#for each pattern of the parent gene
 		for pattern in range(num_patterns):

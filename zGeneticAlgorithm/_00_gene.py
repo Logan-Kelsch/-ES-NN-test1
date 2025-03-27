@@ -17,13 +17,19 @@ class Gene():
 		
 		self._patterns = patterns
 
-		self._lastarray_presence = None
-		self._lastarray_returns = None
-		self._lastarray_kelsch_ratio = None
+		self._array_presence = None
+		self._array_returns = None
+		self._array_kelsch_ratio = None
 
-		self._lastavg_returns = None
-		self._lastavg_kelsch_ratio = None
-		self._last_profit_factor = None
+		self._avg_returns = None
+		self._avg_kelsch_ratio = None
+		self._profit_factor = None
+		self._total_returns = None
+		self._consistency = None
+		self._frequency = None
+		self._total_kelsch_ratio = None
+		self._martin_ratio = None
+		self._mkr = None
 
 		return	
 	
@@ -31,22 +37,16 @@ class Gene():
 		self,
 		patterns_only	:	bool	=	True
 	):
-		#make empty gene
 		new = Gene()
-
-		#copy over patterns
 		new._patterns = self._patterns
-
-		#if desired, copy over everything else
 		if(not patterns_only):
-			new._lastarray_presence = self._lastarray_presence
-			new._lastarray_returns = self._lastarray_returns
-			new._lastarray_kelsch_ratio = self._lastarray_kelsch_ratio
-			new._lastavg_returns = self._lastavg_returns
-			new._lastavg_kelsch_ratio = self._lastavg_kelsch_ratio
-			new._last_profit_factor = self._last_profit_factor
-
-		#return duplicate gene
+			#new._lastarray_presence = self._lastarray_presence
+			#new._lastarray_returns = self._lastarray_returns
+			#new._lastarray_kelsch_ratio = self._lastarray_kelsch_ratio
+			#new._lastavg_returns = self._lastavg_returns
+			#new._lastavg_kelsch_ratio = self._lastavg_kelsch_ratio
+			#new._last_profit_factor = self._last_profit_factor
+			raise NotImplementedError("gene class namechange needed")
 		return new
 
 
@@ -91,7 +91,7 @@ class Gene():
 					#take on fss collection overhead here to avoid needing to find and add by hand
 					acceptable_vals=util.get_fss_from_value(fss,newp[0]),
 					#pass in lags and all other params
-					acceptable_lags=acceptable_lag,
+					acceptable_lags=list(range(acceptable_lag+1)),
 					v1=newp[0],
 					l1=newp[1],
 					op=op_map[newp[2]],
@@ -104,32 +104,34 @@ class Gene():
 	#this funcction takes in arrays and performances to save locally to gene class
 	def update(
 		self,
-		lastarray_returns	:	any	=	None,
-		lastarray_kelsch_ratio:	any	=	None,
-		lastavg_returns		:	any	=	None,
-		lastavg_kelsch_ratio:	any	=	None,
-		last_profit_factor	:	any	=	None
+		array_returns	:	any	=	None,
+		array_kelsch_ratio:	any	=	None,
+		avg_returns		:	any	=	None,
+		avg_kelsch_ratio:	any	=	None,
+		profit_factor	:	any	=	None,
+		total_return	:	any	=	None,
+		consistency	:	any	=	None,
+		frequency		:	any =	None,
+		total_kelsch_ratio	:	any	=	None,
+		martin_ratio	:	any	=	None,
+		mkr			:	any =	None
 	):
 		'''
 		### info:
 		This function takes in arrays and performances to save locally to gene class
 		'''
 		
-		#if(lastarray_returns != None):
-		self._lastarray_returns = lastarray_returns
-		
-		#if(lastarray_kelsch_ratio != None):
-		self._lastarray_kelsch_ratio = lastarray_kelsch_ratio
-		
-		#if(lastavg_returns != None):
-		self._lastavg_returns = lastavg_returns
-		
-		#if(lastavg_kelsch_ratio != None):
-		self._lastavg_kelsch_ratio = lastavg_kelsch_ratio
-
-		#if(last_profit_factor != None):
-		self._last_profit_factor = last_profit_factor
-
+		self._lastarray_returns = array_returns
+		self._lastarray_kelsch_ratio = array_kelsch_ratio
+		self._lastavg_returns = avg_returns
+		self._lastavg_kelsch_ratio = avg_kelsch_ratio
+		self._last_profit_factor = profit_factor
+		self._last_total_return = total_return
+		self._last_consistency = consistency
+		self._last_frequency = frequency
+		self._total_kelsch_ratio = total_kelsch_ratio
+		self._martin_ratio = martin_ratio
+		self._last_mkr = mkr
 
 	#patterns - list of classes
 	#index range or index list
@@ -145,46 +147,94 @@ class Gene():
 	#arrays for holding onto returns and ratio values for evaluation
 
 	@property
-	def lastarray_returns(self):
-		return self._lastarray_returns
+	def array_returns(self):
+		return self._array_returns
 	
-	@lastarray_returns.setter
-	def lastarray_returns(self, new:any):
-		self._lastarray_returns = new
+	@array_returns.setter
+	def array_returns(self, new:any):
+		self._array_returns = new
 
 	@property
-	def lastarray_kelsch_ratio(self):
-		return self._lastarray_kelsch_ratio
+	def array_kelsch_ratio(self):
+		return self._array_kelsch_ratio
 	
-	@lastarray_kelsch_ratio.setter
-	def lastarray_kelsch_ratio(self, new:any):
-		self._lastarray_kelsch_ratio = new
+	@array_kelsch_ratio.setter
+	def array_kelsch_ratio(self, new:any):
+		self._array_kelsch_ratio = new
 
 	#individual values used for gene evaluation
 
 	@property
-	def lastavg_returns(self):
-		return self._lastavg_returns
+	def avg_returns(self):
+		return self._avg_returns
 	
-	@lastavg_returns.setter
-	def lastavg_returns(self, new:any):
-		self._lastavg_returns = new
+	@avg_returns.setter
+	def avg_returns(self, new:any):
+		self._avg_returns = new
 
 	@property
-	def lastavg_kelsch_ratio(self):
-		return self._lastavg_kelsch_ratio
+	def avg_kelsch_ratio(self):
+		return self._avg_kelsch_ratio
 	
-	@lastavg_kelsch_ratio.setter
-	def lastavg_kelsch_ratio(self, new:any):
-		self._lastavg_kelsch_ratio = new
+	@avg_kelsch_ratio.setter
+	def avg_kelsch_ratio(self, new:any):
+		self._avg_kelsch_ratio = new
 
 	@property
-	def last_profit_factor(self):
-		return self._last_profit_factor
+	def profit_factor(self):
+		return self._profit_factor
 	
-	@last_profit_factor.setter
-	def last_profit_factor(self, new:any):
-		self._last_profit_factor = new
+	@profit_factor.setter
+	def profit_factor(self, new:any):
+		self._profit_factor = new
+
+	@property
+	def total_return(self):
+		return self._total_return
+	
+	@total_return.setter
+	def total_return(self, new:any):
+		self._total_return = new
+
+	@property
+	def consistency(self):
+		return self._consistency
+	
+	@consistency.setter
+	def consistency(self, new:any):
+		self._consistency = new
+
+	@property
+	def frequency(self):
+		return self._frequency
+	
+	@frequency.setter
+	def frequency(self, new:any):
+		self._frequency = new
+
+	@property
+	def total_kelsch_ratio(self):
+		return self._total_kelsch_ratio
+	
+	@total_kelsch_ratio.setter
+	def total_kelsch_ratio(self, new:any):
+		self._total_kelsch_ratio = new
+
+	@property
+	def martin_ratio(self):
+		return self._martin_ratio
+	
+	@martin_ratio.setter
+	def martin_ratio(self, new:any):
+		self._martin_ratio = new
+
+	@property
+	def mkr(self):
+		return self._last_mkr
+	
+	@mkr.setter
+	def last_mkr(self, new:any):
+		self._mkr = new
 
 
 class Pattern():

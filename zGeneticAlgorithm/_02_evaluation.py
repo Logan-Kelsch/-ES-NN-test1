@@ -193,6 +193,12 @@ def associate(
 		local_profit_factor = profit_factor(returns[:, gi])
 		local_avg_return = average_nonzero(returns[:, gi])
 		local_avg_kelsch_ratio = average_nonzero(kelsch_ratio[:, gi])
+		local_total_return = total_return(returns[:, gi])
+		local_consistency = consistency(returns[:, gi])
+		local_frequency = frequency(returns[:, gi])
+		local_total_kelsch_ratio = total_return(kelsch_ratio[:, gi])
+		local_martin_ratio = martin_ratio(returns[:, gi])
+		local_mkr = martin_ratio(kelsch_ratio[:, gi])
 
 		#if this is reached, this means the returns are coming in as the percent
 		#difference for each trade IN LOG SPACE
@@ -202,17 +208,23 @@ def associate(
 			
 			#bring them out of log space
 			local_avg_return = np.exp(local_avg_return)-1
-			local_avg_kelsch_ratio = np.exp(local_avg_kelsch_ratio)-1
+			local_avg_kelsch_ratio = (local_avg_kelsch_ratio)
 			#these are now exact average % price differences (KR having some complexities)
 			
 
 		#update data within the gene for local storage for quick evaluation or recall
 		gene.update(
-			lastarray_returns		=	returns[:, gi],
-			#lastarray_kelsch_ratio	=	kelsch_ratio[:, gi],
-			lastavg_returns			=	local_avg_return,
-			lastavg_kelsch_ratio	=	local_avg_kelsch_ratio,
-			last_profit_factor		=	local_profit_factor
+			array_returns		=	returns[:, gi],
+			#array_kelsch_ratio	=	kelsch_ratio[:, gi],
+			avg_returns			=	local_avg_return,
+			avg_kelsch_ratio	=	local_avg_kelsch_ratio,
+			profit_factor		=	local_profit_factor,
+			total_return		=	local_total_return,
+			consistency			=	local_consistency,
+			frequency			=	local_frequency,
+			total_kelsch_ratio	=	local_total_kelsch_ratio,
+			martin_ratio		=	local_martin_ratio,
+			mkr					=	local_mkr
 		)
 
 	#returns updated genes
@@ -220,7 +232,7 @@ def associate(
 
 def sort_population(
 	population	:	list	=	None,
-	criteria	:	Literal['profit_factor','kelsch_ratio','average_return']	=	'profit_factor'
+	criteria	:	Literal['profit_factor','kelsch_ratio','average_return','total_return','consistency']	=	'profit_factor'
 ):
 	'''
 	This function sorts a population based on a specific criteria
@@ -242,6 +254,10 @@ def sort_population(
 		#kelsch ratio
 		case 'kelsch_ratio':
 			metric = "lastavg_kelsch_ratio"
+		case 'total_return':
+			metric = "last_total_return"
+		case 'consistency':
+			metric = "last_consistency"
 		#invalid entry, should be impossible anyways
 		case _:
 			raise ValueError(f"FATAL: Tried sorting population with invalid criteria ({criteria})")
@@ -321,6 +337,11 @@ def average_nonzero(
 
 	return avg
 
+def total_returns(
+	array	:	np.ndarray	=	None
+):
+	return np.sum(array)
+
 
 
 def ulcer_index():
@@ -336,6 +357,19 @@ def martin_ratio(
 	#do something
 	#possibly remove this
 	return
+
+def consistency(
+	returns	:	np.ndarray	=	None
+):
+	return 0
+
+def frequency(
+	returns	:	np.ndarray	=	None
+):
+	'''
+	This doesnt happen to account for trades that were exactly zero but thats just how it will have to be
+	'''
+	return np.sum(returns == 0)
 
 
 def simple_generational_stat_output(
@@ -355,6 +389,10 @@ def simple_generational_stat_output(
 		#kelsch ratio
 		case 'kelsch_ratio':
 			metric = "lastavg_kelsch_ratio"
+		case 'total_return':
+			metric = "last_total_return"
+		case 'consistency':
+			metric = "last_consistency"
 		#invalid entry, should be impossible anyways
 		case _:
 			raise ValueError(f"FATAL: Tried sorting population with invalid criteria ({metric})")
@@ -402,7 +440,53 @@ def show_returns(
 
 	plt.title(f"Percent Return of a Gene:\n{gene_info}")
 
-	plt.plot(cum_pl,color='maroon', label='Strategy Return')
 	plt.plot(base_pl, color='black', label='Market Return')
+	plt.plot(cum_pl,color='maroon', label='Strategy Return')
+
 	plt.legend()
 	plt.show()
+
+	plt.plot(cum_pl,color='maroon')
+	plt.show()
+
+def filter_population(
+	population	:	list	=	[],
+	avg_return	:	float	=	-100,
+	tot_return	:	float	=	0.0,
+	profit_factor	:	float=	0,
+	kelsch_ratio	:	float=	0,
+	entry_frequency	:	float=	0.00
+):
+	'''
+	This function takes a few different areas and filters the population based on such
+	'''
+
+	filtered_population = population
+
+	pop_list = []
+
+	for g, gene in enumerate(population):
+
+		#check first for insufficient avg return
+		if(gene._lastavg_returns < avg_return):
+			#print(f"pop avg return {gene._lastavg_returns}")
+			pop_list.append(g)
+		elif(gene._last_total_return < tot_return):
+			#print(f"pop tot return {gene._last_total_return}")
+			pop_list.append(g)
+		elif(gene._last_profit_factor < profit_factor):
+			#print(f"pop prof fact {gene._last_profit_factor}")
+			pop_list.append(g)
+		elif(gene._lastavg_kelsch_ratio < kelsch_ratio):
+			#print(f"pop kratio {gene._lastavg_kelsch_ratio}")
+			pop_list.append(g)
+		elif(gene._last_frequency < entry_frequency):
+			#print(f"pop frequency {gene._last_frequency}")
+			pop_list.append(g)
+
+	pop_list = sorted(pop_list, reverse=True)
+
+	for i in pop_list:
+		filtered_population.pop(i)
+
+	return filtered_population
