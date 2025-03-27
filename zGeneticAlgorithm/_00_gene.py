@@ -30,6 +30,8 @@ class Gene():
 		self._total_kelsch_ratio = None
 		self._martin_ratio = None
 		self._mkr = None
+		self._r2 = None
+		self._r2_mkr = None
 
 		return	
 	
@@ -114,7 +116,9 @@ class Gene():
 		frequency		:	any =	None,
 		total_kelsch_ratio	:	any	=	None,
 		martin_ratio	:	any	=	None,
-		mkr			:	any =	None
+		mkr			:	any =	None,
+		r2		:	any	=	None,
+		r2_mkr		:	any	=	None
 	):
 		'''
 		### info:
@@ -132,6 +136,8 @@ class Gene():
 		self._total_kelsch_ratio = total_kelsch_ratio
 		self._martin_ratio = martin_ratio
 		self._mkr = mkr
+		self._r2 = r2
+		self._r2_mkr = r2_mkr
 
 	#patterns - list of classes
 	#index range or index list
@@ -235,6 +241,22 @@ class Gene():
 	@mkr.setter
 	def mkr(self, new:any):
 		self._mkr = new
+
+	@property
+	def r2(self):
+		return self._r2
+
+	@r2.setter
+	def r2(self, new:any):
+		self._r2 = new
+
+	@property
+	def r2_mkr(self):
+		return self._r2_mkr
+
+	@r2_mkr.setter
+	def r2_mkr(self, new:any):
+		self._r2_mkr = new
 
 def load_custom_genes(
 	fss		:	list,
