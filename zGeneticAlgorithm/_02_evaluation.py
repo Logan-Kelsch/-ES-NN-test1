@@ -207,9 +207,9 @@ def associate(
 		if(log_normalize):
 			
 			#bring them out of log space
-			local_avg_return = np.exp(local_avg_return)-1
+			local_avg_return = (local_avg_return)
 			local_avg_kelsch_ratio = (local_avg_kelsch_ratio)
-			local_total_return = np.exp(local_total_return)-1
+			local_total_return = (local_total_return)
 			#these are now exact average % price differences (KR having some complexities)
 			
 
@@ -281,7 +281,8 @@ def show_best_gene_patterns(
 	population	:	list	=	None,
 	criteria	:	Literal['profit_factor','kelsch_ratio','average_return','total_return','consistency',\
 							'frequency','total_kelsch_ratio','martin_ratio','mkr']	=	'profit_factor',
-	fss			:	list	=	None
+	fss			:	list	=	None,
+	hold_for	:	int		=	-1
 ):
 	'''
 	This function shows the basic data of the best gene in a list of genes (population)
@@ -308,7 +309,9 @@ def show_best_gene_patterns(
 	output+=f"Profit Factor: {str(profit_factor)}\n"
 	output+=str(f"Average Return: {str(round(s_p[0]._avg_returns,5))} (~{avg_return_ticks} on /MES == ${round(avg_return_ticks*5, 2)})\n")
 	output+=str(f"Average KRatio: {round(s_p[0]._avg_kelsch_ratio, 5)}\n")
-	output+=str(f"MKR: {s_p[0]._mkr}")
+	output+=str(f"MKR: {s_p[0]._mkr}\n")
+	output+=str(f"Frequency: {s_p[0]._frequency}\n")
+	output+=str(f"Hold For: {hold_for}")
 
 	return output
 
@@ -358,15 +361,17 @@ def total_returns(
 def martin_ratio(
 	returns	:	np.ndarray	=	None
 ):
-	#collect the average trade return
+	#get nonzero returns
 	ret_nonzero = returns[returns != 0]
-	avg_ret_nonzero = np.mean(ret_nonzero) if ret_nonzero.size > 0 else 0
+
+	#collect the average trade return
+	avg_ret = np.mean(ret_nonzero) if returns.size > 0 else 0
 
 	#collect the ulcer index of the strategy
 	ulcer_i = ulcer_index(returns)
 
 	#create the martin ratio of the current strategy
-	martin_r = (avg_ret_nonzero / ulcer_i) if ulcer_i > 0 else 0
+	martin_r = (avg_ret / ulcer_i) if ulcer_i > 0 else 0
 
 	#print(f"MR OUT {round(martin_r, 2)}")
 
@@ -385,11 +390,8 @@ def ulcer_index(
 	#array of developing strategy drawdowns
 	ind_ddn = (cum_max - cum_ret)
 
-	#turn this into nonzeros only
-	ind_ddn_nonzero = ind_ddn[ind_ddn != 0]
-
 	#create a standard drawdown variable
-	std_ddn = np.sqrt(np.mean(ind_ddn_nonzero ** 2)) if ind_ddn_nonzero.size > 0 else 0
+	std_ddn = np.sqrt(np.mean(ind_ddn ** 2)) if ind_ddn.size > 0 else 0
 	
 	#return the standard drawdown
 	return std_ddn
@@ -406,7 +408,7 @@ def frequency(
 	'''
 	This doesnt happen to account for trades that were exactly zero but thats just how it will have to be
 	'''
-	return np.sum(returns == 0)
+	return (np.sum(returns != 0)/returns.size)
 
 
 def simple_generational_stat_output(

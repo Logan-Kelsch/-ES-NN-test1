@@ -62,11 +62,11 @@ def collect_parents(
 
 		case "martin_ratio":
 			metric = "martin_ratio"
-			metric_min = 1
+			metric_min = 0
 
 		case "mkr":
 			metric = "mkr"
-			metric_min = 1
+			metric_min = 0
 		#invalid entry, should be impossible anyways
 		case _:
 			raise ValueError(f"FATAL: Tried sorting population with invalid criteria ({criteria})")

@@ -124,13 +124,13 @@ def reproduce(
 			#shuffle all attributes
 			random.shuffle(pattern_pool)
 
-			print(f'pattern pool len = {len(pattern_pool)}')
+			#print(f'pattern pool len = {len(pattern_pool)}')
 
 			#generate all possibly combinations of these patterns. thanks to
 			#a wonderful library I don't have to code this myself.
 			#NOTE WITHOUT REPLACEMENT !! END#NOTE
 			all_pattern_combos = list(combinations(pattern_pool, num_patterns))
-			print(f'combo len = {len(all_pattern_combos)}')
+			#print(f'combo len = {len(all_pattern_combos)}')
 
 			#now create a fresh gene of all combinations and add them to the family list
 			for pattern in all_pattern_combos:

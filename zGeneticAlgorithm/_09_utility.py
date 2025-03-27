@@ -139,10 +139,9 @@ def fn_all_subsets(real_prices: bool = False, indices:int=-1, keep_time:bool=Tru
 	# will append each individual feature/f_set here
 	if(real_prices):
 		if(indices == 0):
-			if(keep_time):
-				fnsub.append(['high','low','close','time','volume','ToD','DoW','barH_spx','wickH_spx','diff_wick_spx'])
-			else:
-				fnsub.append(['high','low','close','volume','ToD','DoW','barH_spx','wickH_spx','diff_wick_spx'])
+			fnsub.append(['high','low','close'])
+			fnsub.append(['volume'])
+			fnsub.append(['barH_spx','wickH_spx','diff_wick_spx'])
 		'''elif(indices == 1):
 			if(keep_time):
 				fnsub.append(['high.1','low.1','close.1','time','volume.1','barH_ndx','wickH_ndx','diff_wick_ndx'])
@@ -167,6 +166,7 @@ def fn_all_subsets(real_prices: bool = False, indices:int=-1, keep_time:bool=Tru
 				fnsub.append(['high','low','close','volume','ToD','DoW','barH_spx','wickH_spx','diff_wick_spx'])
 				fnsub.append(['high.1','low.1','close.1','volume.1','barH_ndx','wickH_ndx','diff_wick_ndx'])'''
 	else:
+		raise NotImplementedError(f"why are we removing real prices brah?")
 		if(indices == 0):
 			if(keep_time):
 				fnsub.append(['time','volume','ToD','DoW','barH_spx','wickH_spx','diff_wick_spx'])
