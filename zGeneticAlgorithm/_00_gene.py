@@ -137,7 +137,7 @@ class Gene():
 		self._martin_ratio = martin_ratio
 		self._mkr = mkr
 		self._r2 = r2
-		self._r2_kr = r2_mkr
+		self._r2_kr = r2_kr
 
 	#patterns - list of classes
 	#index range or index list

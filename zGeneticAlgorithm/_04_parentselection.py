@@ -19,7 +19,7 @@ from operator import attrgetter
 def collect_parents(
 	sorted_population	:	list	=	None,
 	criteria	:	Literal['profit_factor','kelsch_ratio','average_return','total_return','consistency',\
-							'frequency','total_kelsch_ratio','martin_ratio','mkr']	=	'profit_factor',
+							'frequency','total_kelsch_ratio','martin_ratio','mkr','r2','r2_kr']	=	'profit_factor',
 	num_parents			:	int		=	2
 ):
 	
@@ -67,6 +67,9 @@ def collect_parents(
 		case "mkr":
 			metric = "mkr"
 			metric_min = 0
+
+		case "r2":
+			metric = "r2"
 		#invalid entry, should be impossible anyways
 		case _:
 			raise ValueError(f"FATAL: Tried sorting population with invalid criteria ({criteria})")
