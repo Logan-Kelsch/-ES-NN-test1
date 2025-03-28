@@ -70,6 +70,12 @@ def collect_parents(
 
 		case "r2":
 			metric = "r2"
+			metric_min = 0
+
+		case "kr_r2":
+			metric = "kr_r2"
+			metric_min = 0
+			
 		#invalid entry, should be impossible anyways
 		case _:
 			raise ValueError(f"FATAL: Tried sorting population with invalid criteria ({criteria})")

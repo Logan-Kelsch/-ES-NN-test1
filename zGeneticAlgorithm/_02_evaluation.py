@@ -11,7 +11,8 @@ from math import sqrt
 from operator import attrgetter
 import matplotlib.pyplot as plt
 from _00_gene import *
-from sklearn.linear_model import LinearRegression as skLR
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import r2_score
 import sys
 
 def fitness(
@@ -195,7 +196,6 @@ def associate(
 		local_avg_return = average_nonzero(returns[:, gi])
 		local_avg_kelsch_ratio = average_nonzero(kelsch_ratio[:, gi])
 		local_total_return = total_return(returns[:, gi])
-		local_consistency = consistency(returns[:, gi])
 		local_frequency = frequency(returns[:, gi])
 		local_total_kelsch_ratio = total_return(kelsch_ratio[:, gi])
 		local_martin_ratio = martin_ratio(returns[:, gi])
@@ -224,7 +224,6 @@ def associate(
 			avg_kelsch_ratio	=	local_avg_kelsch_ratio,
 			profit_factor		=	local_profit_factor,
 			total_return		=	local_total_return,
-			consistency			=	local_consistency,
 			frequency			=	local_frequency,
 			total_kelsch_ratio	=	local_total_kelsch_ratio,
 			martin_ratio		=	local_martin_ratio,
@@ -406,11 +405,6 @@ def ulcer_index(
 	return std_ddn
 
 
-def consistency(
-	returns	:	np.ndarray	=	None
-):
-	return NotImplementedError(f"have not implemented this function.")
-
 def frequency(
 	returns	:	np.ndarray	=	None
 ):
@@ -418,6 +412,29 @@ def frequency(
 	This doesnt happen to account for trades that were exactly zero but thats just how it will have to be
 	'''
 	return (np.sum(returns != 0)/returns.size)
+
+def r2(
+	returns	:	np.ndarray	=	None
+):
+	
+	#first collect cumulative value of array
+	cum_ret = np.cumsum(returns)
+
+	#collect a time array for linear model building
+	time = np.arange(len(cum_ret)).reshape(-1,1)
+
+	#fit a linear model to the dynamics of the return
+	model = LinearRegression()
+	model.fit(time, cum_ret)
+	
+	#create a trend line of returns over time
+	trend_line = model.predict(time)
+
+	#using pearsons r2 instead of regular to be less affected by scaling
+	#NOTE definitely need to test this out 3/28/25 possibly wrong spot in conf_matx
+	pr2 = np.corrcoef(cum_ret, trend_line)[0, 1] ** 2
+
+	return pr2
 
 
 def simple_generational_stat_output(
@@ -502,6 +519,7 @@ def show_returns(
 	plt.plot(cum_pl,color='maroon')
 	plt.show()
 
+
 def filter_population(
 	population	:	list	=	[],
 	avg_return	:	float	=	-100,
@@ -549,3 +567,14 @@ def filter_population(
 		filtered_population.pop(i)
 
 	return filtered_population
+
+def serial_correlation(
+	returns	:	np.ndarray	=	None
+):
+	'''
+	This function will take in a returns array		<br>
+	And will return a conf_matx or set of bins of mean next trade return	<br>
+	based on number of trades considered (dim1)	and		<br>
+	based on avg value of those trades (dim2)
+	'''
+	return
