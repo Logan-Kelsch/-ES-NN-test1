@@ -10,7 +10,9 @@ import numpy as np
 from math import sqrt
 from operator import attrgetter
 import matplotlib.pyplot as plt
-from _00_gene import *
+import _00_gene as _0
+from typing import Literal
+import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score
 import sys
@@ -201,7 +203,7 @@ def associate(
 		local_martin_ratio = martin_ratio(returns[:, gi])
 		local_mkr = martin_ratio(kelsch_ratio[:, gi])
 		local_r2 = r2(returns[:, gi])
-		local_kr_r2 = r2(kelsch_ratio[:, gi])
+		local_r2_kr = r2(kelsch_ratio[:, gi])
 
 		#if this is reached, this means the returns are coming in as the percent
 		#difference for each trade IN LOG SPACE
@@ -229,7 +231,7 @@ def associate(
 			martin_ratio		=	local_martin_ratio,
 			mkr					=	local_mkr,
 			r2			=	local_r2,
-			kr_r2			=	local_kr_r2
+			r2_kr			=	local_r2_kr
 		)
 
 	#returns updated genes
@@ -578,3 +580,63 @@ def serial_correlation(
 	based on avg value of those trades (dim2)
 	'''
 	return
+
+def show_combined_performance(
+	population	:	list,
+	arr_close	:	np.ndarray,
+	arr_low		:	np.ndarray,
+	arr_returns	:	np.ndarray,
+	arr_kratio	:	np.ndarray,
+	data		:	np.ndarray,
+	hold_for	:	int,
+	lag_allow	:	int,
+	specific_data:	str,#'form_519',
+	log_normalize:	bool,
+	criteria	:	str,
+	fss			:	list
+):
+	
+	returns, kelsch_ratio = fitness(
+		arr_close=arr_close,
+		arr_low=arr_low,
+		arr_returns=arr_returns,
+		arr_kratio=arr_kratio,
+		data=data,
+		genes= population,
+		hold_for=hold_for,
+		lag_allow=lag_allow,
+		specific_data=specific_data,
+		log_normalize=log_normalize
+	)
+
+
+
+	col_ret = returns.sum(axis=1, keepdims=True)
+	#col_kr = kelsch_ratio.sum(axis=1, keepdims=True)
+
+
+	new = _0.Gene(patterns=[])
+
+	unsorted = associate(
+		genes=[new],
+		returns=col_ret,
+		kelsch_ratio=kelsch_ratio,
+		log_normalize=log_normalize
+	)
+
+
+
+	unsorted[0].show_patterns(fss=fss)
+
+	total=0
+
+	base_pl = []
+	cum_pl = []
+
+	show_returns(
+		unsorted[0]._array_returns,
+		arr_close=arr_close,
+		gene_kwargs={"population":unsorted,"criteria":criteria,"fss":fss}
+	)
+
+	return unsorted[0]

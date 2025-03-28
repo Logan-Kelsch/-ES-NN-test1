@@ -77,7 +77,7 @@ class Gene():
 		for i, p in enumerate(pattern_vals):
 			assert len(p) == 5, f"Custom pattern #{i+1} came in with {len(p)} parameters, need exactly 5."
 		
-		self._pattern = []
+		self._patterns = []
 
 		#for ease of declaring operator from string
 		op_map = {
@@ -287,6 +287,8 @@ def load_custom_genes(
 	for gene_patterns in gene_pattern_sets:
 
 		#create blank gene
+		new = Gene()
+		del new
 		new = Gene()
 		#load in standard data with specific gene patterns
 		new.custom(
