@@ -332,7 +332,8 @@ class Pattern():
 		l1  :   int =   None,
 		op  :   operator	=   None,
 		v2  :   int =   None,
-		l2  :   int =   None
+		l2  :   int =   None,
+		as_blank	:	bool	=	False,
 	):
 		assert acceptable_lags != None, \
 			f"A pattern was created, but {acceptable_lags} acceptable lags were entered."
@@ -357,7 +358,8 @@ class Pattern():
 		#if any v1,v2,l1,l1,op are None, this means these are initial pattern creations, therefore..
 		missing = self.has_missing()
 		for miss in missing:
-			self.switch(miss)
+			if not (as_blank):
+				self.switch(miss)
 		
 		return
 	

@@ -239,12 +239,21 @@ def additive_branch(
 
 		new = copy.deepcopy(gene)
 
-		ptrn = _0.Pattern()
-		ptrn.random(mutation=True,fss=fss)
+		ptrn = _0.Pattern(
+			acceptable_lags=new._patterns[0]._acceptable_lags,
+			acceptable_vals=random.choice(fss))
+		
+		
+		#ptrn.random(mutation=True,fss=fss)
+
+		#print(ptrn.show(fss=fss))
 
 		new._patterns.append(ptrn)
 
+
 		family_branch.append(new)
+
+	print(f"Expanded gene to {len(family_branch)} genes.")
 
 	return family_branch
 
