@@ -138,3 +138,9 @@ def shuffle_population(
 ):
 	random.shuffle(population)
 	return population
+
+def make_population_batches(
+	population	:	list,
+	batch_size	:	int	=	100
+):
+	return [population[i:i + batch_size] for i in range(0, len(population), batch_size)]

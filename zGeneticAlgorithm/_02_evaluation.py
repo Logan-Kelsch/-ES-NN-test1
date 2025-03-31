@@ -18,8 +18,6 @@ from sklearn.metrics import r2_score
 import sys
 
 def fitness(
-	arr_close	:	np.ndarray	=	None,
-	arr_low		:	np.ndarray	=	None,
 	arr_returns	:	np.ndarray	=	None,
 	arr_kratio	:	np.ndarray	=	None,
 	data		:	np.ndarray	=	None,
@@ -28,8 +26,6 @@ def fitness(
 	#method		:	function	=	None,
 	hold_for	:	int			=	-1,
 	lag_allow	:	int			=	-1,
-	specific_data	:	str		=	None,
-	log_normalize	:	bool	=	False
 ):
 	'''
 	### info: ###
@@ -45,21 +41,6 @@ def fitness(
 	#assert method != None, "No ground-truth method was provided to the fitness function."
 	assert hold_for != -1, "No holdfor length was provided to the fitness function."
 	assert lag_allow != -1, "No Lagallow length was provided to the fitness function."
-	
-	#close and low data specific assertions and array formations
-	match(specific_data):
-		case None:
-			pass
-			#assert arr_close != None, \
-			#	"Data is not specified, but close data was not provided to the fitness function."
-			#if(method is martin_ratio):
-			#	assert arr_low != None, \
-			#		"Data is not specified, martin ratio is selected, but low data was not provided to the fitness function."
-		case "form_519":
-			
-			#some_index = -1
-			arr_close = data[:, 2]
-			arr_low = data[:, 1]
 
 	#boolean 2d array containing entry/or-not (0|1) for each gene
 	#gene_presence = []
@@ -79,9 +60,12 @@ def fitness(
 			#want to avoid usage of these values for safe analysis
 			#gene_presence.append([0]*len(genes))
 			gene_presence_local = np.array([0]*len(genes))
-			
-			returns.append(gene_presence_local*arr_returns[i])
-			kelsch_ratio.append(gene_presence_local*arr_kratio[i])
+
+			r = np.multiply(gene_presence_local, arr_returns[i])
+			kr= np.multiply(gene_presence_local, arr_kratio[i])
+
+			returns.append(r)
+			kelsch_ratio.append(kr)
 		else:
 		
 			i_presence = []
@@ -117,9 +101,12 @@ def fitness(
 
 			gene_presence_local = np.array(i_presence)
 
+			r = np.multiply(gene_presence_local, arr_returns[i])
+			kr= np.multiply(gene_presence_local, arr_kratio[i])
+
 			#since we have moved returns and kelsch ratio to an earlier step, append those values now
-			returns.append(gene_presence_local*arr_returns[i])
-			kelsch_ratio.append(gene_presence_local*arr_kratio[i])
+			returns.append(r)
+			kelsch_ratio.append(kr)
 			
 	#gene_presence = np.array(gene_presence)
 	returns = np.array(returns)
@@ -188,7 +175,8 @@ def associate(
 	genes	:	list,
 	returns,
 	kelsch_ratio,
-	log_normalize
+	log_normalize,
+	with_array	:	bool
 ):
 	#iterate through all genes and associate calculated values and collected arrays
 	for gi, gene in enumerate(genes):
@@ -220,7 +208,7 @@ def associate(
 
 		#update data within the gene for local storage for quick evaluation or recall
 		gene.update(
-			array_returns		=	returns[:, gi],
+			array_returns		=	returns[:, gi] if with_array else None,
 			#array_kelsch_ratio	=	kelsch_ratio[:, gi],
 			avg_returns			=	local_avg_return,
 			avg_kelsch_ratio	=	local_avg_kelsch_ratio,
@@ -230,8 +218,8 @@ def associate(
 			total_kelsch_ratio	=	local_total_kelsch_ratio,
 			martin_ratio		=	local_martin_ratio,
 			mkr					=	local_mkr,
-			r2			=	local_r2,
-			r2_kr			=	local_r2_kr
+			r2					=	local_r2,
+			r2_kr				=	local_r2_kr
 		)
 
 	#returns updated genes
@@ -240,7 +228,7 @@ def associate(
 def sort_population(
 	population	:	list	=	None,
 	criteria	:	Literal['profit_factor','kelsch_ratio','average_return','total_return','consistency',\
-							'frequency','total_kelsch_ratio','martin_ratio','mkr','r2','kr_r2']	=	'profit_factor'
+							'frequency','total_kelsch_ratio','martin_ratio','mkr','r2','r2_kr']	=	'profit_factor'
 ):
 	'''
 	This function sorts a population based on a specific criteria
@@ -276,8 +264,8 @@ def sort_population(
 			metric = "mkr"
 		case "r2":
 			metric = "r2"
-		case "kr_r2":
-			metric = "kr_r2"
+		case "r2_kr":
+			metric = "r2_kr"
 		#invalid entry, should be impossible anyways
 		case _:
 			raise ValueError(f"FATAL: Tried sorting population with invalid criteria ({criteria})")
@@ -290,7 +278,7 @@ def sort_population(
 def show_best_gene_patterns(
 	population	:	list	=	None,
 	criteria	:	Literal['profit_factor','kelsch_ratio','average_return','total_return','consistency',\
-							'frequency','total_kelsch_ratio','martin_ratio','mkr','r2','kr_r2']	=	'profit_factor',
+							'frequency','total_kelsch_ratio','martin_ratio','mkr','r2','r2_kr']	=	'profit_factor',
 	fss			:	list	=	None,
 	hold_for	:	int		=	-1
 ):
@@ -322,6 +310,7 @@ def show_best_gene_patterns(
 	output+=str(f"MKR: {s_p[0]._mkr}\n")
 	output+=str(f"Frequency: {s_p[0]._frequency}\n")
 	output+=str(f"Hold For: {hold_for}\n")
+	output+=str(f"r2: {s_p[0]._r2}")
 
 	return output
 
@@ -375,7 +364,10 @@ def martin_ratio(
 	ret_nonzero = returns[returns != 0]
 
 	#collect the average trade return
-	avg_ret = np.mean(ret_nonzero) if returns.size > 0 else 0
+	if(ret_nonzero.size > 0):
+		avg_ret = np.mean(ret_nonzero)
+	else:
+		avg_ret = 0
 
 	#collect the ulcer index of the strategy
 	ulcer_i = ulcer_index(returns)
@@ -432,9 +424,14 @@ def r2(
 	#create a trend line of returns over time
 	trend_line = model.predict(time)
 
-	#using pearsons r2 instead of regular to be less affected by scaling
-	#NOTE definitely need to test this out 3/28/25 possibly wrong spot in conf_matx
-	pr2 = np.corrcoef(cum_ret, trend_line)[0, 1] ** 2
+	try:
+		#using pearsons r2 instead of regular to be less affected by scaling
+		#NOTE definitely need to test this out 3/28/25 possibly wrong spot in conf_matx
+		pr2 = np.corrcoef(cum_ret, trend_line)[0, 1] ** 2
+	except FloatingPointError as e:
+		return 0
+	except Exception as e:
+		return 0
 
 	return pr2
 
@@ -470,8 +467,8 @@ def simple_generational_stat_output(
 			metric = "mkr"
 		case "r2":
 			metric = "r2"
-		case "kr_r2":
-			metric = "kr_r2"
+		case "r2_kr":
+			metric = "r2_kr"
 		#invalid entry, should be impossible anyways
 		case _:
 			raise ValueError(f"FATAL: Tried sorting population with invalid criteria ({metric})")
@@ -482,8 +479,12 @@ def simple_generational_stat_output(
 
 		all_metrics.append(fetch_metric(gene))
 
-	avg_metric = np.mean(all_metrics)
-	top_metric = max(all_metrics)
+	if(len(all_metrics) > 0):
+		avg_metric = np.mean(all_metrics)
+		top_metric = max(all_metrics)
+	else:
+		avg_metric = -1
+		top_metric = -1
 
 	return avg_metric, top_metric
 	
@@ -529,8 +530,8 @@ def filter_population(
 	profit_factor	:	float=	0,
 	kelsch_ratio	:	float=	0,
 	entry_frequency	:	float=	0.00,
-	r2		:	float=	5,
-	kr_r2		:	float=	5
+	r2			:	float=	0,
+	r2_kr		:	float=	0
 ):
 	'''
 	This function takes a few different areas and filters the population based on such
@@ -560,7 +561,7 @@ def filter_population(
 			pop_list.append(g)
 		elif(gene._r2 < r2):
 			pop_list.append(g)
-		elif(gene._kr_r2 < kr_r2):
+		elif(gene._r2_kr < r2_kr):
 			pop_list.append(g)
 
 	pop_list = sorted(pop_list, reverse=True)
@@ -580,6 +581,36 @@ def serial_correlation(
 	based on avg value of those trades (dim2)
 	'''
 	return
+
+def single_fitness_association(
+	gene	:	any,
+	returns	:	np.ndarray,
+	kratio	:	np.ndarray,
+	data	:	np.ndarray,
+	hold_for:	int,
+	lag_allow:	int,
+	log_norm:	bool
+):
+	
+	r, kr = fitness(
+		arr_kratio=kratio,
+		arr_returns=returns,
+		data=data,
+		genes=[gene],
+		hold_for=hold_for,
+		lag_allow=lag_allow
+	)
+
+	gene = associate(
+		genes=[gene],
+		returns=r,
+		kelsch_ratio=kr,
+		log_normalize=log_norm
+	)
+
+	gene._array_returns = r
+
+	return gene
 
 def show_combined_performance(
 	population	:	list,
@@ -611,7 +642,7 @@ def show_combined_performance(
 
 
 
-	col_ret = returns.sum(axis=1, keepdims=True)
+	col_ret = returns.mean(axis=1, keepdims=True)
 	#col_kr = kelsch_ratio.sum(axis=1, keepdims=True)
 
 
@@ -632,6 +663,10 @@ def show_combined_performance(
 
 	base_pl = []
 	cum_pl = []
+
+
+	unsorted[0]._array_returns = col_ret
+	
 
 	show_returns(
 		unsorted[0]._array_returns,

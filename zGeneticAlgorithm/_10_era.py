@@ -11,6 +11,7 @@ import numpy as np
 
 
 def era(
+	eon_num	:	int,
 	era_num	:	int,
 	new_population	:	np.ndarray,
 	generations	:	int,
@@ -20,40 +21,38 @@ def era(
 	log_normalize	:	bool,
 	hold_for	:	int,
 	lag_allowance	:	int,
-	arr_close	:	np.ndarray,
-	arr_low		:	np.ndarray,
 	arr_returns	:	np.ndarray,
 	arr_kratio	:	np.ndarray,
 	elite_criteria	:	float|int,
 	num_parents	:	int,
 	rep_mode	:	str,
+	with_array	:	bool,
 	part_mproba	:	float,
 	ptrn_mproba	:	float,
 	use_strict_filter	:	bool,
 	strict_filter_kwargs	:	dict
 ):
 	
+	stat_hold = (0, 0, 0)
+	
 	for generation in range(generations):
 
 		population = new_population
 
-		print(f"       ERA {era_num+1} GEN {generation+1} ({criteria}): ",end='')
+		print(f"        EON {eon_num+1} ERA {era_num+1} GEN {generation+1} ({criteria}): ",end='')
 
 		returns, kelsch_ratio = _2.fitness(
-			arr_close=arr_close,
-			arr_low=arr_low,
 			arr_returns=arr_returns,
 			arr_kratio=arr_kratio,
 			data=dataset,
 			genes= population,
 			hold_for=hold_for,
-			lag_allow=lag_allowance,
-			specific_data=None,#'form_519',
-			log_normalize=log_normalize
+			lag_allow=lag_allowance
 		)
 		unsorted_population = _2.associate(
 			genes=population,
 			returns=returns,
+			with_array=with_array,
 			kelsch_ratio=kelsch_ratio,
 			log_normalize=log_normalize
 		)
@@ -70,12 +69,30 @@ def era(
 		)
 
 		avg, top = _2.simple_generational_stat_output(population,criteria)
-		print(f"AVG {round(avg, 5)}, BEST {round(top, 5)}, FROM {len(population)} GENES.")
 
+		if(avg+top == -2):
+			print("Zero genes survived.")
+			return []
+		
+		#make sure there is not a generation of no change
+		if(((stat_hold[0] == avg) & (stat_hold[1] == top)) & (stat_hold[2] == len(population))):
+			#this means nothing has changed since
+			print(f"AVG {round(avg, 5)}, BEST {round(top, 5)}, FROM {len(population)} GENES.")
+			return population
+		else:
+			stat_hold = (avg, top, len(population))
+		
+		print(f"AVG {round(avg, 5)}, BEST {round(top, 5)}, FROM {len(population)} GENES.")
+		
 		elites = _3.collect_elite(
 			sorted_population=population,
 			filter_criteria=elite_criteria
 		)
+
+		if(len(population) == 1):
+			#no parents to collect, only elite
+			return population
+
 		parents = _4.collect_parents(
 			sorted_population=population,
 			criteria=criteria,

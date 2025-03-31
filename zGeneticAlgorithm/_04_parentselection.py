@@ -72,8 +72,8 @@ def collect_parents(
 			metric = "r2"
 			metric_min = 0
 
-		case "kr_r2":
-			metric = "kr_r2"
+		case "r2_kr":
+			metric = "r2_kr"
 			metric_min = 0
 			
 		#invalid entry, should be impossible anyways

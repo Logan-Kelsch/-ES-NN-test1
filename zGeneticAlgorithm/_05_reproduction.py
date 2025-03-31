@@ -31,6 +31,8 @@ def reproduce(
 	if(custom_num_patterns == -1):
 		#gather number of patterns in each gene
 		num_patterns = len(parents[0]._patterns)
+	else:
+		num_patterns = custom_num_patterns
 
 	#gather number of parents brought into function
 	num_parents = len(parents)
@@ -218,3 +220,53 @@ def evolutionary_branch(
 
 	#by here, all mutated family members have been added to the family branch
 	return family_branch
+
+
+def additive_branch(
+	gene	:	any,
+	branch_size	:	int,
+	fss			:	list
+):
+	'''
+	### info: ###
+	This function takes a given gene and turns it into a population of the parent gene with random patterns appended
+	'''
+
+	family_branch = []
+
+	for i in range(branch_size):
+
+
+		new = copy.deepcopy(gene)
+
+		ptrn = _0.Pattern()
+		ptrn.random(mutation=True,fss=fss)
+
+		new._patterns.append(ptrn)
+
+		family_branch.append(new)
+
+	return family_branch
+
+def expansive_recomposition(
+	population	:	list,
+	num_patterns	:	int
+):
+	'''
+	### info: ###
+	this function takes a population and generates a new one consisting of all possible combinations from the initially dissolved population pattern pool.
+	'''
+
+	init_size = len(population)
+
+	pop_recomp = reproduce(
+		parents=population,
+		mode='exponential',
+		custom_num_patterns=num_patterns
+	)
+
+	finl_size = len(pop_recomp)
+
+	print(f"Expanded population: {init_size} -> {finl_size} at length {num_patterns}.")
+
+	return pop_recomp

@@ -27,3 +27,11 @@ Profit Factor:	1.2681
 Average Return:	7.600399618512554e-05	(~0.38 on /MES == $1.9)
 Average KRatio:	nan	(~nan on /MES == $nan)
 holdfor:15
+
+(412)diff_ma_5_240_spx[10] > (412)diff_ma_5_240_spx[14]
+Profit Factor: 1.1074
+Average Return: 2e-05 (~0.08 on /MES == $0.4)
+Average KRatio: 5.54354
+MKR: 0.38073007499209915
+Frequency: 0.47148517816724167
+is single best parameter out of 0-11 gene pool
