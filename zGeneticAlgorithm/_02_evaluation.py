@@ -49,8 +49,8 @@ def fitness(
 
 	length = len(data)
 
-	returns = np.zeros((length, len(genes)))
-	kelsch_ratio = np.zeros((length, len(genes)))
+	returns = np.zeros((length, len(genes)), dtype=np.float32)
+	kelsch_ratio = np.zeros((length, len(genes)), dtype=np.float32)
 
 	#test all samples in the set, accounting for
 	#lag allowance and hold length
@@ -59,10 +59,10 @@ def fitness(
 		if(i < lag_allow | i > length-hold_for-1):
 			#want to avoid usage of these values for safe analysis
 			#gene_presence.append([0]*len(genes))
-			gene_presence_local = np.zeros(len(genes))
+			gene_presence_local = np.zeros(len(genes), dtype=int)
 
-			r = np.multiply(gene_presence_local, arr_returns[i])
-			kr= np.multiply(gene_presence_local, arr_kratio[i])
+			r = np.multiply(gene_presence_local, arr_returns[i], dtype=np.float32)
+			kr= np.multiply(gene_presence_local, arr_kratio[i], dtype=np.float32)
 
 			returns[i] = r
 			kelsch_ratio[i] = kr
@@ -97,8 +97,8 @@ def fitness(
 
 			gene_presence_local = i_presence
 
-			r = np.multiply(gene_presence_local, arr_returns[i])
-			kr= np.multiply(gene_presence_local, arr_kratio[i])
+			r = np.multiply(gene_presence_local, arr_returns[i], dtype=np.float32)
+			kr= np.multiply(gene_presence_local, arr_kratio[i], dtype=np.float32)
 
 			#since we have moved returns and kelsch ratio to an earlier step, append those values now
 			returns[i] = r
