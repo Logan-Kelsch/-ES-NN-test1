@@ -18,7 +18,8 @@ def get_fss_aslists(
 			raise NotImplementedError(f"DANG YOU USING A SOURCE FOR FEATURE SUBSET INDICES THAT ISNT IMPLEMENTED.")
 
 def load_large_csv(
-	file_name	:	str	=	''
+	file_name	:	str	=	'',
+	optm_data	:	bool	=	True
 ):
 	print("Trying to load CSV file into DataFrame...")
  	#Attempt to load in pandas file
@@ -27,7 +28,11 @@ def load_large_csv(
 		iter = 1
 		for chunk in pd.read_csv(file_name, chunksize=25000):
 			isoc = sys.getsizeof(chunk) #initial size of chunk
-			print(f'loaded chunk {iter} of size: {isoc}')
+			if(optm_data):
+				chunk = numerical_df_optimizer(chunk)
+				print(f'loaded chunk {iter} of size: {isoc} -> {sys.getsizeof(chunk)}')
+			else:
+				print(f'loaded chunk {iter} of size: {isoc}')
 			chunks.append(chunk)
 			iter+=1
 		print('concat chunks')
@@ -44,6 +49,8 @@ def load_large_csv(
 		raise
 
 	return data
+
+
 
 def drop_all_targets(
 	dataset	:	any	=	None,
@@ -76,7 +83,22 @@ def get_fss_from_value(
 	return iswhere
 
 
+def numerical_df_optimizer(df):
+	'''this function takes a given dataframe and tries to save as much RAM as possible'''
+	#now going to try to convert any floats to ints
+	for col in df.select_dtypes(include=["float"]).columns:
+		#check if something like 0.0, 1.0 are sitting around
+		if(df[col] == df[col].astype(int)).all():
+			df[col] = df[col].astype(int)
+	for col in df.select_dtypes(include=["float","int"]).columns:
+		#downcast integer
+		if(pd.api.types.is_integer_dtype(df[col])):
+			df[col] = pd.to_numeric(df[col], downcast="integer")
+		#downcast floats
+		elif(pd.api.types.is_float_dtype(df[col])):
+			df[col] = pd.to_numeric(df[col], downcast="float")
 
+	return df
 
 
 

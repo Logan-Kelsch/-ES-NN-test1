@@ -49,8 +49,8 @@ def fitness(
 
 	length = len(data)
 
-	returns = []
-	kelsch_ratio = []
+	returns = np.zeros((length, len(genes)))
+	kelsch_ratio = np.zeros((length, len(genes)))
 
 	#test all samples in the set, accounting for
 	#lag allowance and hold length
@@ -59,20 +59,22 @@ def fitness(
 		if(i < lag_allow | i > length-hold_for-1):
 			#want to avoid usage of these values for safe analysis
 			#gene_presence.append([0]*len(genes))
-			gene_presence_local = np.array([0]*len(genes))
+			gene_presence_local = np.zeros(len(genes))
 
 			r = np.multiply(gene_presence_local, arr_returns[i])
 			kr= np.multiply(gene_presence_local, arr_kratio[i])
 
-			returns.append(r)
-			kelsch_ratio.append(kr)
+			returns[i] = r
+			kelsch_ratio[i] = kr
 		else:
-		
-			i_presence = []
+
+			i_presence = np.zeros(len(genes), dtype=int)
 
 			if(i%25000==0):
 				sys.stdout.write(f"\r{i}")
 				sys.stdout.flush()
+
+			#i_presence = [1 if all(p._op(data[i-p._l1, p._v1], data[i-p._l2, p._v2]) for p in gene._patterns) else 0 for gene in genes]
 		
 			#check presence of each gene at each sample
 			for g, gene in enumerate(genes):
@@ -84,87 +86,27 @@ def fitness(
 					#print(f'v1,v2,l1,l2: {p._v1} {p._v2} {p._l1} {p._l2}')
 					
 					#if given pattern holds true
-					if(p._op(data[i-p._l1, p._v1],data[i-p._l2, p._v2])):
-						pass#pattern matches
-					else:
-						#this is reached when any pattern does not match
+					if not (p._op(data[i-p._l1, p._v1],data[i-p._l2, p._v2])):
 						matches = False
 						break
 				#check if matches variable held
-				if(matches == False):
-					i_presence.append(0)
-				else:
-					i_presence.append(1)
+				i_presence[g] = 1 if matches else 0
 		
 			#now have a fully built sample presence
 			#gene_presence.append(i_presence)
 
-			gene_presence_local = np.array(i_presence)
+			gene_presence_local = i_presence
 
 			r = np.multiply(gene_presence_local, arr_returns[i])
 			kr= np.multiply(gene_presence_local, arr_kratio[i])
 
 			#since we have moved returns and kelsch ratio to an earlier step, append those values now
-			returns.append(r)
-			kelsch_ratio.append(kr)
+			returns[i] = r
+			kelsch_ratio[i] = kr
 			
 	#gene_presence = np.array(gene_presence)
-	returns = np.array(returns)
-	kelsch_ratio = np.array(kelsch_ratio)
-	
-	
-	'''#now going to take gene presence and define
-	#returns and custom index values
-	for i in range(length):
-		
-		#we do not need to account for illogical extreme values of i,
-		#since that was already taken  into account when collecting gene presence above.
-		#those values are all zero.
-		#illogical extremes means hold_for at end of dataset, and lag allownace at beginning of dataset
-
-
-		if(i < lag_allow | i > length-hold_for-1):
-			#want to avoid usage of these values for safe analysis
-			returns.append(gene_presence[i]*0)
-			kelsch_ratio.append(gene_presence[i]*0)
-		else:
-		
-			#calculate returns
-			if(log_normalize):
-				ret_local = np.log(arr_close[i+hold_for]/arr_close[i])
-			else:
-				ret_local = (arr_close[i+hold_for] - arr_close[i])
-			returns.append(gene_presence[i]*ret_local)
-			
-			#calculate index values here if desired
-			ki_local = 0
-			entry_price = arr_close[i]
-			for c in range(1,hold_for+1):
-				if(log_normalize):
-					ki = entry_price/arr_low[i+c] #>=1 means is below entry
-					ki_local+=(np.log(max(ki, 1))**2)
-				else:
-					ki_local+=((max(entry_price - arr_low[i+c] , 0)) ** 2)
-			#taking square root of the mean drawdown squared
-			if(log_normalize):
-				#is in log space, so is returns, so i dont think np.exp goes here
-				ki_local = (sqrt(ki_local/hold_for))
-			else:
-				ki_local = sqrt(ki_local/hold_for)
-			
-
-			if(ki_local == np.nan):
-				print('nan found!')
-			#if(ki_local != 0):
-				#print(f"{ret_local} ++++++ {ki_local}")
-			kelsch_ratio_local = (ret_local - (ki_local))
-			#else:
-			#	kelsch_ratio_local = 100 #force a maximum value
-
-			kelsch_ratio.append(gene_presence[i]*(kelsch_ratio_local))
-
-	returns = np.array(returns)
-	kelsch_ratio = np.array(kelsch_ratio)'''
+	returns = returns
+	kelsch_ratio = kelsch_ratio
 	
 	#This function will by default return the returns and kelsch_index values for each gene
 	#these are iterable, along dim0 (by data sample) are gene column local values

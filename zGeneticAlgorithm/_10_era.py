@@ -26,11 +26,11 @@ def era(
 	elite_criteria	:	float|int,
 	num_parents	:	int,
 	rep_mode	:	str,
-	with_array	:	bool,
 	part_mproba	:	float,
 	ptrn_mproba	:	float,
 	use_strict_filter	:	bool,
-	strict_filter_kwargs	:	dict
+	strict_filter_kwargs	:	dict,
+	with_array	:	bool = False,
 ):
 	
 	stat_hold = (0, 0, 0)
@@ -39,7 +39,7 @@ def era(
 
 		population = new_population
 
-		print(f"        EON {eon_num+1} ERA {era_num+1} GEN {generation+1} ({criteria}): ",end='')
+		print(f"        EON {eon_num+1} ERA {era_num+1} GEN {generation+1} ({criteria}):",end='')
 
 		returns, kelsch_ratio = _2.fitness(
 			arr_returns=arr_returns,
@@ -49,6 +49,7 @@ def era(
 			hold_for=hold_for,
 			lag_allow=lag_allowance
 		)
+		print(f":",end='')
 		unsorted_population = _2.associate(
 			genes=population,
 			returns=returns,
@@ -56,13 +57,13 @@ def era(
 			kelsch_ratio=kelsch_ratio,
 			log_normalize=log_normalize
 		)
-
+		print(f":",end='')
 		if(use_strict_filter):
 			unsorted_population = _2.filter_population(
 				population=unsorted_population,
 				**strict_filter_kwargs
 			)
-
+		print(f": ",end='')
 		population = _2.sort_population(
 			population=unsorted_population,
 			criteria=criteria
