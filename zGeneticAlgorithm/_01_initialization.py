@@ -50,8 +50,9 @@ def generate_initial_population(
 	return genes
 
 def collect_parallel_metrics(
+	direction:	bool		=	1,
 	arr_close:	np.ndarray	=	None,
-	arr_low	:	np.ndarray	=	None,
+	arr_ext	:	np.ndarray	=	None,
 	hold_for:	int			=	0,
 	lag_allow:	int			=	0,
 	log_normalize:	bool	=	True
@@ -78,9 +79,16 @@ def collect_parallel_metrics(
 		
 			#calculate returns
 			if(log_normalize):
-				returns_local = np.log(arr_close[i+hold_for]/arr_close[i])
+				if(direction==1):
+					returns_local = np.log(arr_close[i+hold_for]/arr_close[i])
+				else:
+					returns_local = np.log(arr_close[i]/arr_close[i+hold_for])
 			else:
-				returns_local = (arr_close[i+hold_for] - arr_close[i])
+				if(direction==1):
+					returns_local = (arr_close[i+hold_for] - arr_close[i])
+				else:
+					returns_local = (arr_close[i] - arr_close[i+hold_for])
+
 			returns.append(returns_local)
 			
 			#calculate index values here if desired
@@ -88,10 +96,17 @@ def collect_parallel_metrics(
 			entry_price = arr_close[i]
 			for c in range(1,hold_for+1):
 				if(log_normalize):
-					ki = entry_price/arr_low[i+c] #>=1 means is below entry
+					if(direction==1):
+						ki = entry_price/arr_ext[i+c] #>=1 means is below entry
+					else:
+						ki = arr_ext[i+c]/entry_price
+
 					ki_local+=(np.log(max(ki, 1))**2)
 				else:
-					ki_local+=((max(entry_price - arr_low[i+c] , 0)) ** 2)
+					if(direction==1):
+						ki_local+=((max(entry_price - arr_ext[i+c] , 0)) ** 2)
+					else:
+						ki_local+=((max(arr_ext[i+c] - entry_price, 0)) ** 2)
 			#taking square root of the mean drawdown squared
 			if(log_normalize):
 				#is in log space, so is returns, so i dont think np.exp goes here
@@ -105,6 +120,9 @@ def collect_parallel_metrics(
 			#take difference to show differential between std drawdown and profit
 			else:
 				kelsch_ratio_local = ((returns_local) / (ki_local))
+
+			if(kelsch_ratio_local > 10):
+				kelsch_ratio_local = 10
 
 			kelsch_ratio.append((kelsch_ratio_local))
 
