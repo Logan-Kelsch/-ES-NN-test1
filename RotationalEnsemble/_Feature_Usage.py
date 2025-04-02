@@ -759,34 +759,41 @@ def fe_bollinger(
 	X,
 	index
 ):
-
 	'''
 	TOS code version of this is the following
-
  	sdev = stdev(close, length)
-
   	midline = ma(avg type, close, length) length is the same btw
-
     	bollinger value would be :::
      	val_desired = (close-midline)/sdev
       	#this value would be the standard deviations off of the mean in same time range
  	'''
-	#orig feature #3
-	# # # deals with all close of minute values
+
+	lengths = [5, 15, 30, 60, 120, 240]
+	
+	#deals with all close of minute values
 	close = X.iloc[:, 2+index].values
 
 	l = len(X)
-	new_data = []
+
+	new_data = np.zeros((l, len(lengths)), dtype=np.float32)
 
 	for sample in range(l):
-		row = []
-		#do something
+		row = np.zeros(len(lengths), dtype=np.float32)
 
-		new_data.append(row)
+		for t, time in enumerate(lengths):
+
+			if(sample-time < 0):
+				row[t] = 0
+			else:
+				sdev = np.std(close[sample-time:sample])
+				ml = np.mean(close[sample-time:sample])
+				row[t] = (close-ml)/sdev
+
+		new_data[sample] = row
 
 	cols = []
-
-	#do something to make bollinger bands feature names
+	for i in lengths:
+		cols.append(f'bbands_{i}_{idx[index]}')
 
 	feature_set = pd.DataFrame(new_data, columns=cols)
 
@@ -809,6 +816,8 @@ def fe_atr(
       	diff between h0 c1
 	diff between c1 l0
  	'''
+
+	lengths = [5, 15, 30, 60, 120, 240]
 	
 	l = len(X)
 	new_data = []
