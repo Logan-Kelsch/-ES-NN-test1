@@ -799,38 +799,78 @@ def fe_bollinger(
 
 	return feature_set
 
-def fe_atr(
-	X,
-	index
+def fe_true_range(
+	X
 ):
-	low = X.iloc[:, 1+index].values
-	high = X.iloc[:, 0+index].values
-	close = X.iloc[:, 2+index].values
-
-	#TOS script is the following
 	'''
-		moving average of average type of the truerange(h,l,c) for given length
-  		truerange happens to be
-    	the greatest of the following
+		Simple function to collect an array of true range values.
+      	the greatest of the following
      	diff between h0 l0
       	diff between h0 c1
 	diff between c1 l0
  	'''
 
+	low = X.iloc[:, 1+index].values
+	high = X.iloc[:, 0+index].values
+	close = X.iloc[:, 2+index].values
+
+	l = len(X)
+
+	new_data = np.zeros((l), dtype=np.float32)
+
+	for i in range(l):
+
+		#value 1 must be trimmed, but should be fully functional as is here
+		tr = max(
+			abs(high[i]-low[i]),
+			abs(high[i]-close[(i-1)%l]),
+			abs(low[i]-close[(i-1)%l])
+		)
+
+		new_data[i] = tr
+
+	cols = ['true_range']
+
+	feature_set = pd.DataFrame(new_data, columns=cols)
+
+	return feature_set
+
+
+def fe_atr(
+	X,
+	index
+):
+	true_range = fe_true_range(X).values
+
+	#TOS script is the following
+	'''
+		moving average of average type of the truerange(h,l,c) for given length
+  		truerange happens to be
+ 	'''
+
 	lengths = [5, 15, 30, 60, 120, 240]
 	
 	l = len(X)
-	new_data = []
+
+	new_data = np.zeros((l, len(lengths)), dtype=np.float32)
 
 	for sample in range(l):
-		row = []
-		#do something
+		row = np.zeros(len(lengths), dtype=np.float32)
 
-		new_data.append(row)
+		for t, time in enumerate(lengths):
+
+			if(sample-time < 0):
+				row[t] = 0
+			else:
+				trs = np.zeros(time, dtype=np.float32)
+				ml = np.mean(close[sample-time:sample])
+				row[t] = (close-ml)/sdev
+
+		new_data[sample] = row
 
 	cols = []
-
-	#do something to make bollinger bands feature names
+	for i in lengths:
+		cols.append(f'bbands_{i}_{idx[index]}')
 
 	feature_set = pd.DataFrame(new_data, columns=cols)
 
