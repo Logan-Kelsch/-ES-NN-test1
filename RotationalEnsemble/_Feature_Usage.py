@@ -874,6 +874,44 @@ def fe_atr(
 	feature_set = pd.DataFrame(new_data, columns=cols)
 
 	return feature_set
+	
+def fe_norm_range(
+	X,
+ index
+):
+
+	lengths = [5, 15, 30, 60, 120, 240]
+
+	high = X.iloc[:,0+index].values
+	low = X.iloc[:,1+index].values
+	
+	atr = fe_atr(X,index).values
+	
+	l = len(X)
+	r = len(atr[0])
+	
+	new_data = np.zeros((l, r), dtype=np.float32)
+	
+	for sample in range(l):
+		
+		row = np.zeros(r, dtype=np.float32)
+		
+		for arr in range(r):
+			
+			#append corresponding atr value from array
+			row[arr] = (high[sample]-low[sample])/atr[sample,arr]
+			
+		new_data[sample] = row
+		
+	cols = []
+	for i in lengths:
+		cols.append(f'normr_{i}_{idx[index]}')
+
+	feature_set = pd.DataFrame(new_data, columns=cols)
+	
+	return feature_set
+		
+		
 
 def fe_hawkes_quantile(
 	X,
@@ -890,10 +928,14 @@ def fe_hawkes_quantile(
 	close = X.iloc[:, 2+index].values
 	
 	l = len(X)
-	new_data = []
+	
+	new_data = np.zeros((l, len(lengths)), dtype=np.float32)
 
 	for sample in range(l):
-		row = []
+		
+		row = np.zeros(len(lengths), dtype=np.float32)
+		
+		
 		#do something
 
 		new_data.append(row)
