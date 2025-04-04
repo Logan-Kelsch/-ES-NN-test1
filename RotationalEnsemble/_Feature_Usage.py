@@ -862,15 +862,14 @@ def fe_atr(
 			if(sample-time < 0):
 				row[t] = 0
 			else:
-				trs = np.zeros(time, dtype=np.float32)
-				ml = np.mean(close[sample-time:sample])
-				row[t] = (close-ml)/sdev
+				atr = np.mean(true_range[sample-time:sample])
+				row[t] = atr
 
 		new_data[sample] = row
 
 	cols = []
 	for i in lengths:
-		cols.append(f'bbands_{i}_{idx[index]}')
+		cols.append(f'atr_{i}_{idx[index]}')
 
 	feature_set = pd.DataFrame(new_data, columns=cols)
 
