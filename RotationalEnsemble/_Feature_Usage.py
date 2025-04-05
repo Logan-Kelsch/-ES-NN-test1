@@ -915,9 +915,58 @@ def fe_norm_range(
 	
 	return feature_set
 		
+def fe_hawkes_process(
+	X,
+	index
+):
+	''' non rolling version, raw values'''
+	
+	norm_ranges = fe_norm_range(X, index)
+	
+	l = len(X)
+	r = len(norm_ranges[0]) #should be lengths array length
+	
+	lengths = [5, 15, 30, 60, 120, 240]
+	
+	raw_kappa = [0.64, 0.16, 0.08, 0.04, 0.01]
+	kappa = [np.exp(-k) for k in raw_kappa]
+	
+	kl = len(kappa)
+	
+	new_data = np.zeros((l,r*len(kappa)), dtype=np.float32)
+	
+	for sample in range(l):
 		
+		row = np.zeros(r*len(kappa), dtype=np.float32)
+		
+		for nr in range(r):
+			for k, kap in enumerate(kappa):
+				
+				truidx = (nr*kl+k)
+			
+				if((sample==0) | (sample==240)):
+					
+					hp = norm_ranges[sample,nr]
+					
+				else:
+					
+					hp = new_data[sample-1,truidx]
+				
+				row[truidx] = hp
+			
+		new_data[sample] = row
+	
+	cols = []
+	
+	for l in lengths:
+		for k in raw_kappa:
+			cols.append(f'hawkes_{l}_{k}_{idx[index]}')
 
-def fe_hawkes_quantile(
+	feature_set = pd.DataFrame(new_data, columns=cols)
+	
+	return feature_set
+
+def fe_hawkes_stoch(
 	X,
 	index
 ):
