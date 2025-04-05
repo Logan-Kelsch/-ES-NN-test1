@@ -880,6 +880,10 @@ def fe_norm_range(
  index
 ):
 
+	'''retutns the same dimensions as ATR generated from below lengths array
+		atr is called in here 1 to 1
+		'''
+
 	lengths = [5, 15, 30, 60, 120, 240]
 
 	high = X.iloc[:,0+index].values
