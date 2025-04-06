@@ -244,12 +244,15 @@ def show_best_gene_patterns(
 	#multiplying it by a very rough real price guesstimate, also assuming this is on SPY
 	avg_return_ticks = round( (s_p[0]._avg_returns)*5000 , 2) #5k is super rough estimate on spy price
 	avg_kratio_ticks = round( (s_p[0]._avg_kelsch_ratio)*5000 , 2) #5k is super rough estimate on spy price
+	mdn_ret = median_nonzero(s_p[0]._array_returns)
+	mdn_return_ticks = (mdn_ret)*5000
 
 	#then show basic metrics of the gene across last test
 	output+=f"Profit Factor: {str(profit_factor)}\n"
-	output+=str(f"Average Return: {str(round(s_p[0]._avg_returns,5))} (~{avg_return_ticks} on /MES == ${round(avg_return_ticks*5, 2)})\n")
+	output+=str(f"Average Return: {str(round(s_p[0]._avg_returns,5))} (~{round(avg_return_ticks,3)} on /MES == ${round(avg_return_ticks*5, 2)})\n")
+	output+=str(f"Median Return: {str(round(mdn_ret,5))} (~{round(mdn_return_ticks,2)} on /MES == ${round(mdn_return_ticks*5, 2)})\n")
 	output+=str(f"Average KRatio: {round(s_p[0]._avg_kelsch_ratio, 5)}\n")
-	output+=str(f"MKR: {s_p[0]._mkr}\n")
+	output+=str(f"MKR: {round(s_p[0]._mkr,4)}\n")
 	output+=str(f"Frequency: {s_p[0]._frequency}\n")
 	output+=str(f"Hold For: {hold_for}\n")
 	output+=str(f"r2: {s_p[0]._r2}")
@@ -292,6 +295,15 @@ def average_nonzero(
 	avg = (np.mean(filtered)) if filtered.size > 0 else 0
 
 	return avg
+
+def median_nonzero(
+	array	:	np.ndarray	=	None
+):
+	filtered = array[array != 0]
+
+	mdn = (np.median(filtered)) if filtered.size > 0 else 0
+
+	return mdn
 
 def total_returns(
 	array	:	np.ndarray	=	None

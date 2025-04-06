@@ -161,10 +161,11 @@ def fn_all_subsets(real_prices: bool = False, indices:int=-1, keep_time:bool=Tru
 	# will append each individual feature/f_set here
 	if(real_prices):
 		if(indices == 0):
-			fnsub.append(['high','low','close'])
-			fnsub.append(['volume'])
-			fnsub.append(['barH_spx','wickH_spx','diff_wick_spx'])
-		'''elif(indices == 1):
+			if(keep_time):
+				fnsub.append(['high','low','close','time','volume','ToD','DoW','barH_spx','wickH_spx','diff_wick_spx'])
+			else:
+				fnsub.append(['high','low','close','volume','ToD','DoW','barH_spx','wickH_spx','diff_wick_spx'])
+		elif(indices == 1):
 			if(keep_time):
 				fnsub.append(['high.1','low.1','close.1','time','volume.1','barH_ndx','wickH_ndx','diff_wick_ndx'])
 			else:
@@ -186,15 +187,14 @@ def fn_all_subsets(real_prices: bool = False, indices:int=-1, keep_time:bool=Tru
 				fnsub.append(['high.1','low.1','close.1','volume.1','barH_ndx','wickH_ndx','diff_wick_ndx'])
 			else:
 				fnsub.append(['high','low','close','volume','ToD','DoW','barH_spx','wickH_spx','diff_wick_spx'])
-				fnsub.append(['high.1','low.1','close.1','volume.1','barH_ndx','wickH_ndx','diff_wick_ndx'])'''
+				fnsub.append(['high.1','low.1','close.1','volume.1','barH_ndx','wickH_ndx','diff_wick_ndx'])
 	else:
-		raise NotImplementedError(f"why are we removing real prices brah?")
 		if(indices == 0):
 			if(keep_time):
 				fnsub.append(['time','volume','ToD','DoW','barH_spx','wickH_spx','diff_wick_spx'])
 			else:
 				fnsub.append(['volume','ToD','DoW','barH_spx','wickH_spx','diff_wick_spx'])
-		'''if(indices == 1):
+		if(indices == 1):
 			if(keep_time):
 				fnsub.append(['time','volume.1','ToD','DoW','barH_ndx','wickH_ndx','diff_wick_ndx'])
 			else:
@@ -210,7 +210,7 @@ def fn_all_subsets(real_prices: bool = False, indices:int=-1, keep_time:bool=Tru
 				fnsub.append(['volume.1','ToD','DoW','barH_ndx','wickH_ndx','diff_wick_ndx'])
 			else:
 				fnsub.append(['volume','ToD','DoW','barH_spx','wickH_spx','diff_wick_spx'])
-				fnsub.append(['volume.1','ToD','DoW','barH_ndx','wickH_ndx','diff_wick_ndx'])'''
+				fnsub.append(['volume.1','ToD','DoW','barH_ndx','wickH_ndx','diff_wick_ndx'])
 		
 	if(indices == 0 or indices ==-2):
 		#		NOTE NOTE NOTE HERE IS THE IMPLEMENTATION OF ALL INDEX #1 (SPX) DATA. END NOTE END NOTE END NOTE		#
@@ -233,6 +233,9 @@ def fn_all_subsets(real_prices: bool = False, indices:int=-1, keep_time:bool=Tru
 		fnsub.append(fn_disp_lolo(0))
 		fnsub.append(fn_hilo_diff(0))
 		fnsub.append(fn_hilo_stoch(0))
+		fnsub.append(fn_bollinger(0))
+		fnsub.append(fn_hawkes_process(0))
+		fnsub.append(fn_hawkes_stoch(0))
 
 	if(indices == 1 or indices ==-2):
 		#		NOTE NOTE NOTE HERE IS THE IMPLEMENTATION OF ALL INDEX #2 (NDX) DATA. END NOTE END NOTE END NOTE 		#
@@ -305,6 +308,37 @@ def return_name_collection():
 	full_set = set1+set2+set3
 
 	return full_set
+
+def fn_hawkes_process(index):
+	lengths = [5, 15, 30, 60, 120, 240]
+	
+	raw_kappa = [0.64, 0.16, 0.08, 0.04, 0.01]	
+	
+	cols = []
+	
+	for l in lengths:
+		for k in raw_kappa:
+			cols.append(f'hawkes_{l}_{k}_{idx[index]}')
+	return cols
+
+def fn_hawkes_stoch(index):
+	lengths = [5, 15, 30, 60, 120, 240]
+	
+	raw_kappa = [0.64, 0.16, 0.08, 0.04, 0.01]
+
+	cols = []
+	
+	for l in lengths:
+		for k in raw_kappa:
+			cols.append(f'hawkes_stoch_{l}_{k}_{idx[index]}')
+	return cols
+
+def fn_bollinger(index):
+	lengths = [5, 15, 30, 60, 120, 240]
+	cols = []
+	for i in lengths:
+		cols.append(f'bbands_{i}_{idx[index]}')
+	return cols
 
 def fn_vel(index):
 	return [f'vel{i}_{idx[index]}' for i in range(1,61)]
