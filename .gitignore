@@ -26,5 +26,6 @@ RotationalEnsemble/spx_large_stoch.csv
 zGeneticAlgorithm/spx_large.csv
 zGeneticAlgorithm/spx_features.csv
 zGeneticAlgorithm/spx_features_small.csv
+zGeneticAlgorithm/spx_newest.csv
 .tf_/
 .torch_/

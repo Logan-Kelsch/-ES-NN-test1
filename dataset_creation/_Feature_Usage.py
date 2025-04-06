@@ -151,23 +151,44 @@ def augmod_dataset(
 	#FEATURE ENGINEERING		--------------
 
 	#first collect basic data within dataset
+	augmod_verbose(0)
 	f_ToD = fe_ToD(data)#single
+	augmod_verbose(1)
 	f_DoW = fe_DoW(data)#single
 
 	#collect spx specific data
+	augmod_verbose(2)
 	f_vel = fe_vel(data, i[0])#set
+	augmod_verbose(3)
 	f_acc = fe_acc(data, i[0])#set
+	augmod_verbose(4)
 	f_stchK = fe_stoch_k(data, i[0], clip_stochastic)#set
+	augmod_verbose(5)
 	f_barH = fe_height_bar(data, i[0])#single
+	augmod_verbose(6)
 	f_wickH = fe_height_wick(data, i[0])#single
+	augmod_verbose(7)
 	f_wickD = fe_diff_hl_wick(data, i[0])#single
+	augmod_verbose(8)
 	f_volData = fe_vol_sz_diff(data, i[0])#set
+	augmod_verbose(9)
 	f_maData = fe_ma_disp(data, i[0])#set
+	augmod_verbose(10)
 	f_maDiff = fe_ma_diff(f_maData, i[0])#set
+	augmod_verbose(11)
 	f_hihi = fe_hihi_diff(data, i[0])#set
+	augmod_verbose(12)
 	f_lolo = fe_lolo_diff(data, i[0])#set
+	augmod_verbose(13)
 	f_hilo = fe_hilo_diff(f_hihi,f_lolo, i[0])#set
+	augmod_verbose(14)
 	f_stochHiLo = fe_hilo_stoch(data, f_hihi, f_lolo, i[0], clip_stochastic)#set
+	augmod_verbose(15)
+	f_bollinger = fe_bollinger(data, i[0])#set
+	augmod_verbose(16)
+	f_hawkes_process = fe_hawkes_process(data, i[0])#set
+	augmod_verbose(17)
+	f_hawkes_stoch = fe_hawkes_stoch(data, i[0])#set
 
 	if(len(index_names)>1):
 		#collect ndx specific data
@@ -222,7 +243,7 @@ def augmod_dataset(
 		df_list = [data, f_ToD, f_DoW, f_vel, f_acc, \
 						f_stchK, f_barH, f_wickH, f_wickD,\
 							f_volData, f_maData, f_maDiff, f_hihi, f_lolo,\
-								f_hilo, f_stochHiLo]
+								f_hilo, f_stochHiLo, f_bollinger, f_hawkes_process, f_hawkes_stoch]
 		if(format_mode == 'backtest'):
 			match(target_isolate):
 				case 'r':
@@ -787,7 +808,10 @@ def fe_bollinger(
 			else:
 				sdev = np.std(close[sample-time:sample])
 				ml = np.mean(close[sample-time:sample])
-				row[t] = (close-ml)/sdev
+				if(sdev!=0):
+					row[t] = (close[sample]-ml)/sdev
+				else:
+					row[t] = 0
 
 		new_data[sample] = row
 
@@ -878,7 +902,7 @@ def fe_atr(
 	
 def fe_norm_range(
 	X,
- index
+	index
 ):
 
 	'''retutns the same dimensions as ATR generated from below lengths array
@@ -903,8 +927,11 @@ def fe_norm_range(
 		
 		for arr in range(r):
 			
-			#append corresponding atr value from array
-			row[arr] = (high[sample]-low[sample])/atr[sample,arr]
+			if(atr[sample,arr]!=0):
+				#append corresponding atr value from array
+				row[arr] = (high[sample]-low[sample])/atr[sample,arr]
+			else:
+				row[arr] = 0
 			
 		new_data[sample] = row
 		
@@ -922,7 +949,7 @@ def fe_hawkes_process(
 ):
 	''' non rolling version, raw values'''
 	
-	norm_ranges = fe_norm_range(X, index)
+	norm_ranges = fe_norm_range(X, index).values
 	
 	l = len(X)
 	r = len(norm_ranges[0]) #should be lengths array length
@@ -956,6 +983,8 @@ def fe_hawkes_process(
 				row[truidx] = hp
 			
 		new_data[sample] = row
+
+	new_data = np.round(new_data, 4)
 	
 	cols = []
 	
@@ -977,7 +1006,7 @@ def fe_hawkes_stoch(
  	this and then can test on TOS what some reasonable values are to use for cappa parameters.
  	'''
 
-	hawkes = fe_hawkes_process(X, index)
+	hawkes = fe_hawkes_process(X, index).values
 
 	lengths = [5, 15, 30, 60, 120, 240]
 	raw_kappa = [0.64, 0.16, 0.08, 0.04, 0.01]
@@ -992,10 +1021,10 @@ def fe_hawkes_stoch(
 	rl = ll*kl
 
 
-	hawk_low_hold = np.zeros((len(hawkes)[0]), dtype=np.float32)
-	hawk_high_hold= np.zeros((len(hawkes)[0]), dtype=np.float32)
+	hawk_low_hold = np.zeros((len(hawkes[0])), dtype=np.float32)
+	hawk_high_hold= np.zeros((len(hawkes[0])), dtype=np.float32)
 
-	new_data = np.zeros((l, len(lengths)), dtype=np.float32)
+	new_data = np.zeros((l, rl), dtype=np.float32)
 
 	for sample in range(l):
 		
@@ -1010,8 +1039,8 @@ def fe_hawkes_stoch(
 			else:
 				#safe sample to work on
 				#grab the lowest value of the last lengths[i] hawkes value
-				hawk_low_hold = np.min(hawkes[(sample-lengths[h//kl]):hawkes[sample],h])
-				hawk_high_hold= np.max(hawkes[(sample-lengths[h//kl]):hawkes[sample],h])
+				hawk_low_hold = np.min(hawkes[(sample-lengths[h//kl]):sample,h])
+				hawk_high_hold= np.max(hawkes[(sample-lengths[h//kl]):sample,h])
 
 				dsp = hawkes[sample,h] - hawk_low_hold
 				rng = hawk_high_hold - hawk_low_hold
@@ -1025,6 +1054,8 @@ def fe_hawkes_stoch(
 				row[h] = hs
 
 		new_data[sample] = row
+
+	new_data = np.round(new_data, 2)
 
 	cols = []
 	
@@ -1381,6 +1412,9 @@ def fn_all_subsets(real_prices: bool = False, indices:int=-1, keep_time:bool=Tru
 		fnsub.append(fn_disp_lolo(0))
 		fnsub.append(fn_hilo_diff(0))
 		fnsub.append(fn_hilo_stoch(0))
+		fnsub.append(fn_bollinger(0))
+		fnsub.append(fn_hawkes_process(0))
+		fnsub.append(fn_hawkes_stoch(0))
 
 	if(indices == 1 or indices ==-2):
 		#		NOTE NOTE NOTE HERE IS THE IMPLEMENTATION OF ALL INDEX #2 (NDX) DATA. END NOTE END NOTE END NOTE 		#
@@ -1433,6 +1467,38 @@ def return_name_collection():
 	full_set = set1+set2+set3
 
 	return full_set
+
+def fn_hawkes_process(index):
+	lengths = [5, 15, 30, 60, 120, 240]
+	
+	raw_kappa = [0.64, 0.16, 0.08, 0.04, 0.01]	
+	
+	cols = []
+	
+	for l in lengths:
+		for k in raw_kappa:
+			cols.append(f'hawkes_{l}_{k}_{idx[index]}')
+	return cols
+
+def fn_hawkes_stoch(index):
+	lengths = [5, 15, 30, 60, 120, 240]
+	
+	raw_kappa = [0.64, 0.16, 0.08, 0.04, 0.01]
+
+	cols = []
+	
+	for l in lengths:
+		for k in raw_kappa:
+			cols.append(f'hawkes_stoch_{l}_{k}_{idx[index]}')
+	return cols
+
+def fn_bollinger(index):
+	lengths = [5, 15, 30, 60, 120, 240]
+	cols = []
+	for i in lengths:
+		cols.append(f'bbands_{i}_{idx[index]}')
+	return cols
+
 
 def fn_hilo_diff(index):
 	lengths = [5,15,30,60,120,240]
@@ -1527,3 +1593,43 @@ def tn_stoch_classification_exception(num_classes, past_future_string, index=0):
 
 def tn_stoch_regression():
 	return
+
+
+def augmod_verbose(scenario:int):
+	match(scenario):
+		case 0:
+			print('Generating ToD...')
+		case 1:
+			print('Generating DoW...')
+		case 2:
+			print('Generating vel...')
+		case 3:
+			print('Generating acc...')
+		case 4:
+			print('Generating stoch k...')
+		case 5:
+			print('Generating height bar...')
+		case 6:
+			print('Generating height wick...')
+		case 7:
+			print('Generating diff hl wick...')
+		case 8:
+			print('Generating vol sz diff...')
+		case 9:
+			print('Generating ma disp...')
+		case 10:
+			print('Generating ma diff...')
+		case 11:
+			print('Generating hihi diff...')
+		case 12:
+			print('Generating lolo diff...')
+		case 13:
+			print('Generating hilo diff...')
+		case 14:
+			print('Generating hilo stoch...')
+		case 15:
+			print('Generating bollinger...')
+		case 16:
+			print('Generating hawkes process...')
+		case 17:
+			print('Generating hawkes stoch...')
