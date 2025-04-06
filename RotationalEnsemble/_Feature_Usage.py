@@ -800,7 +800,8 @@ def fe_bollinger(
 	return feature_set
 
 def fe_true_range(
-	X
+	X,
+	index
 ):
 	'''
 		Simple function to collect an array of true range values.
@@ -840,7 +841,7 @@ def fe_atr(
 	X,
 	index
 ):
-	true_range = fe_true_range(X).values
+	true_range = fe_true_range(X,index).values
 
 	#TOS script is the following
 	'''
@@ -950,7 +951,7 @@ def fe_hawkes_process(
 					
 				else:
 					
-					hp = new_data[sample-1,truidx]
+					hp = new_data[sample-1,truidx] * kap + norm_ranges[sample,nr]
 				
 				row[truidx] = hp
 			
@@ -975,30 +976,64 @@ def fe_hawkes_stoch(
 	need to check out neurotrader888 hawkes video again to see what data is actually going into 
  	this and then can test on TOS what some reasonable values are to use for cappa parameters.
  	'''
-	
-	#orig feature #3
-	# # # deals with all close of minute values
-	close = X.iloc[:, 2+index].values
+
+	hawkes = fe_hawkes_process(X, index)
+
+	lengths = [5, 15, 30, 60, 120, 240]
+	raw_kappa = [0.64, 0.16, 0.08, 0.04, 0.01]
 	
 	l = len(X)
-	
+
+	#lengths length and kappa length denotations
+	ll = len(lengths)
+	kl = len(raw_kappa)
+
+	#row length denotations
+	rl = ll*kl
+
+
+	hawk_low_hold = np.zeros((len(hawkes)[0]), dtype=np.float32)
+	hawk_high_hold= np.zeros((len(hawkes)[0]), dtype=np.float32)
+
 	new_data = np.zeros((l, len(lengths)), dtype=np.float32)
 
 	for sample in range(l):
 		
-		row = np.zeros(len(lengths), dtype=np.float32)
-		
-		
-		#do something
+		row = np.zeros(rl, dtype=np.float32)
 
-		new_data.append(row)
+		for h in range(rl):
+
+			#floor division works since kappa is nested loop within lengths, we iterate with lengths
+			if(sample<lengths[h//kl]):
+				#there is not enough data to collect for this array, will be cut out anyways
+				pass#is a zero already
+			else:
+				#safe sample to work on
+				#grab the lowest value of the last lengths[i] hawkes value
+				hawk_low_hold = np.min(hawkes[(sample-lengths[h//kl]):hawkes[sample],h])
+				hawk_high_hold= np.max(hawkes[(sample-lengths[h//kl]):hawkes[sample],h])
+
+				dsp = hawkes[sample,h] - hawk_low_hold
+				rng = hawk_high_hold - hawk_low_hold
+
+				if(rng != 0):
+					hs = dsp/rng * 100
+
+				else:
+					hs = 0
+
+				row[h] = hs
+
+		new_data[sample] = row
 
 	cols = []
-
-	#do something to make bollinger bands feature names
+	
+	for l in lengths:
+		for k in raw_kappa:
+			cols.append(f'hawkes_stoch_{l}_{k}_{idx[index]}')
 
 	feature_set = pd.DataFrame(new_data, columns=cols)
-
+	
 	return feature_set
 
 '''-------------------------------------------------------------------------------
