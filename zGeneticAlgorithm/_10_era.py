@@ -19,7 +19,6 @@ def era(
 	fss			:	list,
 	criteria	:	str,
 	log_normalize	:	bool,
-	hold_for	:	int,
 	lag_allowance	:	int,
 	arr_returns	:	np.ndarray,
 	arr_kratio	:	np.ndarray,
@@ -46,7 +45,6 @@ def era(
 			arr_kratio=arr_kratio,
 			data=dataset,
 			genes= population,
-			hold_for=hold_for,
 			lag_allow=lag_allowance
 		)
 		print(f":",end='')

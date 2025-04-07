@@ -3,6 +3,7 @@ import random
 import numpy as np
 from math import sqrt
 from typing import Literal
+import operator
 
 def generate_initial_population(
 	sample_size	:	int	=	None,
@@ -50,13 +51,15 @@ def generate_initial_population(
 	#returns the list of created genes
 	return genes
 
+
+
 def collect_parallel_metrics(
 	direction:	bool		=	1,
 	arr_close:	np.ndarray	=	None,
 	arr_ext	:	np.ndarray	=	None,
-	exit_mode:	any			=	0,
-	exit_type:	Literal['area','line']	=	'area',
 	exit_cond:	any			=	None,
+	clip_prof:	float		=	0,
+	clip_loss:	float		=	0,
 	dataset:	np.ndarray	=	None,
 	lag_allow:	int			=	0,
 	log_normalize:	bool	=	True
@@ -66,6 +69,15 @@ def collect_parallel_metrics(
 	such as:
 	- kelsch ratio of given holdfor length
 	- returns of given holdfor length
+	### params: ###
+	- 
+	- 
+	- 
+	- 
+	- clip_prof:
+	-	-	take profit, in percent
+	- clip_loss:
+	-	-	stop loss, in percent
 
 	NOTE EXPANDED FUNCTIONALITY EXPLANATION NOTE
 	This function will now support the use of custom single dimension exit conditioning.
@@ -92,43 +104,109 @@ def collect_parallel_metrics(
 
 	length = len(arr_close)
 
-	exit_disp = np.zeros(length, dtype=np.float32)
+	exit_disp = np.zeros(length, dtype=int)
 
 	#this loop is for collecting an array containing how long a trade would be held for at each instance of the backtesting data
 	#forbidden trade areas hold zeros to denote zero holding time
 	#hold_for (initial functionality of this file) sets a constant value for all instances of the dataset (ex; 15 mins holding time)
-	for i in range(length):
+	#for i in range(length):
 
-		#check which trading mode is being used
-		match(exit_mode):
+	#check which trading mode is being used
+	match(exit_cond):
+		#classical use of this file, always holds trade for set amount of time
+		case int()|float():
+			exit_disp = np.full(length, fill_value=exit_cond, dtype=int)
 
-			#classical use of this file, always holds trade for set amount of time
-			case 0|'hold_for':
-				exit_disp = exit_cond
+		#a custom exit statement is being created
+		case tuple():
 
-			#a custom exit statement is being created
-			case 1|'custom':
-				
-				#exit_cond should come in as a tuple containing
-				#the index of desired conditional variable in the dataset
-				#the comparator, denoted as a string of either 'lt','gt','le','ge'
-				#the comarative variable
-				#an example of this could be a bollinger band brought in, where exit is -1 (stdev from ma)
+			exit_disp = np.full(length, fill_value=-1, dtype=int)
 
-				'''NOTE ENSURE THAT VARIABLES ARE CALLED LEGALLY, consider trimming conditional statements if needed'''
-				'''resume coding here -	-	-	-	-	-	-	-	- NOTE NOTE NOTE NOTE'''
+			op_map = {
+				'lt'	:	operator.lt,
+				'gt'	:	operator.gt,
+				'le'	:	operator.le,
+				'ge'	:	operator.ge,
+				'eq'	:	operator.eq
+			}
+			
+			#exit_cond should come in as a tuple containing
+			#the index of desired conditional variable in the dataset
+			#the comparator, denoted as a string of either 'lt','gt','le','ge'
+			#the comarative variable
+			#an example of this could be a bollinger band brought in, where exit is -1 (stdev from ma)
 
-				'''
-				Current psuedo code:
-				
-				grab the feature to use
-				isolate that into a variable for minimizing calcuations
-				check each sample instance for exit or forbidden state presence
-				then go back and collect time until for each
-				consider making holding cache for each instance.
-				'''
-				pass
+			#grab the feature to use and isolate for minimal calculation
+			exit_feat = dataset[:,exit_cond[0]]
 
+			#grab the comparing operator
+			exit_op = op_map[exit_cond[1]]
+
+			#grab the comparing value
+			exit_comp = exit_cond[2]
+
+			next_satisfied = -1
+
+			#splitting exit type pre-sample-loop to minimize time-complexity
+			match(exit_cond[3]):
+
+				#this means if condition is satisfied, is forbidden area
+				case 'area':
+
+					#honestly used chatgpt for this idea, absolutely smartmode idea it came up with!!
+					for i in reversed(range(len(exit_feat))):
+
+						#check to see if condition is satisfied
+						if(exit_op(exit_feat[i], exit_comp)):
+
+							next_satisfied = i
+
+						#end of week, do not stay in trade
+						if(dataset[i,5]==1019 and dataset[i,6] == 5):
+
+							next_satisfied = i
+						
+						if(next_satisfied != -1):
+
+							exit_disp[i] = next_satisfied - i
+
+				#this means only forbidden area is the moment that condition is satisfied, 
+				#if subsequently followed by condition satisfaction, it is neglected and is not forbidden 
+				case 'line':
+
+					#honestly used chatgpt for this idea, absolutely smartmode idea it came up with!!
+					for i in reversed(range(len(exit_feat))):
+
+						#check to see if condition is satisfied, and also that it was not satisfied the previous minute
+						#this is an identification of a cross in the conditional truth space
+						if(exit_op(exit_feat[i], exit_comp) and not exit_op(exit_feat[(i-1)%len(exit_feat)], exit_comp)):
+
+							next_satisfied = i
+
+						#end of week, do not stay in trade
+						if(dataset[i,5]==1019 and dataset[i,6] == 5):
+
+							next_satisfied = i
+						
+						if(next_satisfied != -1):
+
+							exit_disp[i] = next_satisfied - i
+
+	#entire exit_disp array is completed, all match cases are exited
+	#ensure any forbidden area flags (-1) are converted to zero
+	#zero as an exit distance measurement is desireable as it will be thrown into calculation where:
+	#we are taking natural log of exit price over entry price. if zero exit displacement then it is
+	#some price n over some price n => equals 1 => ln(1) = 0, making zero return undesirable/unnoticable
+	#now negating all significance of any trade here, making model gene pool ignore these areas! 
+	#perfect woop woop woop woop woopen gangnem style
+	exit_disp[exit_disp == -1] = 0 		
+
+	#identify pre-calculated log values of clips to minimize computation
+	log_clip_prof = np.log(1+clip_prof)
+	log_clip_loss = -np.log(1+clip_loss)
+
+	#now we are going to loop through the array with the provided exit displacement variable array
+	#and calculate returns from all bars under these circumstances
 	for i in range(length):
 
 		hold_for = exit_disp[i]
@@ -138,53 +216,74 @@ def collect_parallel_metrics(
 			returns.append(0)
 			kelsch_ratio.append(0)
 		else:
-		
+			
+			#forbidden case, can avoid calculation
+			if(hold_for == 0):
+				returns_local = 0
+
 			#calculate returns
-			if(log_normalize):
+			elif(log_normalize):
 				if(direction==1):
 					returns_local = np.log(arr_close[i+hold_for]/arr_close[i])
 				else:
 					returns_local = np.log(arr_close[i]/arr_close[i+hold_for])
+
+				if((clip_loss!=0.0) or (clip_prof!=0.0)):
+					if(returns_local > log_clip_prof):
+						returns_local = log_clip_prof
+					if(returns_local < log_clip_loss):
+						returns_local = log_clip_loss
+
 			else:
 				if(direction==1):
 					returns_local = (arr_close[i+hold_for] - arr_close[i])
 				else:
 					returns_local = (arr_close[i] - arr_close[i+hold_for])
 
+				if((clip_loss!=0.0) or (clip_prof!=0.0)):
+					if(returns_local > clip_prof):
+						returns_local = clip_prof
+					if(returns_local < clip_loss):
+						returns_local = clip_loss
+
+
 			returns.append(returns_local)
 			
-			#calculate index values here if desired
-			ki_local = 0
-			entry_price = arr_close[i]
-			for c in range(1,hold_for+1):
+			if(hold_for == 0):
+				kelsch_ratio_local = 0
+			else:
+				#calculate index values here if desired
+				ki_local = 0
+				entry_price = arr_close[i]
+				for c in range(1,hold_for+1):
+					if(log_normalize):
+						if(direction==1):
+							ki = entry_price/arr_ext[i+c] #>=1 means is below entry
+						else:
+							ki = arr_ext[i+c]/entry_price
+
+						ki_local+=(np.log(max(ki, 1))**2)
+					else:
+						if(direction==1):
+							ki_local+=((max(entry_price - arr_ext[i+c] , 0)) ** 2)
+						else:
+							ki_local+=((max(arr_ext[i+c] - entry_price, 0)) ** 2)
+				#taking square root of the mean drawdown squared
 				if(log_normalize):
-					if(direction==1):
-						ki = entry_price/arr_ext[i+c] #>=1 means is below entry
-					else:
-						ki = arr_ext[i+c]/entry_price
-
-					ki_local+=(np.log(max(ki, 1))**2)
+					#is in log space, so is returns, so i dont think np.exp goes here
+					ki_local = (sqrt(ki_local/hold_for))
 				else:
-					if(direction==1):
-						ki_local+=((max(entry_price - arr_ext[i+c] , 0)) ** 2)
-					else:
-						ki_local+=((max(arr_ext[i+c] - entry_price, 0)) ** 2)
-			#taking square root of the mean drawdown squared
-			if(log_normalize):
-				#is in log space, so is returns, so i dont think np.exp goes here
-				ki_local = (sqrt(ki_local/hold_for))
-			else:
-				ki_local = sqrt(ki_local/hold_for)
-			
-			#this comes up when there is zero closes below the entry close
-			if(ki_local == 0):
-				kelsch_ratio_local = 10
-			#take difference to show differential between std drawdown and profit
-			else:
-				kelsch_ratio_local = ((returns_local) / (ki_local))
+					ki_local = sqrt(ki_local/hold_for)
+				
+				#this comes up when there is zero closes below the entry close
+				if(ki_local == 0):
+					kelsch_ratio_local = 10
+				#take difference to show differential between std drawdown and profit
+				else:
+					kelsch_ratio_local = ((returns_local) / (ki_local))
 
-			if(kelsch_ratio_local > 10):
-				kelsch_ratio_local = 10
+				if(kelsch_ratio_local > 10):
+					kelsch_ratio_local = 10
 
 			kelsch_ratio.append((kelsch_ratio_local))
 

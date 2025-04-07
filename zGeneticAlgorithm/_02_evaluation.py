@@ -24,7 +24,6 @@ def fitness(
 	genes		:	list|np.ndarray	=	None,
 	#NOTE removing method parameter, as fully inclusive evaluations will be done first.
 	#method		:	function	=	None,
-	hold_for	:	int			=	-1,
 	lag_allow	:	int			=	-1,
 ):
 	'''
@@ -39,7 +38,6 @@ def fitness(
 	assert genes != None, "No genes were provided to the fitness function."
 	#NOTE removed method assertion as im going to do full inclusive runs first END#NOTE!!!
 	#assert method != None, "No ground-truth method was provided to the fitness function."
-	assert hold_for != -1, "No holdfor length was provided to the fitness function."
 	assert lag_allow != -1, "No Lagallow length was provided to the fitness function."
 
 	#boolean 2d array containing entry/or-not (0|1) for each gene
@@ -56,7 +54,7 @@ def fitness(
 	#lag allowance and hold length
 	for i in range(length):
 		
-		if(i < lag_allow | i > length-hold_for-1):
+		if(i < lag_allow | i > length-1):
 			#want to avoid usage of these values for safe analysis
 			#gene_presence.append([0]*len(genes))
 			gene_presence_local = np.zeros(len(genes), dtype=int)
@@ -222,7 +220,7 @@ def show_best_gene_patterns(
 	criteria	:	Literal['profit_factor','kelsch_ratio','average_return','total_return','consistency',\
 							'frequency','total_kelsch_ratio','martin_ratio','mkr','r2','r2_kr']	=	'profit_factor',
 	fss			:	list	=	None,
-	hold_for	:	int		=	-1
+	exit_cond	:	int		=	-1
 ):
 	'''
 	This function shows the basic data of the best gene in a list of genes (population)
@@ -254,7 +252,7 @@ def show_best_gene_patterns(
 	output+=str(f"Average KRatio: {round(s_p[0]._avg_kelsch_ratio, 5)}\n")
 	output+=str(f"MKR: {round(s_p[0]._mkr,4)}\n")
 	output+=str(f"Frequency: {s_p[0]._frequency}\n")
-	output+=str(f"Hold For: {hold_for}\n")
+	output+=str(f"Exit Condition: {exit_cond}\n")
 	output+=str(f"r2: {s_p[0]._r2}")
 
 	return output
@@ -474,6 +472,22 @@ def show_returns(
 	plt.show()
 
 	plt.plot(cum_pl,color='maroon')
+	plt.show()
+
+	# Plot histogram
+
+	arr_ret_nonzero = arr_returns[arr_returns != 0]
+
+	plt.figure(figsize=(10, 6))
+	plt.hist(arr_ret_nonzero, bins='auto', edgecolor='black', alpha=0.75)
+
+	# Formatting
+	plt.title('Return Distribution')
+	plt.xlabel('Return')
+	plt.ylabel('Frequency')
+	plt.grid(True)
+	plt.tight_layout()
+
 	plt.show()
 
 
