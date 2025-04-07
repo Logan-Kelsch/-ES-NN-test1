@@ -2,6 +2,7 @@ import _00_gene as _0
 import random
 import numpy as np
 from math import sqrt
+from typing import Literal
 
 def generate_initial_population(
 	sample_size	:	int	=	None,
@@ -53,7 +54,10 @@ def collect_parallel_metrics(
 	direction:	bool		=	1,
 	arr_close:	np.ndarray	=	None,
 	arr_ext	:	np.ndarray	=	None,
-	hold_for:	int			=	0,
+	exit_mode:	any			=	0,
+	exit_type:	Literal['area','line']	=	'area',
+	exit_cond:	any			=	None,
+	dataset:	np.ndarray	=	None,
 	lag_allow:	int			=	0,
 	log_normalize:	bool	=	True
 ):
@@ -62,15 +66,73 @@ def collect_parallel_metrics(
 	such as:
 	- kelsch ratio of given holdfor length
 	- returns of given holdfor length
+
+	NOTE EXPANDED FUNCTIONALITY EXPLANATION NOTE
+	This function will now support the use of custom single dimension exit conditioning.
+	This will also still have hold_for functionality, and as default.
+	Takes in an dataset and fss list.
+	creates 1 DIMENSIONAL exit signal from a single feature of the dataset.
+	for instance, using custom feature based exit conditioning:
+	>>> grab dataset
+	>>> grab and stash (hawkes stoch at 60 mins and .08 kappa) as array
+	>>> bring in some exit conditioning, such as (stashed feature is less than .2)
+	>>> before the loop is created, go through entire dataset and create an array
+	>>> This array will be used for collecting exit time displacement information, or holding an illegal flag
+	>>> this array holds state info of the following:
+	>>> time-till-exit, or forbidden of entry. These are denoted as
+	>>> n (candles), 0 (ln of (price1/price1) will return PL of zero, simulating no value in entry)
+	Some candles are considered forbidden (of trade) if exit_type is area, and exit condition is satisfied. 
 	'''
-	
+
+	assert exit_cond != None, 'Exit condition was never specified. Check documentation of collecting parallel metrics.'
+
 	#list variables for holding metrics
 	returns = []
 	kelsch_ratio = []
 
 	length = len(arr_close)
 
+	exit_disp = np.zeros(length, dtype=np.float32)
+
+	#this loop is for collecting an array containing how long a trade would be held for at each instance of the backtesting data
+	#forbidden trade areas hold zeros to denote zero holding time
+	#hold_for (initial functionality of this file) sets a constant value for all instances of the dataset (ex; 15 mins holding time)
 	for i in range(length):
+
+		#check which trading mode is being used
+		match(exit_mode):
+
+			#classical use of this file, always holds trade for set amount of time
+			case 0|'hold_for':
+				exit_disp = exit_cond
+
+			#a custom exit statement is being created
+			case 1|'custom':
+				
+				#exit_cond should come in as a tuple containing
+				#the index of desired conditional variable in the dataset
+				#the comparator, denoted as a string of either 'lt','gt','le','ge'
+				#the comarative variable
+				#an example of this could be a bollinger band brought in, where exit is -1 (stdev from ma)
+
+				'''NOTE ENSURE THAT VARIABLES ARE CALLED LEGALLY, consider trimming conditional statements if needed'''
+				'''resume coding here -	-	-	-	-	-	-	-	- NOTE NOTE NOTE NOTE'''
+
+				'''
+				Current psuedo code:
+				
+				grab the feature to use
+				isolate that into a variable for minimizing calcuations
+				check each sample instance for exit or forbidden state presence
+				then go back and collect time until for each
+				consider making holding cache for each instance.
+				'''
+				pass
+
+	for i in range(length):
+
+		hold_for = exit_disp[i]
+
 		if((i < lag_allow) | (i > length-hold_for-1)):
 			#want to avoid usage of these values for safe analysis
 			returns.append(0)
