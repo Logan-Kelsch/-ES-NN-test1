@@ -392,29 +392,37 @@ def fe_vol_sz_diff(X, index):
 	#orig feature #4
 	# # # deals with volume of each minute
 	volume = X.iloc[:, 3+index].values
-	new_data = []
+
+	lengths = [5, 15, 30, 60, 120, 240]
 
 	l = len(X)
+	r = len(lengths)
+
+	new_data = np.zeros((l, r*2), dtype=np.float32)
+
 	for sample in range(l):
-		row = []
-		#creating 59 areas of total volume from 2 -> 60 minutes
-		for i in range(1,60):
-			t_vol = volume[sample]
-			for j in range(1,i+1):
-				t_vol+=volume[(sample - j) %l]
-			row.append(t_vol)
+
+		row = np.zeros((r*2), dtype=np.float32)
 		
-		#creating 59 diffs for vol - avgvol from 2 -> 60 minutes
-		for i in range(1,60):
-			avg_vol = row[i-1]/(i+1)
-			row.append(round(volume[sample] - avg_vol, 2))
+		if(240-sample<0):
+			pass#row is already zeros, these values will be trimmed
+		
+		else:
+			for i, disp in enumerate(lengths):
+
+				row[i] = round(np.sum(volume[sample-disp:sample]), 2)
+			
+			
+			for i, disp in enumerate(lengths):
+				avg_vol = row[i]/(disp)
+				row[r+i]= round(volume[sample] - avg_vol, 2)
 
 		#this is all data for each given sample
-		new_data.append(row)
+		new_data[sample] = row
 
 	#custom feature name
-	cols = [f'vol_m{i}_{idx[index]}' for i in range(2,61)]+\
-		[f'vol_avgDiff{i}_{idx[index]}' for i in range(2,61)]
+	cols = [f'vol_m{i}_{idx[index]}' for i in lengths]+\
+		[f'vol_avgDiff{i}_{idx[index]}' for i in lengths]
 
 	#CONTINUE HERE THERE ARE ONLY 59 FEATURES
 	feature_set = pd.DataFrame(new_data, columns=cols)
@@ -1262,9 +1270,11 @@ def fn_stoch_k(index):
 	return [f'stchK{i}_{idx[index]}' for i in range(5, 125, 5)]
 def fn_vol_m(index):
 	'''NOTE subset 1 of fe_vol_sz_diff feature set END NOTE'''
+	lengths = [5, 15, 30, 60, 120, 240]
 	return [f'vol_m{i}_{idx[index]}' for i in range(2,61)]
 def fn_vol_avgDiff(index):
 	'''NOTE subset 2 of fe_vol_sz_diff feature set END NOTE'''
+	lengths = [5, 15, 30, 60, 120, 240]
 	return [f'vol_avgDiff{i}_{idx[index]}' for i in range(2,61)]
 def fn_ma_s60(index):
 	'''NOTE the sub 60m subset of ma feature set'''
