@@ -20,6 +20,7 @@ import sys
 def fitness(
 	arr_returns	:	np.ndarray	=	None,
 	arr_kratio	:	np.ndarray	=	None,
+	arr_holdfor	:	np.ndarray	=	None,
 	data		:	np.ndarray	=	None,
 	genes		:	list|np.ndarray	=	None,
 	#NOTE removing method parameter, as fully inclusive evaluations will be done first.
@@ -50,6 +51,10 @@ def fitness(
 	returns = np.zeros((length, len(genes)), dtype=np.float32)
 	kelsch_ratio = np.zeros((length, len(genes)), dtype=np.float32)
 
+	#new variable added to stop gene from entering multiple times 
+	#within a single actual trade 
+	in_trade_till = np.zeros(len(genes), dtype=int)
+
 	#test all samples in the set, accounting for
 	#lag allowance and hold length
 	for i in range(length):
@@ -76,17 +81,40 @@ def fitness(
 		
 			#check presence of each gene at each sample
 			for g, gene in enumerate(genes):
-				matches = True
-				for p in gene._patterns:
 
-					#some referrential point printouts if needed
-					#print(f"p: {type(p)} at {g}")
-					#print(f'v1,v2,l1,l2: {p._v1} {p._v2} {p._l1} {p._l2}')
-					
-					#if given pattern holds true
-					if not (p._op(data[i-p._l1, p._v1],data[i-p._l2, p._v2])):
-						matches = False
-						break
+				#always initially set to true
+				matches = True
+
+				#added this in trade till if statement this way to enforce that a strategy is only entering one time per single / hold
+				#and at the same time it also allows for unneded computation to be skipped out on, since this function is unfortunately
+				#already slow that optimization is really helpful.. hopefully. have not run it yet. 
+
+				#check to see if this gene is in a trade already
+				#this if is true if it is not in a trade
+				if(in_trade_till[g]<i):
+
+					#now that this gene has entered a trade, needs to reset when it is allowed to
+					#enter a new trade. we are going to do this by grabbing the hold_for value
+					#for the array brought in from _01.collect_parallel_metrics on initial return collection
+					in_trade_till[g] = arr_holdfor[i]+i
+					#this essentially tells the gene (in a safe and blind manner) that it cannot enter a trade
+					#until the time in which it ends up exiting the trade its in.
+
+					#check each pattern within the gene
+					for p in gene._patterns:
+
+						#some referrential point printouts if needed
+						#print(f"p: {type(p)} at {g}")
+						#print(f'v1,v2,l1,l2: {p._v1} {p._v2} {p._l1} {p._l2}')
+						
+						#if given pattern does not hold true
+						if not (p._op(data[i-p._l1, p._v1],data[i-p._l2, p._v2])):
+							matches = False
+							break
+
+				#this else is reached if the gene is already in the trade
+				else:
+					matches = False
 				#check if matches variable held
 				i_presence[g] = 1 if matches else 0
 		
@@ -494,9 +522,9 @@ def show_returns(
 def filter_population(
 	population	:	list	=	[],
 	avg_return	:	float	=	-100,
-	tot_return	:	float	=	0.0,
+	tot_return	:	float	=	-100,
 	profit_factor	:	float=	0,
-	kelsch_ratio	:	float=	0,
+	kelsch_ratio	:	float=	-100,
 	entry_frequency	:	float=	0.00,
 	r2			:	float=	0,
 	r2_kr		:	float=	0

@@ -22,6 +22,7 @@ def era(
 	lag_allowance	:	int,
 	arr_returns	:	np.ndarray,
 	arr_kratio	:	np.ndarray,
+	arr_holdfor	:	np.ndarray,
 	elite_criteria	:	float|int,
 	num_parents	:	int,
 	rep_mode	:	str,
@@ -43,6 +44,7 @@ def era(
 		returns, kelsch_ratio = _2.fitness(
 			arr_returns=arr_returns,
 			arr_kratio=arr_kratio,
+			arr_holdfor=arr_holdfor,
 			data=dataset,
 			genes= population,
 			lag_allow=lag_allowance

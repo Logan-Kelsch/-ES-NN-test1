@@ -288,7 +288,7 @@ def collect_parallel_metrics(
 			kelsch_ratio.append((kelsch_ratio_local))
 
 	#metrics are built, return parallel metrics
-	return returns, kelsch_ratio
+	return returns, kelsch_ratio, exit_disp
 
 
 
