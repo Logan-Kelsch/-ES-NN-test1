@@ -44,7 +44,7 @@ def build_transition_matrix(
 
 	#considering it is zero indexing, the length of states should equal the number of the highest number state.
 	#if this is not true, the some theorized and computed state never showed up in the entire dataset.
-	if(existing_states[-1] == len(exitsting_states)):
+	if(existing_states[-1] == len(existing_states)):
 		print(f"States Never Seen: {np.setdiff1d(np.arange(existing_states[0], existing_states[-1]+1), existing_states)}")
 
 	#using last value in array instead of length to ensure that if states never show up that they are at least shown
@@ -70,7 +70,7 @@ def build_transition_matrix(
 		for f, (f_i, f_v) in enumerate(filter_args.items()):
 
 			#now we are within a single features filters, need to iterate by pair 
-			for p, pair in enumerate(filt):
+			for p, pair in enumerate(f_v):
 
 				#on filter f within filters
 				#which is relating filter dataset column f_i
@@ -96,12 +96,8 @@ def build_transition_matrix(
 		#tally for ease for normalization after tally
 		total_transitions += 1
 
-	#normalizing i suppose is done by rows
+	#normalizing i suppose is done by rows for markov
 	row_sums = trans_tally_matrix.sum(axis=1, keepdims=True)
-	probability_matrix = trans_tally_matrix / row_sums
-								
+	probability_matrix = trans_tally_matrix / row_sums			
 	
-	return
-
-
-									
+	return probability_matrix
