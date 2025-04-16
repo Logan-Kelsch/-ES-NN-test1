@@ -101,3 +101,68 @@ def build_transition_matrix(
 	probability_matrix = trans_tally_matrix / row_sums			
 	
 	return probability_matrix
+
+
+def fn_return_fss(
+	mode	:	str	=	'beta_vhs'
+):
+	match(mode):
+		case 'beta_vhs':
+			return [[0, 1, 2, 3, 4],[5, 6],[7, 8, 9],[10,11]]
+		case _:
+			raise NotImplementedError(f"Your goofy mode '{mode}' is not goofy implemented for fss retrieval in Markov Chain folder.")
+		
+def build_state_array(
+	data	:	np.ndarray,
+	fss_mode:	str	=	'beta_vhs'
+):
+	'''
+	### info: ###
+	this function will take all data instances within the time and day restrictions and create a state chain out of it
+	### params: ###
+	- data:
+	-	-	the array of data of all features
+	- time-rst:
+	-	-	a tuple denoting the beginning and end time of allowable trade entries
+	- day-rst:
+	-	-	a tuple denoting the beginning and end day of allowable trading entries
+	- fss-mode:
+	-	-	a variable denoting the format of the dataset
+	'''
+
+	fss = fn_return_fss(mode=fss_mode)
+
+	
+	vhsi = fss[3]
+
+	state_array = np.full(len(data), -1)
+
+	for sample in range(len(data)):
+
+
+		if(data[sample,vhsi[0]]<20):
+			tmp=0
+		elif(data[sample,vhsi[0]]>80):
+			tmp=2
+		else:
+			tmp=1
+
+
+		if(data[sample,vhsi[1]]<20):
+			pass
+		elif(data[sample,vhsi[1]]>80):
+			tmp+=6
+		else:
+			tmp+=3
+
+
+		if(data[sample,vhsi[2]]<20):
+			pass
+		elif(data[sample,vhsi[1]]>80):
+			tmp+=18
+		else:
+			tmp+=9
+
+		state_array[sample] = tmp
+
+	return state_array

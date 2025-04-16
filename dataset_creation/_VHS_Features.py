@@ -381,3 +381,13 @@ def fn_direction_hawkes_stoch(mode):
 			raise ValueError(f"Mode for augmod dataset was passed to a function with an illegal value of '{mode}'. Please check acceptable values and try again.")
 	return
 
+def fn_full_fss(mode):
+	match(mode):
+		case 'vhs':
+			fss = [['high','low','close','volume','time']]
+			fss.append(['ToD','DoW'])
+			fss.append(fn_attention_hawkes_stoch(mode))
+			fss.append(fn_volatility_hawkes_stoch(mode))
+			fss.append(fn_direction_hawkes_stoch(mode))
+		case _:
+			raise NotImplementedError(f"Your mode '{mode}' is not implemented for full fss retrieval")
