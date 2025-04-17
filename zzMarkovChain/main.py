@@ -79,8 +79,10 @@ def build_transition_matrix(
 				#which is relating filter dataset column f_i
 				#and comparing filter value with operator pair[0] over pair[1] value
 
+				#print(pair[0],f_i, pair[1])
+
 				#if filter is NOTE TRUE NOTE TRUE, then remove
-				if( op_map[pair[0]]( arr_filters[f_i] , pair[1] ) ):
+				if( op_map[pair[0]]( pair[1], arr_filters[i,f_i] ) ):
 					keep = False
 					break
 					
