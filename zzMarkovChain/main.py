@@ -12,8 +12,11 @@ import operator
 def build_transition_matrix(
 	trans_length	:	int		=	0,
 	arr_states	:	np.ndarray	=	None,
+	format		:	str			=	'beta_vhs',
 	arr_filters	:	np.ndarray	=	None,
-	filter_args	:	dict		=	{}
+	filter_args	:	dict		=	{},
+	col_filter	:	str			=	'None',
+	dir_norm	:	str			=	'row'
 ):
 	'''
 	 ### info: ###
@@ -48,7 +51,7 @@ def build_transition_matrix(
 		print(f"States Never Seen: {np.setdiff1d(np.arange(existing_states[0], existing_states[-1]+1), existing_states)}")
 
 	#using last value in array instead of length to ensure that if states never show up that they are at least shown
-	n_states = existing_states[-1]
+	n_states = existing_states[-1]+1
 
 	#going to make a matrix where all transitions will be tossed into bins for each location of the matrix
 	trans_tally_matrix = np.zeros((n_states, n_states), dtype=int)
@@ -91,14 +94,42 @@ def build_transition_matrix(
 
 		#if this area is reached, then it is not being filtered out 
 		#and the sample needs to be accepted into the transition matrix
-		trans_tally_matrix[ arr_states[ i-trans_length ][ i ] ] += 1
+		trans_tally_matrix[ arr_states[ i-trans_length ], arr_states[ i ] ] += 1
 
 		#tally for ease for normalization after tally
 		total_transitions += 1
 
+	match(col_filter):
+		case 'None':
+			pass
+		case 'evens':
+			trans_tally_matrix[:, ::2] = 0
+
 	#normalizing i suppose is done by rows for markov
-	row_sums = trans_tally_matrix.sum(axis=1, keepdims=True)
-	probability_matrix = trans_tally_matrix / row_sums			
+	match(dir_norm):
+		case 'col':
+			sums = trans_tally_matrix.sum(axis=0, keepdims=True)
+			#wherever row_sum!=0 do the division, else put 0
+			probability_matrix = np.where(
+				sums != 0,
+				np.transpose(np.transpose(trans_tally_matrix) / sums),
+				0
+			)
+		case 'row':
+			sums = trans_tally_matrix.sum(axis=1, keepdims=True)
+			#wherever row_sum!=0 do the division, else put 0
+			probability_matrix = np.where(
+				sums != 0,
+				trans_tally_matrix / sums,
+				0
+			)
+
+	#wherever row_sum!=0 do the division, else put 0
+	'''probability_matrix = np.where(
+		sums != 0,
+		trans_tally_matrix / sums,
+		0
+	)'''
 	
 	return probability_matrix
 
@@ -114,7 +145,8 @@ def fn_return_fss(
 		
 def build_state_array(
 	data	:	np.ndarray,
-	fss_mode:	str	=	'beta_vhs'
+	fss_mode:	str	=	'beta_vhs',
+	mode	:	str =	'3to27'
 ):
 	'''
 	### info: ###
@@ -133,36 +165,90 @@ def build_state_array(
 	fss = fn_return_fss(mode=fss_mode)
 
 	
-	vhsi = fss[3]
+	vhsi = fss[2]
+	mai = fss[3]
 
 	state_array = np.full(len(data), -1)
 
-	for sample in range(len(data)):
+	match(mode):
+		case '3to27':
+
+			for sample in range(len(data)):
+
+				tmp=-1
+
+				if(data[sample,vhsi[0]]<20):
+					tmp=0
+				elif(data[sample,vhsi[0]]>80):
+					tmp=2
+				else:
+					tmp=1
 
 
-		if(data[sample,vhsi[0]]<20):
-			tmp=0
-		elif(data[sample,vhsi[0]]>80):
-			tmp=2
-		else:
-			tmp=1
+				if(data[sample,vhsi[1]]<20):
+					pass
+				elif(data[sample,vhsi[1]]>80):
+					tmp+=6
+				else:
+					tmp+=3
 
 
-		if(data[sample,vhsi[1]]<20):
-			pass
-		elif(data[sample,vhsi[1]]>80):
-			tmp+=6
-		else:
-			tmp+=3
+				if(data[sample,vhsi[2]]<20):
+					pass
+				elif(data[sample,vhsi[2]]>80):
+					tmp+=18
+				else:
+					tmp+=9
+
+				state_array[sample] = tmp
+
+		case '3ma15to12':
+
+			for sample in range(len(data)):
+
+				tmp=-1
+
+				if(data[sample,vhsi[0]]>80 and data[sample,vhsi[1]]>50):
+					tmp=1
+				else:
+					tmp=0
 
 
-		if(data[sample,vhsi[2]]<20):
-			pass
-		elif(data[sample,vhsi[1]]>80):
-			tmp+=18
-		else:
-			tmp+=9
+				if(data[sample,vhsi[2]]<20):
+					pass
+				elif(data[sample,vhsi[2]]>80):
+					tmp+=4
+				else:
+					tmp+=2
 
-		state_array[sample] = tmp
+				if(data[sample,mai[0]]>0):
+					tmp+=6
+
+				state_array[sample] = tmp
+
+		case '3ma60to12':
+
+			for sample in range(len(data)):
+
+				tmp=-1
+
+				if(data[sample,vhsi[0]]>80 and data[sample,vhsi[1]]>50):
+					tmp=1
+				else:
+					tmp=0
+
+
+				if(data[sample,vhsi[2]]<20):
+					pass
+				elif(data[sample,vhsi[2]]>80):
+					tmp+=4
+				else:
+					tmp+=2
+
+				if(data[sample,mai[1]]>0):
+					tmp+=6
+
+				state_array[sample] = tmp
+
 
 	return state_array
