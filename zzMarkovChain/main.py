@@ -254,3 +254,72 @@ def build_state_array(
 
 
 	return state_array
+
+
+
+def make_day_dataset(X,
+                     y,
+                     time_idx=1,
+                     min_time=570,
+                     max_time=900,
+                     to_lstm=False,
+                     include_days=None):
+    """
+    Build a tf.data.Dataset that yields one day's windowed slice at a time.
+
+    Args:
+      X: np.ndarray, shape (N, F)     — feature matrix
+      y: np.ndarray, shape (N,)       — parallel label array
+      time_idx: int                   — index of looping time feature (0–1200)
+      min_time, max_time: int         — inclusive window bounds
+      to_lstm: bool                   — if True, output has leading batch dim
+      include_days: list/np.ndarray   — which day IDs to include
+
+    Returns:
+      tf.data.Dataset yielding (x_batch, y_batch):
+        if to_lstm=False:
+          x_batch: (seq_len, F),   y_batch: (seq_len,)
+        if to_lstm=True:
+          x_batch: (1, seq_len, F), y_batch: (1, seq_len)
+    """
+    # infer day IDs by wrap‑around of the time feature
+    times  = X[:, time_idx]
+    day_id = np.concatenate([[0], np.cumsum(times[1:] < times[:-1])])
+
+    # filter rows into your time window
+    mask   = (times >= min_time) & (times <= max_time)
+    X_f    = X[mask]
+    y_f    = y[mask]
+    days_f = day_id[mask]
+
+    # restrict to a subset of days if requested
+    if include_days is not None:
+        keep   = np.isin(days_f, include_days)
+        X_f    = X_f[keep]
+        y_f    = y_f[keep]
+        days_f = days_f[keep]
+
+    # generator: one day's slice per iteration
+    def gen():
+        for d in np.unique(days_f):
+            x_batch = X_f[days_f == d].astype(np.float32)
+            y_batch = y_f[days_f == d].astype(np.float32)
+            if to_lstm:
+                x_batch = np.expand_dims(x_batch, 0)  # (1, seq_len, F)
+                y_batch = np.expand_dims(y_batch, 0)  # (1, seq_len)
+            yield x_batch, y_batch
+
+    # declare the output shapes
+    n_feats = X.shape[1]
+    if to_lstm:
+        spec = (
+            tf.TensorSpec(shape=(1, None, n_feats), dtype=tf.float32),
+            tf.TensorSpec(shape=(1, None)       , dtype=tf.float32),
+        )
+    else:
+        spec = (
+            tf.TensorSpec(shape=(None, n_feats), dtype=tf.float32),
+            tf.TensorSpec(shape=(None,)        , dtype=tf.float32),
+        )
+
+    return tf.data.Dataset.from_generator(gen, output_signature=spec)
