@@ -144,8 +144,8 @@ def make_day_dataset(X,
 
 	#scaled time
 
-	mintime = (min_time - scaler.mean_[1]) / scaler.scale_[1]
-	maxtime = (max_time - scaler.mean_[1]) / scaler.scale_[1]
+	mintime = min_time#(min_time - scaler.mean_[1]) / scaler.scale_[1]
+	maxtime = max_time#(max_time - scaler.mean_[1]) / scaler.scale_[1]
 
 	# filter rows into your time window
 	mask   = (times >= mintime) & (times <= maxtime)
