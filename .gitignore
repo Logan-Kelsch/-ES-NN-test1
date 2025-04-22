@@ -27,5 +27,6 @@ zGeneticAlgorithm/spx_large.csv
 zGeneticAlgorithm/spx_features.csv
 zGeneticAlgorithm/spx_features_small.csv
 zGeneticAlgorithm/spx_newest.csv
+zzMarkovChain/spx_features.csv
 .tf_/
 .torch_/
