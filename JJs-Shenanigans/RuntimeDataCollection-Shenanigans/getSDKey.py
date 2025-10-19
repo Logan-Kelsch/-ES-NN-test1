@@ -2,5 +2,5 @@
 
 class getKey:
     def gKey():  # get key function
-        return 'aOWP2vRuALq9jMytMWgRzWbIZBG4J1KomISuZvF9'
+        return 'removed, ask Logan'
         
